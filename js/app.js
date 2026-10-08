@@ -344,15 +344,19 @@ function trafficChip(kind, id) {
   }
 
   // Each direction stands on its own — one way can be jammed while the other
-  // runs free, and a single colour for both would hide exactly that.
-  return sides.map(([direction, side]) => {
+  // runs free, and a single colour for both would hide exactly that. They are
+  // stacked, one per line, so neither reads as the other.
+  const readings = sides.map(([direction, side]) => {
     const place = copy[DIRECTION_LABEL[direction]] || direction;
     const minutes = side.minutes > 0
       ? ` ${esc(copy.trafficMinutes.replace('{minutes}', String(side.minutes)))}`
       : '';
     return chip(side.state, `${esc(copy.trafficTowards.replace('{place}', place))} `
       + `${esc(condition(side.state))}${minutes}`);
-  }).join(' ');
+  });
+  return readings.length === 1
+    ? readings[0]
+    : `<span class="traffic-sides">${readings.join('')}</span>`;
 }
 
 const corridorIncidents = (group) =>
