@@ -180,10 +180,10 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 .alt { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
 .alt-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .alt-title { font-size: 0.9rem; font-weight: 700; }
-.alt .pick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.alt .compare-list { margin-top: 8px; }
+.pick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 
-/* Same-trip alternatives */
-#alt-select { margin-top: 8px; }
+/* Toll comparison picker */
 .chip {
   border: 1px solid var(--line);
   background: #fff;
@@ -195,6 +195,30 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
   cursor: pointer;
 }
 .chip.on { border-color: #bcd7ff; background: #e8f1ff; color: var(--focus); font-weight: 700; }
+.compare-tag { color: var(--muted); font-size: 0.78rem; font-weight: 700; }
+.compare-row.cheapest .compare-tag { color: #157a4d; }
+
+.compare-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.compare-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  border-radius: 12px;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.compare-row:hover { background: var(--form); }
+.compare-row.cheapest { background: #e7f6ee; color: #157a4d; font-weight: 700; }
+.compare-row.cheapest .compare-price { color: #157a4d; }
+.compare-price { font-variant-numeric: tabular-nums; }
 .compare-note { margin: 8px 0 0; color: var(--muted); font-size: 0.88rem; font-weight: 600; }
 
 /* Chart card */
