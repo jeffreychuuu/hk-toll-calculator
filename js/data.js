@@ -77,6 +77,75 @@ export const TVT_FIXED = {
   tlt: { taxi: 28, other: 43 },
 };
 
+// --- Time-varying schedules ---------------------------------------------
+// Transition rate: price(min) = from + dir * (offset + step * floor((min - s)/2))
+// Values are transcribed from the TD detailed toll-schedule PDFs and are
+// authoritative over any formula: irregular steps (e.g. a first step of $1)
+// are captured by individual `from`/`offset` values.
+
+const F = (s, e, period, car, moto) => ({ s, e, type: 'fixed', period, car, moto });
+const T = (s, e, car, moto) => ({ s, e, type: 'transition', car, moto });
+const up = (from, offset, step) => ({ from, dir: 1, offset, step });
+const down = (from, offset, step) => ({ from, dir: -1, offset, step });
+
+// 海底隧道及東區海底隧道 — Monday to Saturday, excluding public holidays
+const CH_WEEKDAY = [
+  F(0, 449, 'non-peak', 20, 8),
+  T(450, 467, up(20, 2, 2), up(8, 0.8, 0.8)),
+  F(468, 614, 'peak', 40, 16),
+  T(615, 622, down(40, 2, 2), down(16, 0.8, 0.8)),
+  F(623, 989, 'normal', 30, 12),
+  T(990, 997, up(30, 2, 2), up(12, 0.8, 0.8)),
+  F(998, 1139, 'peak', 40, 16),
+  T(1140, 1157, down(40, 2, 2), down(16, 0.8, 0.8)),
+  F(1158, 1439, 'non-peak', 20, 8),
+];
+
+// 西區海底隧道 — Monday to Saturday, excluding public holidays
+const WHC_WEEKDAY = [
+  F(0, 449, 'non-peak', 20, 8),
+  T(450, 487, up(20, 2, 2), up(8, 0.8, 0.8)),
+  F(488, 614, 'peak', 60, 24),
+  T(615, 642, down(60, 2, 2), down(24, 0.8, 0.8)),
+  F(643, 989, 'normal', 30, 12),
+  T(990, 1017, up(30, 2, 2), up(12, 0.8, 0.8)),
+  F(1018, 1139, 'peak', 60, 24),
+  T(1140, 1177, down(60, 2, 2), down(24, 0.8, 0.8)),
+  F(1178, 1439, 'non-peak', 20, 8),
+];
+
+// 三條過海隧道 — Sunday and public holidays
+const CH_WEEKEND = [
+  F(0, 610, 'non-peak', 20, 8),
+  T(611, 614, up(20, 1, 2), up(8, 0.4, 0.8)),
+  F(615, 1154, 'normal', 25, 10),
+  T(1155, 1158, down(25, 2, 2), down(10, 0.8, 0.8)),
+  F(1159, 1439, 'non-peak', 20, 8),
+];
+
+// 大欖隧道 — Monday to Saturday, excluding public holidays
+const TLT_WEEKDAY = [
+  F(0, 434, 'non-peak', 18, 7.2),
+  T(435, 460, up(18, 1, 2), up(7.2, 0.4, 0.8)),
+  F(461, 584, 'peak', 45, 18),
+  T(585, 598, down(45, 2, 2), down(18, 0.8, 0.8)),
+  F(599, 1034, 'normal', 30, 12),
+  T(1035, 1048, up(30, 1, 2), up(12, 0.4, 0.8)),
+  F(1049, 1139, 'peak', 45, 18),
+  T(1140, 1165, down(45, 2, 2), down(18, 0.8, 0.8)),
+  F(1166, 1439, 'non-peak', 18, 7.2),
+];
+
+// 大欖隧道 — Sunday and public holidays: flat all day
+const TLT_WEEKEND = [F(0, 1439, 'non-peak', 18, 7.2)];
+
+export const TVT_SCHEDULES = {
+  cht: { weekday: CH_WEEKDAY, weekend: CH_WEEKEND },
+  ehc: { weekday: CH_WEEKDAY, weekend: CH_WEEKEND },
+  whc: { weekday: WHC_WEEKDAY, weekend: CH_WEEKEND },
+  tlt: { weekday: TLT_WEEKDAY, weekend: TLT_WEEKEND },
+};
+
 export function vehiclesFor(tunnelId) {
   const tunnel = TUNNELS.find((t) => t.id === tunnelId);
   if (!tunnel) throw new Error(`unknown tunnel: ${tunnelId}`);
