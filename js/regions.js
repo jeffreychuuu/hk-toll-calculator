@@ -8,7 +8,7 @@
 // This is "which tunnels serve this trip", never a claim about speed: the data
 // to answer that does not live in this project.
 
-export const NODES = ['ntw', 'nte', 'klw', 'klc', 'kle', 'isw', 'isc', 'ise', 'iss', 'ntl'];
+export const NODES = ['ntw', 'nte', 'klw', 'klc', 'kle', 'isw', 'isc', 'ise', 'iss'];
 
 // The tunnels, each joining two areas.
 export const TUNNEL_EDGES = [
@@ -29,7 +29,7 @@ export const TUNNEL_EDGES = [
 // is absent matters most: nothing crosses the harbour for free.
 export const FREE_EDGES = [
   {
-    a: 'ntw', b: 'nte', id: 'lamkam', compare: false,    name: { tc: '林錦公路／青山公路', sc: '林锦公路／青山公路', en: 'Lam Kam Road / Castle Peak Road' },
+    a: 'ntw', b: 'nte', id: 'lamkam', compare: true,    name: { tc: '林錦公路／青山公路', sc: '林锦公路／青山公路', en: 'Lam Kam Road / Castle Peak Road' },
   },
   {
     a: 'ntw', b: 'klw', id: 'tmr', compare: true,    name: { tc: '屯門公路', sc: '屯门公路', en: 'Tuen Mun Road' },
@@ -39,27 +39,6 @@ export const FREE_EDGES = [
   },
   {
     a: 'nte', b: 'klc', id: 'tpr', compare: true,    name: { tc: '大埔道', sc: '大埔道', en: 'Tai Po Road' },
-  },
-  {
-    a: 'nte', b: 'kle', id: 'lungcheung', compare: true,    name: { tc: '龍翔道', sc: '龙翔道', en: 'Lung Cheung Road' },
-  },
-  {
-    a: 'klw', b: 'klc', id: 'wkc', compare: true,    name: { tc: '西九龍走廊', sc: '西九龙走廊', en: 'West Kowloon Corridor' },
-  },
-  {
-    a: 'klc', b: 'kle', id: 'ped', compare: false,    name: { tc: '太子道東', sc: '太子道东', en: 'Prince Edward Road East' },
-  },
-  {
-    a: 'isw', b: 'isc', id: 'connaught', compare: false,    name: { tc: '干諾道', sc: '干诺道', en: 'Connaught Road' },
-  },
-  {
-    a: 'isc', b: 'ise', id: 'iec', compare: false,    name: { tc: '東區走廊', sc: '东区走廊', en: 'Island Eastern Corridor' },
-  },
-  {
-    a: 'ntw', b: 'ntl', id: 'tmclk', compare: true,    name: { tc: '屯門赤鱲角隧道', sc: '屯门赤鱲角隧道', en: 'Tuen Mun–Chek Lap Kok Link' },
-  },
-  {
-    a: 'ntw', b: 'ntl', id: 'lantau', compare: true,    name: { tc: '青嶼幹線／北大嶼山公路', sc: '青屿干线／北大屿山公路', en: 'Lantau Link / North Lantau Highway' },
   },
 ];
 
@@ -78,8 +57,8 @@ const CORRIDOR_CATEGORIES = [
   { id: 'kln-ntw', pairs: [['ntw', 'klw']] },
   { id: 'nte-ntw', pairs: [['ntw', 'nte']] },
   { id: 'island', pairs: [['isw', 'isc'], ['isc', 'ise'], ['isc', 'iss']] },
-  { id: 'kowloon', pairs: [['klw', 'klc'], ['klc', 'kle']] },
-  { id: 'ntw-airport', pairs: [['ntw', 'ntl']] },
+  // Discovery Bay stands alone: off the macro map, so it names itself.
+  { id: 'other', tunnels: ['dbt'] },
 ];
 
 const pairKey = (a, b) => [a, b].sort().join('-');
@@ -93,10 +72,11 @@ export function categoryForTunnel(tunnelId) {
 
 export function compareGroups() {
   return CORRIDOR_CATEGORIES.map((category) => {
-    const pairs = new Set(category.pairs.map(([a, b]) => pairKey(a, b)));
-    const tunnels = TUNNEL_EDGES
-      .filter((edge) => pairs.has(pairKey(edge.a, edge.b)))
-      .map((edge) => edge.tunnel);
+    const pairs = new Set((category.pairs || []).map(([a, b]) => pairKey(a, b)));
+    // Most corridors are a pair of areas; a standalone tunnel names itself.
+    const tunnels = category.tunnels
+      ? [...category.tunnels]
+      : TUNNEL_EDGES.filter((edge) => pairs.has(pairKey(edge.a, edge.b))).map((edge) => edge.tunnel);
     const roads = [];
     for (const edge of FREE_EDGES) {
       if (!pairs.has(pairKey(edge.a, edge.b))) continue;

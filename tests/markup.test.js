@@ -32,16 +32,16 @@ const section = (id) => {
   return html.slice(start, html.indexOf('</section>', start));
 };
 
-test('the day type and the clock live on the chart card', () => {
+test('every control lives with what it belongs to', () => {
   const chart = section('chart-card');
   for (const id of ['date-input', 'daytype-select', 'hour-select', 'minute-select',
-    'time-slider', 'back-to-now']) {
+    'time-slider', 'back-to-now', 'period-badge', 'next-hint', 'chart-bar', 'chart-tunnel']) {
     assert.ok(chart.includes(`id="${id}"`), `#${id} should sit with the 24-hour chart`);
   }
 
-  const result = section('result-card');
-  for (const id of ['daytype-select', 'hour-select', 'minute-select']) {
-    assert.ok(!result.includes(`id="${id}"`), `#${id} should have left the result card`);
+  const alt = section('alt-card');
+  for (const id of ['vehicle-select', 'label-vehicle-class', 'alt-list', 'alt-categories',
+    'holiday-notice', 'traffic-footnote']) {
+    assert.ok(alt.includes(`id="${id}"`), `#${id} belongs with the comparison`);
   }
-  assert.ok(result.includes('id="vehicle-select"'), 'the vehicle class stays with the price');
 });

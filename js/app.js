@@ -1,5 +1,5 @@
 // js/app.js
-import { TUNNELS, vehiclesFor, CROSS_HARBOUR_IDS, canonicalFor, classIdFor } from './data.js';
+import { TUNNELS, TVT_VEHICLES, vehiclesFor, CROSS_HARBOUR_IDS, canonicalFor, classIdFor } from './data.js';
 import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison } from './engine.js';
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
@@ -12,6 +12,16 @@ const FOOTER_LINKS = ['tvt', 'flat', 'taiLam'];
 const $ = (id) => document.getElementById(id);
 const nowMinutes = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
 const fmtTime = (min) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+// "427 min" reads badly, so past an hour say "7 小時 7 分鐘".
+const fmtDuration = (minutes) => {
+  const copy = t();
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  const parts = [];
+  if (hours) parts.push(`${hours}${copy.hourUnit}`);
+  if (mins || !hours) parts.push(`${mins}${copy.minuteUnit}`);
+  return parts.join('').trim();
+};
 const WEEKDAY = ['日', '一', '二', '三', '四', '五', '六'];
 const fmtDate = (d) => `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${WEEKDAY[d.getDay()]}）`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -72,8 +82,7 @@ const CATEGORY_LABEL = {
   'kln-ntw': 'cmpCatKlnNtw',
   'nte-ntw': 'cmpCatNteNtw',
   island: 'cmpCatIsland',
-  kowloon: 'cmpCatKowloon',
-  'ntw-airport': 'cmpCatAirport',
+  other: 'cmpCatOther',
 };
 
 
@@ -136,7 +145,6 @@ let following = true;
 // Set when the user picks their own date. Kept separate from `following` so a
 // pinned date is neither reported as "showing now" nor rolled over by the clock.
 let datePinned = false;
-let altCategory = null;   // which corridor the alternatives list is showing
 
 // Live road conditions from the Transpart Department, by way of our own
 // serverless proxy. Absent until it loads, and silently absent if it cannot:
@@ -153,24 +161,6 @@ async function loadTraffic() {
   } catch {
     // no live data is a normal state, not an error worth showing
   }
-}
-
-function fillTunnelSelect() {
-  const copy = t();
-  const groups = compareGroups();
-  const mapped = new Set(groups.flatMap((group) => group.tunnels));
-  const orphans = TUNNELS.filter((tunnel) => !mapped.has(tunnel.id));
-  const option = (tunnel) => `<option value="${tunnel.id}">${esc(nameOf(tunnel))}</option>`;
-
-  $('tunnel-select').innerHTML = groups
-    .filter((group) => group.tunnels.length) // a corridor of free roads only has nothing to pick here
-    .map((group) => `<optgroup label="${esc(copy[CATEGORY_LABEL[group.id]])}">`
-      + group.tunnels.map((id) => option(tunnelById(id))).join('') + '</optgroup>')
-    .join('')
-    + (orphans.length
-      ? `<optgroup label="${esc(copy.groupOther)}">${orphans.map(option).join('')}</optgroup>`
-      : '');
-  $('tunnel-select').value = state.tunnelId;
 }
 
 function fillDayTypeSelect() {
@@ -230,9 +220,9 @@ function applyLanguage() {
   document.documentElement.lang = lang.htmlLang;
   document.title = copy.pageTitle;
   $('chart-title').textContent = copy.chartTitle;
-  $('alt-title').textContent = copy.compareTitle;
-  $('tunnel-select').setAttribute('aria-label', copy.labelTunnel);
+  $('label-vehicle-class').textContent = copy.compareVehicle;
   $('vehicle-select').setAttribute('aria-label', copy.labelVehicle);
+  $('chart-tunnel').setAttribute('aria-label', copy.labelTunnel);
   $('date-input').setAttribute('aria-label', copy.labelDate);
   $('daytype-select').setAttribute('aria-label', copy.labelCategory);
   $('holiday-notice').textContent = copy.notice;
@@ -246,13 +236,16 @@ function applyLanguage() {
 function renderResult() {
   const copy = t();
   const { amount, periodType } = getToll(state);
-  $('live-traffic').innerHTML = traffic && !isShowingNow()
-    ? `<span class="traffic-hint">${esc(t().trafficOnlyNow)}</span>`
-    : trafficChip('tunnel', state.tunnelId);
+  // The chart's own picker: the tunnels of the corridor it is drawing.
+  const group = compareGroups().find((entry) => entry.id === categoryForTunnel(state.tunnelId));
+  const picker = $('chart-tunnel');
+  picker.innerHTML = (group ? group.tunnels : [])
+    .map((id) => `<option value="${id}">${esc(nameOf(tunnelById(id)))}</option>`)
+    .join('');
+  picker.value = state.tunnelId;
   const badge = $('period-badge');
   badge.textContent = copy.period[periodType];
   badge.className = `badge ${periodType}`;
-  $('price-amount').textContent = amount.toFixed(2);
 
   const hint = $('next-hint');
   const next = getNextTransition(state);
@@ -264,7 +257,7 @@ function renderResult() {
   const change = next.amount > amount ? copy.changeUp : next.amount < amount ? copy.changeDown : copy.changeKeep;
   hint.hidden = false;
   hint.textContent = copy.hint
-    .replace('{min}', String(diff))
+    .replace('{duration}', fmtDuration(diff))
     .replace('{time}', fmtTime(next.atMin))
     .replace('{period}', copy.period[next.periodType])
     .replace('{change}', change)
@@ -281,28 +274,37 @@ function alternativeRows(group, canonical) {
   ]
     .map((option) => ({
       ...option,
-      amount: option.kind === 'tunnel' ? priceTunnelFor(option.id, canonical) : 0,
+      // A free corridor has no toll to quote, so it carries no amount at all.
+      amount: option.kind === 'tunnel' ? priceTunnelFor(option.id, canonical) : null,
     }))
-    .sort((a, b) => a.amount - b.amount);
+    .sort((a, b) => (a.amount ?? 0) - (b.amount ?? 0));
 
-  const cheapest = options.length ? options[0].amount : 0;
+  // 最平 is a claim about tolls, so it belongs to the cheapest tunnel — never to
+  // a free corridor, which simply reads 免費 and wears a colour of its own.
+  const tunnelAmounts = options.filter((option) => option.kind === 'tunnel')
+    .map((option) => option.amount);
+  const cheapest = tunnelAmounts.length ? Math.min(...tunnelAmounts) : null;
+
   const rows = options.map((option) => {
-    const tags = [];
-    if (option.kind === 'tunnel' && option.id === state.tunnelId) tags.push(copy.compareCurrent);
-    if (option.amount === cheapest) tags.push(copy.planCheapest);
-    const best = tags.includes(copy.planCheapest);
+    const free = option.kind === 'road';
+    const cheapestHere = !free && option.amount === cheapest;
+    const current = option.kind === 'tunnel' && option.id === state.tunnelId;
+    const tags = cheapestHere ? [copy.planCheapest] : [];
+    const price = free ? esc(copy.compareFree) : `HK$ ${option.amount.toFixed(2)}`;
     const content = `<span class="compare-name">${esc(option.name)}</span>`
       + trafficChip(option.kind, option.id)
-      + `<span class="compare-price">HK$ ${option.amount.toFixed(2)}</span>`
+      + `<span class="compare-price">${price}</span>`
       + (tags.length ? `<span class="compare-tag">${esc(tags.join(' · '))}</span>` : '');
+    const cls = `compare-row${free ? ' free' : ''}${cheapestHere ? ' cheapest' : ''}`;
     // Roads are places, not choices: only tunnels switch the selector.
     return option.kind === 'tunnel'
-      ? `<li><button type="button" class="compare-row${best ? ' cheapest' : ''}"`
-        + ` data-tunnel-id="${option.id}"${best ? ' aria-current="true"' : ''}>${content}</button></li>`
-      : `<li><div class="compare-row${best ? ' cheapest' : ''}">${content}</div></li>`;
+      ? `<li><button type="button" class="${cls}"`
+        + ` data-tunnel-id="${option.id}"${current ? ' aria-current="true"' : ''}>${content}</button></li>`
+      : `<li><div class="${cls}">${content}</div></li>`;
   }).join('');
 
-  const tied = options.length > 1 && options.every((option) => option.amount === cheapest);
+  const paid = options.filter((option) => option.kind === 'tunnel');
+  const tied = paid.length > 1 && paid.every((option) => option.amount === cheapest);
   return { rows, tied, cheapest };
 }
 
@@ -321,7 +323,6 @@ const DIRECTION_LABEL = {
   'kowloon-w': 'dirKowloonW',
   tsuenwan: 'dirTsuenWan',
   shatin: 'dirShatin',
-  airport: 'dirAirport',
   wanchai: 'dirWanChai',
   tingkau: 'dirTingKau',
 };
@@ -381,8 +382,11 @@ function incidentBlock(group) {
   return `<div class="incidents"><p class="incidents-title">⚠️ ${esc(copy.trafficIncidents)}</p>${lines}</div>`;
 }
 
-function trafficSourceLine() {
-  if (!traffic || !traffic.updatedAt || !isShowingNow()) return '';
+// The live readings only mean something at the present moment, so when the view
+// has moved on the footnote says why instead of dating the feed.
+function trafficFootnote() {
+  if (!traffic || !traffic.updatedAt) return '';
+  if (!isShowingNow()) return `<p class="traffic-hint">${esc(t().trafficOnlyNow)}</p>`;
   const at = traffic.updatedAt.slice(11, 16);
   return `<p class="traffic-source">${esc(t().trafficSource.replace('{time}', at))}</p>`;
 }
@@ -399,9 +403,9 @@ function renderAlternatives() {
   section.hidden = false;
 
   const groups = compareGroups();
-  // The selector opens on the selected tunnel's own corridor; the visitor can
-  // switch to another corridor in one click without drilling down.
-  const activeId = groups.some((group) => group.id === altCategory) ? altCategory : tunnelCategory;
+  // The list shows the chosen tunnel's own corridor, so a chip that switches
+  // corridor also picks that corridor's first tunnel (see the click handler).
+  const activeId = tunnelCategory;
   const active = groups.find((group) => group.id === activeId);
   const vehicle = canonicalFor(state.tunnelId, state.vehicleId);
 
@@ -409,11 +413,12 @@ function renderAlternatives() {
     const on = group.id === activeId;
     const warn = corridorIncidents(group).length ? ' ⚠️' : '';
     return `<button type="button" class="chip${on ? ' on' : ''}" data-group="${group.id}"`
-      + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]])}${warn}</button>`;
+      + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]] ?? group.id)}${warn}</button>`;
   }).join('');
 
   const rows = alternativeRows(active, vehicle);
-  $('alt-list').innerHTML = rows.rows + incidentBlock(active) + trafficSourceLine();
+  $('alt-list').innerHTML = rows.rows + incidentBlock(active);
+  $('traffic-footnote').innerHTML = trafficFootnote();
   $('compare-note').hidden = !rows.tied;
   $('compare-note').textContent = rows.tied
     ? copy.compareTie.replace('{amount}', rows.cheapest.toFixed(2))
@@ -453,8 +458,10 @@ function renderMoment() {
       + 'stroke-linecap="round" stroke-linejoin="round"/></svg>'
       + esc(copy.backToNow);
 
-  const label = $('marker-label');
   const position = (state.minutes / 1440) * 100;
+  $('chart-marker').style.left = `${position}%`;
+
+  const label = $('marker-label');
   const hh = String(Math.floor(state.minutes / 60)).padStart(2, '0');
   const mm = String(state.minutes % 60).padStart(2, '0');
   label.textContent = now ? copy.nowLabel : `${hh}:${mm}`;
@@ -465,14 +472,22 @@ function renderMoment() {
     : (position > 92 ? 'translateX(-100%)' : 'translateX(-50%)');
 }
 
+// A tunnel that charges one rate, whatever the clock says — so the schedule
+// controls would have nothing to do.
+const isFlatDay = () => getDaySegments(state).every((seg) => seg.periodType === 'flat');
+
 function renderChart() {
   const copy = t();
   const segs = getDaySegments(state);
+  // A tunnel with one flat rate all day has no schedule to pick through, so the
+  // clock and date controls step aside; the badge and the flat band remain.
+  const flat = segs.every((seg) => seg.periodType === 'flat');
+  $('chart-controls').hidden = flat;
+  $('time-slider').hidden = flat;
   $('chart-bar').innerHTML = segs.map((seg) => {
     const width = ((seg.endMin - seg.startMin + 1) / 1440) * 100;
-    return `<div class="seg ${seg.periodType}" style="width:${width.toFixed(4)}%"></div>`;
+    return `<span class="seg ${seg.periodType}" style="width:${width.toFixed(4)}%"></span>`;
   }).join('');
-  $('chart-marker').style.left = `${(state.minutes / 1440) * 100}%`;
 
   const present = LEGEND_ORDER.filter((p) => segs.some((s) => s.periodType === p));
   $('legend').innerHTML = present
@@ -501,7 +516,6 @@ function renderToll() {
 
 function render() {
   fillVehicleSelect();
-  fillTunnelSelect();
   fillDayTypeSelect();
   renderDateType();
   renderTime();
@@ -514,6 +528,39 @@ function goNow() {
   datePinned = false;
   state.minutes = nowMinutes();
   state.date = toDateKey(new Date());
+}
+
+// The id a class has in a tunnel's own picker. Not the same as the pricing id:
+// a flat-rate tunnel prices every class the same, but its picker still names
+// them separately.
+const vehicleIdFor = (tunnelId, canonical) => {
+  const options = vehiclesFor(tunnelId);
+  const hit = options.find((vehicle) => canonicalFor(tunnelId, vehicle.id) === canonical);
+  return (hit || options[0]).id;
+};
+
+// Every tunnel names its vehicle classes, but some name them in a way of their
+// own (Discovery Bay has government / private car / ... instead of car / moto /
+// taxi / other). Those cannot hold the class you had, so it is remembered.
+const COMMON_VEHICLE_IDS = new Set(TVT_VEHICLES.map((vehicle) => vehicle.id));
+const ownVehicleClasses = (tunnelId) =>
+  !vehiclesFor(tunnelId).some((vehicle) => COMMON_VEHICLE_IDS.has(vehicle.id));
+let commonVehicle = 'car'; // the ordinary class the visitor is using
+
+// Switching tunnel keeps the kind of vehicle you picked, translating through the
+// canonical class rather than letting the picker fall back to the first option.
+function setTunnel(tunnelId) {
+  if (tunnelId === state.tunnelId) return;
+  const canonical = canonicalFor(state.tunnelId, state.vehicleId);
+  if (!ownVehicleClasses(state.tunnelId)) commonVehicle = canonical;
+  state.tunnelId = tunnelId;
+  state.vehicleId = ownVehicleClasses(tunnelId)
+    ? vehicleIdFor(tunnelId, canonical)
+    : vehicleIdFor(tunnelId, commonVehicle);
+  // A flat-rate tunnel has no schedule, so there is no other time to be at.
+  if (isFlatDay()) goNow();
+  saveSelection();
+  render();
 }
 
 function selectTime(minutes) {
@@ -542,6 +589,7 @@ function init() {
     state.vehicleId = saved.vehicleId;
     if (saved.category) state.category = saved.category;
   }
+  commonVehicle = canonicalFor(state.tunnelId, state.vehicleId) || 'car';
 
   fillTimeSelects();
   applyLanguage();
@@ -563,27 +611,22 @@ function init() {
     $('lang-trigger').focus();
   });
 
-  $('tunnel-select').addEventListener('change', (e) => {
-    state.tunnelId = e.target.value;
-    altCategory = null; // re-anchor the alternatives on the new corridor
-    saveSelection();
-    render();
+  $('chart-tunnel').addEventListener('change', (e) => {
+    setTunnel(e.target.value);
   });
   $('alt-categories').addEventListener('click', (e) => {
     const chip = e.target.closest('button[data-group]');
-    if (!chip || chip.dataset.group === altCategory) return;
-    altCategory = chip.dataset.group;
-    renderAlternatives();
+    if (!chip || chip.dataset.group === categoryForTunnel(state.tunnelId)) return;
+    const group = compareGroups().find((entry) => entry.id === chip.dataset.group);
+    // Switching corridor picks that corridor's first tunnel, and the chart
+    // follows the choice.
+    if (!group || !group.tunnels.length) return;
+    setTunnel(group.tunnels[0]);
   });
   $('alt-list').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-tunnel-id]');
     if (!btn) return;
-    state.tunnelId = btn.dataset.tunnelId;
-    altCategory = null;
-    fillTunnelSelect();
-    fillVehicleSelect();
-    saveSelection();
-    render();
+    setTunnel(btn.dataset.tunnelId);
   });
   $('vehicle-select').addEventListener('change', (e) => {
     state.vehicleId = e.target.value;

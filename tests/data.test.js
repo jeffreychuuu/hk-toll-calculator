@@ -25,6 +25,15 @@ test('vehicle options depend on the tunnel', () => {
   assert.throws(() => vehiclesFor('nope'));
 });
 
+test('the private car leads every tunnel that names one', () => {
+  for (const tunnel of TUNNELS) {
+    const ids = vehiclesFor(tunnel.id).map((vehicle) => vehicle.id);
+    const car = ids.includes('car') ? 'car' : 'pc';
+    if (!ids.includes(car)) continue; // a tunnel with a scheme of its own
+    assert.equal(ids[0], car, `${tunnel.id} leads with the private car`);
+  }
+});
+
 test('flat toll tables hold the published rates', () => {
   assert.equal(FLAT_TOLLS.abt.all, 8);
   assert.equal(FLAT_TOLLS.stg.all, 8);

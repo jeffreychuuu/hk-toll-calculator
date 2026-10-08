@@ -115,25 +115,10 @@ body {
   .lang-trigger { transition: none; }
 }
 
-/* The tunnel and vehicle are chosen where they are shown */
-.result-titles { min-width: 0; flex: 1 1 auto; }
-.title-select {
-  appearance: none;
-  width: 100%;
-  border: 0;
-  background: transparent url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round'/></svg>") no-repeat right 0 center;
-  padding: 0 26px 0 0;
-  font: inherit;
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: var(--ink);
-  cursor: pointer;
-}
-.title-select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+/* Which tunnel the chart is for, stated under its title */
+.chart-tunnel-select { flex: 1 1 100%; width: 100%; font-weight: 700; }
 
-.subtitle { margin: 6px 0 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.title-select { max-width: 100%; }
+/* The tunnel is chosen where the vehicles and prices are compared */
 .inline-select {
   appearance: none;
   width: auto;
@@ -214,10 +199,7 @@ body {
   cursor: pointer;
 }
 
-/* Result card */
-.result-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
-.subtitle { margin: 4px 0 0; color: var(--muted); font-size: 0.9rem; }
+/* Comparison card */
 .badge {
   flex: 0 0 auto;
   background: var(--badge-bg);
@@ -233,16 +215,6 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 .badge.non-peak { background: #e7f6ee; color: #157a4d; }
 .badge.transition { background: #fdf1df; color: #a2650f; }
 
-.price {
-  margin: 10px 0 0;
-  font-variant-numeric: tabular-nums;
-  font-weight: 800;
-  font-size: clamp(2.1rem, 5vw, 2.9rem);
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-.price .currency { font-size: 0.4em; font-weight: 700; color: var(--muted); margin-right: 6px; }
-
 .hint {
   margin-top: 12px;
   background: var(--form);
@@ -254,7 +226,11 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 }
 
 /* Same-trip alternatives: corridor chips over a priced list */
-.alt-title { font-size: 1rem; margin: 0; }
+.alt-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; }
+.alt-vehicle { display: inline-flex; align-items: center; gap: 6px; }
+/* A fixed width, so the control never shifts as the classes change length */
+.alt-vehicle select { width: 22rem; max-width: 100%; }
+.alt-vehicle-label { color: var(--muted); font-size: 0.85rem; font-weight: 600; }
 .pick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .chip {
   border: 1px solid var(--line);
@@ -284,17 +260,21 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
   text-align: left;
   cursor: pointer;
 }
-.compare-row:hover { background: var(--form); }
-.compare-row.cheapest { background: #e7f6ee; color: #157a4d; font-weight: 700; }
+button.compare-row:hover { background: var(--form); }
+/* A free corridor reads 免費 and wears green; the cheapest tunnel wears blue,
+   so the two best-value rows are never confused for each other. */
+.compare-row.free { background: #e7f6ee; color: #157a4d; font-weight: 700; }
+.compare-row.free .compare-price,
+.compare-row.free .compare-tag { color: #157a4d; }
+.compare-row.cheapest { background: #e8eefc; color: #1d4ed8; font-weight: 700; }
 /* The name takes a line of its own, so it is never squeezed into a column of
    single Chinese characters; the readings, price and tags follow underneath. */
 .compare-name { flex: 1 1 100%; min-width: 0; }
 .compare-price { font-variant-numeric: tabular-nums; white-space: nowrap; margin-left: auto; }
 .compare-tag { color: var(--muted); font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
 .compare-row.cheapest .compare-price,
-.compare-row.cheapest .compare-tag { color: #157a4d; }
+.compare-row.cheapest .compare-tag { color: #1d4ed8; }
 div.compare-row { cursor: default; }
-div.compare-row:hover { background: transparent; }
 
 /* Live conditions from the Transport Department */
 .traffic { font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
@@ -303,8 +283,6 @@ div.compare-row:hover { background: transparent; }
 .traffic-jam { color: #b91c1c; }
 .traffic-closed { color: #6b7280; }
 .traffic-sides { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 1px; }
-.live-traffic { margin: 8px 0 0; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.live-traffic:empty { display: none; }
 .traffic-hint { color: var(--muted); font-size: 0.78rem; }
 .incidents { margin-top: 10px; background: #fdf6e8; border-radius: 12px; padding: 10px 12px; }
 .incidents-title { margin: 0 0 4px; font-size: 0.85rem; font-weight: 700; color: #a2650f; }
@@ -314,9 +292,9 @@ div.compare-row:hover { background: transparent; }
 .compare-note { margin: 8px 0 0; color: var(--muted); font-size: 0.88rem; font-weight: 600; }
 
 /* Chart card */
-.chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 10px; }
-.chart-head h2 { flex: 1 1 100%; }
-.chart-head h2 { font-size: 1rem; margin: 0; }
+.chart-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.chart-head h2 { flex: 1 1 auto; font-size: 1rem; margin: 0; }
+.chart-controls { flex: 1 1 100%; }
 
 .marker-label {
   position: absolute;
@@ -448,24 +426,21 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .site-footer { color: var(--muted); font-size: 0.78rem; line-height: 1.65; padding: 0 4px; }
 .site-footer a { color: var(--focus); }
 
-/* Wide screens: result + chart on the left, form on the right, so the whole
-   tool fits one viewport without scrolling. */
+/* Wide screens: the comparison left, the chart right */
 @media (min-width: 900px) {
   .wrap {
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
     grid-template-areas:
       "topbar topbar"
-      "query  chart"
-      "alt    chart"
-      "footer footer";
+      "alt     chart"
+      "footer  footer";
     align-items: start;
     gap: 14px;
     padding-top: 14px;
   }
   .topbar { grid-area: topbar; }
-  #result-card { grid-area: query; }
-  #chart-card { grid-area: chart; }
   #alt-card { grid-area: alt; }
+  #chart-card { grid-area: chart; }
   .site-footer { grid-area: footer; }
 }

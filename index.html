@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <main class="wrap">
+  <main class="wrap" id="wrap">
     <nav class="topbar" aria-label="Language">
       <div class="lang-picker" id="lang-picker">
         <button type="button" class="lang-trigger" id="lang-trigger"
@@ -26,36 +26,34 @@
       </div>
     </nav>
 
-    <section class="card" id="result-card">
-      <div class="result-head">
-        <div class="result-titles">
-          <select id="tunnel-select" class="title-select" aria-label="選擇隧道"></select>
-          <p class="subtitle">
-            <select id="vehicle-select" class="inline-select" aria-label="車輛類別"></select>
-          </p>
-          <p class="live-traffic" id="live-traffic"></p>
-        </div>
-        <span class="badge" id="period-badge">—</span>
+    <section class="card" id="alt-card" hidden>
+      <div class="alt-head">
+        <label class="alt-vehicle">
+          <span class="alt-vehicle-label" id="label-vehicle-class">車種</span>
+          <select id="vehicle-select" class="inline-select" aria-label="車輛類別"></select>
+        </label>
       </div>
-      <p class="price"><span class="currency">HK$</span><span id="price-amount">0.00</span></p>
-      <div class="hint" id="next-hint" hidden></div>
-
-
+      <div class="pick-chips" id="alt-categories"></div>
+      <ul class="alt-list" id="alt-list"></ul>
+      <p class="compare-note" id="compare-note" hidden></p>
+      <div id="traffic-footnote"></div>
       <p class="notice" id="holiday-notice" hidden></p>
     </section>
 
     <section class="card" id="chart-card">
       <div class="chart-head">
         <h2 id="chart-title">24小時收費時段分佈圖</h2>
-        <div class="chart-controls">
+        <span class="badge" id="period-badge">—</span>
+        <select id="chart-tunnel" class="chart-tunnel-select" aria-label="選擇隧道"></select>
+        <div class="chart-controls" id="chart-controls">
           <button type="button" class="now-pill" id="back-to-now">回到現在</button>
           <input id="date-input" class="date-input" type="date" aria-label="日期">
-          <select id="daytype-select" class="inline-select" aria-label="日期類型"></select>
           <span class="time-selects">
             <select id="hour-select" class="inline-select" aria-label="小時"></select>
             <span class="time-colon">:</span>
             <select id="minute-select" class="inline-select" aria-label="分鐘"></select>
           </span>
+          <select id="daytype-select" class="inline-select" aria-label="日期類型"></select>
         </div>
       </div>
       <div class="chart" id="chart">
@@ -68,13 +66,7 @@
         <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:59</span>
       </div>
       <ul class="legend" id="legend"></ul>
-    </section>
-
-    <section class="card" id="alt-card" hidden>
-      <h2 id="alt-title">行程比較</h2>
-      <div class="pick-chips" id="alt-categories"></div>
-      <ul class="alt-list" id="alt-list"></ul>
-      <p class="compare-note" id="compare-note" hidden></p>
+      <div class="hint" id="next-hint" hidden></div>
     </section>
 
     <footer class="site-footer" id="site-footer"></footer>
