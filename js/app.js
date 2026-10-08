@@ -1,9 +1,9 @@
 // js/app.js
-import { TUNNELS, vehiclesFor, CROSS_HARBOUR_IDS } from './data.js';
-import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison } from './engine.js';
+import { TUNNELS, vehiclesFor, CROSS_HARBOUR_IDS, canonicalFor } from './data.js';
+import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison, priceRoute } from './engine.js';
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
-import { REGIONS, regionById, planCrossing } from './regions.js';
+import { REGIONS, regionById, planRoutes } from './regions.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
 const FOOTER_LINKS = ['tvt', 'flat', 'taiLam'];
@@ -277,15 +277,25 @@ function renderCompare() {
 const tunnelById = (id) => TUNNELS.find((x) => x.id === id);
 
 function fillPlanSelects() {
-  const blank = `<option value="">${esc(t().planUnset)}</option>`;
-  const options = REGIONS
-    .map((region) => `<option value="${region.id}">${esc(region.name[state.lang])}</option>`)
+  const copy = t();
+  const areaLabel = { island: copy.areaIsland, kowloon: copy.areaKowloon, nt: copy.areaNt };
+  const groups = ['island', 'kowloon', 'nt']
+    .map((area) => {
+      const options = REGIONS.filter((region) => region.area === area)
+        .map((region) => `<option value="${region.id}">${esc(region.name[state.lang])}</option>`)
+        .join('');
+      return `<optgroup label="${esc(areaLabel[area])}">${options}</optgroup>`;
+    })
     .join('');
-  $('from-select').innerHTML = blank + options;
-  $('to-select').innerHTML = blank + options;
+  const blank = `<option value="">${esc(copy.planUnset)}</option>`;
+
+  $('from-select').innerHTML = blank + groups;
+  $('to-select').innerHTML = blank + groups;
   $('from-select').value = state.fromId;
   $('to-select').value = state.toId;
 }
+
+const ROUTES_SHOWN = 6;
 
 function renderPlan() {
   const copy = t();
@@ -296,27 +306,30 @@ function renderPlan() {
     return;
   }
 
-  const plan = planCrossing({ fromId: state.fromId, toId: state.toId });
-  if (!plan.crossesHarbour) {
-    result.innerHTML = `<p class="plan-note">${esc(copy.planNoCrossing)}</p>`;
-    return;
-  }
+  const { routes } = planRoutes({ fromId: state.fromId, toId: state.toId });
+  const vehicle = canonicalFor(state.tunnelId, state.vehicleId);
+  const priced = routes
+    .map((route) => ({
+      tunnels: route.tunnels,
+      amount: priceRoute({ tunnels: route.tunnels, vehicle, dayType: state.dayType, minutes: state.minutes }),
+    }))
+    .sort((a, b) => a.amount - b.amount)
+    .slice(0, ROUTES_SHOWN);
 
-  const tunnelButton = (id) =>
-    `<button type="button" class="plan-tunnel" data-tunnel-id="${id}">${esc(nameOf(tunnelById(id)))}</button>`;
-  const [best, ...rest] = plan.tiers;
-  const reason = copy[`planReason${plan.reason[0].toUpperCase()}${plan.reason.slice(1)}`];
-
-  result.innerHTML = [
-    `<p class="plan-best"><span class="plan-label">${esc(copy.planMoreDirect)}</span>`
-      + `${best.map(tunnelButton).join('<span class="plan-sep">·</span>')}</p>`,
-    rest.length
-      ? `<p class="plan-rest"><span class="plan-label">${esc(copy.planLessDirect)}</span>`
-        + `${rest.flat().map(tunnelButton).join('<span class="plan-sep">·</span>')}</p>`
-      : '',
-    `<p class="plan-reason">${esc(reason)}</p>`,
-    `<p class="plan-disclaimer">${esc(copy.planDisclaimer)}</p>`,
-  ].join('');
+  const cheapest = priced.length ? priced[0].amount : 0;
+  result.innerHTML = priced.map((route) => {
+    const name = route.tunnels.length
+      ? route.tunnels.map((id) => esc(nameOf(tunnelById(id)))).join('<span class="plan-sep">·</span>')
+      : esc(copy.planFree);
+    const tag = route.amount === cheapest
+      ? copy.planCheapest
+      : (route.tunnels.length ? copy.planPricier : '');
+    return `<div class="plan-route${route.amount === cheapest ? ' cheapest' : ''}">`
+      + `<span class="plan-route-name">${name}</span>`
+      + `<span class="plan-route-price">HK$ ${route.amount.toFixed(2)}</span>`
+      + (tag ? `<span class="plan-route-tag">${esc(tag)}</span>` : '')
+      + '</div>';
+  }).join('') + `<p class="plan-disclaimer">${esc(copy.planDisclaimer)}</p>`;
 }
 
 function renderTabs() {
@@ -445,15 +458,6 @@ function init() {
   $('to-select').addEventListener('change', (e) => {
     state.toId = e.target.value;
     renderPlan();
-  });
-  $('plan-result').addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-tunnel-id]');
-    if (!btn) return;
-    state.tunnelId = btn.dataset.tunnelId;
-    fillTunnelSelect();
-    fillVehicleSelect();
-    saveSelection();
-    render();
   });
   $('compare-list').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-tunnel-id]');

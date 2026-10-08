@@ -169,27 +169,27 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 }
 .view-tabs button[aria-selected="true"] { background: #e8f1ff; color: var(--focus); font-weight: 700; }
 
-/* Journey suggestion */
-.plan-result { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+/* Journey suggestion — a list of tunnel combinations with totals */
+.plan-result { margin-top: 12px; display: flex; flex-direction: column; gap: 4px; }
 .plan-note { margin: 0; color: var(--muted); font-size: 0.92rem; }
-.plan-best, .plan-rest { margin: 0; font-size: 0.95rem; }
-.plan-rest { color: var(--muted); }
-.plan-label { color: var(--muted); font-weight: 600; font-size: 0.85rem; margin-right: 4px; }
-.plan-tunnel {
-  border: 0;
-  background: transparent;
-  border-radius: 8px;
-  padding: 2px 4px;
-  font: inherit;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--focus);
-  cursor: pointer;
+.plan-route {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-size: 0.92rem;
 }
-.plan-tunnel:hover { background: var(--form); }
+.plan-route.cheapest { background: #e7f6ee; }
+.plan-route-name { flex: 1 1 auto; min-width: 0; }
+.plan-route.cheapest .plan-route-name { color: #157a4d; font-weight: 700; }
+.plan-route-price { font-variant-numeric: tabular-nums; font-weight: 600; }
+.plan-route-tag { color: var(--muted); font-size: 0.78rem; }
+.plan-route.cheapest .plan-route-tag { color: #157a4d; font-weight: 700; }
 .plan-sep { color: var(--muted); margin: 0 2px; }
-.plan-reason { margin: 0; color: var(--muted); font-size: 0.85rem; }
-.plan-disclaimer { margin: 0; color: var(--muted); font-size: 0.78rem; }
+.plan-disclaimer { margin: 6px 0 0; color: var(--muted); font-size: 0.78rem; }
+
 .compare-empty { margin: 8px 0 0; color: var(--muted); font-size: 0.9rem; }
 
 /* Cheapest harbour crossing */

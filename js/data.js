@@ -132,6 +132,29 @@ export const DBT_VEHICLES = [
 
 const FLAT8 = ['abt', 'smt', 'lrt', 'stg'];
 
+// A journey route mixes tunnels that classify vehicles differently, so routes
+// are priced through four canonical classes (car / moto / taxi / other) and
+// mapped per tunnel. Tate's Cairn has no "other" class, so goods traffic is
+// priced as its light goods vehicle.
+const CANONICAL = { car: 'car', moto: 'moto', taxi: 'taxi', other: 'other' };
+const ALL_CLASSES = { car: 'all', moto: 'all', taxi: 'all', other: 'all' };
+
+export const CANONICAL_FOR_TUNNEL = {
+  cht: CANONICAL, ehc: CANONICAL, whc: CANONICAL, tlt: CANONICAL,
+  abt: ALL_CLASSES, smt: ALL_CLASSES, lrt: ALL_CLASSES, stg: ALL_CLASSES,
+  tct: { car: 'pc', moto: 'mc', taxi: 'taxi', other: 'lgv' },
+  dbt: { car: 'c7', moto: 'c7', taxi: 'c7', other: 'c7' },
+};
+
+export const classIdFor = (tunnelId, canonical) => CANONICAL_FOR_TUNNEL[tunnelId]?.[canonical];
+
+export function canonicalFor(tunnelId, classId) {
+  const map = CANONICAL_FOR_TUNNEL[tunnelId];
+  if (!map) return 'car';
+  const hit = Object.entries(map).find(([, id]) => id === classId);
+  return hit ? hit[0] : 'other';
+}
+
 export const FLAT_TOLLS = {
   abt: { all: 8 },
   smt: { all: 8 },

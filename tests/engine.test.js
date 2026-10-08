@@ -115,3 +115,19 @@ test('next transition is null when the rest of the day is flat', () => {
   assert.equal(getNextTransition({ tunnelId: 'cht', vehicleId: 'taxi', dayType: 'weekday', minutes: 600 }), null);
   assert.equal(getNextTransition({ tunnelId: 'whc', vehicleId: 'car', dayType: 'weekday', minutes: 1439 }), null);
 });
+
+// --- tunnel-set pricing (journey routes) ---
+import { priceRoute } from '../js/engine.js';
+
+test('a route is priced as the sum of its tunnels', () => {
+  const route = (tunnels, hhmm = '12:00', vehicle = 'car', dayType = 'weekday') => {
+    const [h, m] = hhmm.split(':').map(Number);
+    return priceRoute({ tunnels, vehicle, dayType, minutes: h * 60 + m });
+  };
+  assert.equal(route([]), 0, 'free roads cost nothing');
+  assert.equal(route(['lrt']), 8);
+  assert.equal(route(['lrt', 'cht']), 38);
+  assert.equal(route(['tlt', 'whc'], '09:00'), 45 + 60);
+  assert.equal(route(['tct'], '12:00', 'moto'), 15);
+  assert.equal(route(['smt']), 8);
+});

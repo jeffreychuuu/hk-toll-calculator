@@ -36,6 +36,7 @@ globalThis.localStorage = {
   removeItem(k) { storage.delete(k); },
 };
 const STORAGE_KEY = 'hk-toll-calculator.selection';
+let REGION_COUNT = 0;
 
 const mkButton = (ds) => ({
   dataset: ds, ariaPressed: null, textContent: '', disabled: false,
@@ -514,56 +515,80 @@ test('the card is hidden when the selected tunnel is not a harbour crossing', ()
   assert.equal($('compare-card').hidden, false);
 });
 
-test('the journey card lists every district plus an unset option', async () => {
-  await import('../js/app.js?plan=1');
-  const { REGIONS } = await import('../js/regions.js');
+const { REGIONS } = await import('../js/regions.js');
+REGION_COUNT = REGIONS.length;
 
-  assert.equal(($('from-select').innerHTML.match(/<option/g) || []).length, REGIONS.length + 1);
-  assert.equal(($('to-select').innerHTML.match(/<option/g) || []).length, REGIONS.length + 1);
-  assert.ok($('from-select').innerHTML.includes('未揀'));
+test('the journey card groups districts by macro area', async () => {
+  storage.delete('hk-toll-calculator.selection');
+  fakeNowMs = new RealDate(2026, 9, 8, 12, 0).getTime();
+  await import('../js/app.js?plan=2');
+
+  const from = $('from-select').innerHTML;
+  assert.equal((from.match(/<optgroup/g) || []).length, 3, 'island / kowloon / new territories');
+  for (const label of ['港島', '九龍', '新界']) assert.ok(from.includes(label), `missing group ${label}`);
+  assert.equal((from.match(/<option/g) || []).length, REGION_COUNT + 1, 'every district plus unset');
   assert.ok($('plan-result').innerHTML.includes('揀返起點同終點'));
 });
 
-test('a harbour trip ranks the crossings and explains why', () => {
-  $('from-select').value = 'nt-tuenmun';
+test('a harbour trip lists routes with their tunnels and total toll', () => {
+  $('from-select').value = 'nt-st';
   fire('from-select', 'change');
-  $('to-select').value = 'hki-central';
+  $('to-select').value = 'hki-wc';
   fire('to-select', 'change');
 
   const html = $('plan-result').innerHTML;
-  assert.ok(html.includes('較順路'));
-  assert.ok(html.includes('西區海底隧道（西隧）'), 'the western crossing leads');
-  assert.ok(html.includes('海底隧道（紅隧）'), 'the red tunnel shares the top tier');
-  assert.ok(html.includes('較繞'));
+  assert.ok(html.includes('獅子山隧道'), 'the approach tunnel is named');
+  assert.ok(html.includes('海底隧道（紅隧）'));
   assert.ok(html.includes('東區海底隧道（東隧）'));
-  assert.ok(html.includes('位於西區'), 'the reason is shown');
-  assert.ok(html.includes('實際走法要睇實時交通'), 'the disclaimer is shown');
+  assert.ok(html.includes('HK$ 38.00'), 'Lion Rock + red tunnel at noon');
+  assert.ok(html.includes('最平'), 'the cheapest route is labelled');
 });
 
-test('a same-side trip says no crossing is needed, and shows no prices', () => {
-  $('from-select').value = 'kln-mk';
+test('a route with no tunnel is labelled as free roads', () => {
+  $('from-select').value = 'nt-st';
   fire('from-select', 'change');
-  $('to-select').value = 'kln-kwuntong';
+  $('to-select').value = 'nt-tw';
   fire('to-select', 'change');
 
   const html = $('plan-result').innerHTML;
-  assert.ok(html.includes('唔需要過海'));
-  assert.ok(!html.includes('HK$'), 'the journey card must not duplicate prices');
-  assert.ok(!html.includes('較順路'));
+  assert.ok(html.includes('免費道路'));
+  assert.ok(html.includes('HK$ 0.00'));
+  assert.ok(html.includes('城門隧道'));
+  assert.ok(html.includes('HK$ 8.00'));
 });
 
-test('the journey card never quotes a price on a harbour trip either', () => {
-  $('from-select').value = 'kln-tst';
+test('a trip that needs no tunnel at all still gets a suggestion', () => {
+  $('from-select').value = 'kln-ytm';
   fire('from-select', 'change');
-  $('to-select').value = 'hki-wanchai';
+  $('to-select').value = 'kln-kt';
   fire('to-select', 'change');
-  assert.ok(!$('plan-result').innerHTML.includes('HK$'));
+
+  const html = $('plan-result').innerHTML;
+  assert.ok(html.includes('免費道路'));
+  assert.ok(html.includes('HK$ 0.00'));
+  assert.ok(html.includes('最平'));
 });
 
-test('clicking a ranked crossing switches the selected tunnel', () => {
-  fire('plan-result', 'click', { target: { closest: () => ({ dataset: { tunnelId: 'ehc' } }) } });
-  assert.equal($('tunnel-select').value, 'ehc');
-  assert.equal($('result-title').textContent, '東區海底隧道（東隧）');
+test('the route list is capped so the card stays readable', () => {
+  $('from-select').value = 'nt-tm'; // Tuen Mun: the widest choice of options
+  fire('from-select', 'change');
+  $('to-select').value = 'hki-cw';
+  fire('to-select', 'change');
+
+  const rows = ($('plan-result').innerHTML.match(/plan-route-name/g) || []).length;
+  assert.ok(rows >= 1 && rows <= 6, `expected 1-6 routes, got ${rows}`);
+});
+
+test('the route totals follow the chosen vehicle', () => {
+  $('from-select').value = 'nt-st';
+  fire('from-select', 'change');
+  $('to-select').value = 'hki-wc';
+  fire('to-select', 'change');
+  assert.ok($('plan-result').innerHTML.includes('HK$ 38.00'));
+
+  $('vehicle-select').value = 'moto';
+  fire('vehicle-select', 'change');
+  assert.ok($('plan-result').innerHTML.includes('HK$ 20.00'), 'motorcycle: Lion Rock $8 + red tunnel $12');
 });
 
 test('the output is split into sections and only one is shown', async () => {
