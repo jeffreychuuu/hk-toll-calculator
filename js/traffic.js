@@ -38,6 +38,15 @@ const worse = (a, b) => (CONDITION_ORDER.indexOf(b) < CONDITION_ORDER.indexOf(a)
 const ORIGIN_SIDES = { H: 'island', K: 'kowloon', N: 'nt', S: 'shatin' };
 export const originSide = (locationId) => ORIGIN_SIDES[String(locationId).charAt(0)] || 'other';
 
+// Free roads the department measures as a route: the reading is the whole
+// corridor, so it is attached to the corridor we list, not to a tunnel.
+export const ROAD_DESTINATIONS = {
+  TWTM: { road: 'tmr', direction: 'tsuenwan' }, // Tsuen Wan (W) via Tuen Mun
+  TPR: { road: 'tpr', direction: 'shatin' }, // Shatin via Tai Po Road
+  KTPR: { road: 'tpr', direction: 'kowloon' }, // Kowloon via Tai Po Road
+  TWCP: { road: 'lamkam', direction: 'tsuenwan' }, // Tsuen Wan (W) via Castle Peak
+};
+
 const DESTINATION_DIRECTIONS = {
   ABT: 'wanchai', // Wan Chai via Aberdeen Tunnel
   LRT: 'kowloon-c', // Kowloon (C) via Lion Rock Tunnel
@@ -87,14 +96,17 @@ export function tunnelsMentioned(text) {
 
 export function normaliseJourneyTimes(xml) {
   const tunnels = {};
+  const roads = {};
   let updatedAt = '';
 
   for (const row of elements(xml, 'jtis_journey_time')) {
     const captured = tagValue(row, 'CAPTURE_DATE');
     if (captured) updatedAt = captured;
 
-    const tunnelId = DESTINATION_TUNNELS[tagValue(row, 'DESTINATION_ID')];
-    if (!tunnelId) continue;
+    const destination = tagValue(row, 'DESTINATION_ID');
+    const tunnelId = DESTINATION_TUNNELS[destination];
+    const road = ROAD_DESTINATIONS[destination];
+    if (!tunnelId && !road) continue;
 
     const type = Number(tagValue(row, 'JOURNEY_TYPE'));
     const data = Number(tagValue(row, 'JOURNEY_DATA'));
@@ -116,16 +128,18 @@ export function normaliseJourneyTimes(xml) {
     if (minutes !== null) entry.minutes = Math.max(entry.minutes, minutes);
     entry.reports += 1;
 
-    const direction = directionFor(tagValue(row, 'DESTINATION_ID'), tagValue(row, 'LOCATION_ID'));
+    const direction = road ? road.direction
+      : directionFor(destination, tagValue(row, 'LOCATION_ID'));
     const towards = entry.byDirection[direction] || { state: 'free', minutes: 0 };
     towards.state = worse(towards.state, state);
     if (minutes !== null) towards.minutes = Math.max(towards.minutes, minutes);
     entry.byDirection[direction] = towards;
 
-    tunnels[tunnelId] = entry;
+    if (tunnelId) tunnels[tunnelId] = entry;
+    else roads[road.road] = entry;
   }
 
-  return { updatedAt, tunnels };
+  return { updatedAt, tunnels, roads };
 }
 
 export function normaliseIncidents(xml) {

@@ -601,6 +601,9 @@ test('live conditions from the transport department sit beside the tunnels', asy
         },
         ehc: { state: 'free', minutes: 9, reports: 2, byDirection: { kowloon: { state: 'free', minutes: 9 } } },
       },
+      roads: {
+        tmr: { state: 'slow', minutes: 22, reports: 2, byDirection: { tsuenwan: { state: 'slow', minutes: 22 } } },
+      },
       incidents: [{
         id: '147614',
         at: '2026-10-08T22:01:00',
@@ -625,6 +628,10 @@ test('live conditions from the transport department sit beside the tunnels', asy
   assert.ok($('alt-categories').innerHTML.includes('⚠️'), 'the affected corridor is flagged');
   assert.ok($('live-traffic').innerHTML.includes('往港島 18 分鐘'),
     'the chosen tunnel\'s directions show on the headline card too');
+
+  // a free corridor is measured too, when its row is on screen
+  fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-ntw' } }) } });
+  assert.ok($('alt-list').innerHTML.includes('往荃灣 22 分鐘'), 'Tuen Mun Road carries a reading');
 
   // a hypothetical time is not now, so live readings have no business showing
   setTime('12', '00');

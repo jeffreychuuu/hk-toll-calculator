@@ -53,7 +53,8 @@ test('the free corridors are named in three languages and listed once each', () 
   assert.ok(names.includes('屯門公路'));
   assert.ok(names.includes('大埔道'));
   assert.ok(names.includes('龍翔道'));
-  for (const road of COMPARE_ROADS) assert.ok(road.id.startsWith('road:'));
+  for (const road of COMPARE_ROADS) assert.equal(typeof road.id, 'string');
+  assert.equal(COMPARE_ROADS.find((road) => road.name.tc === '屯門公路').id, 'tmr');
 });
 
 test('a route carries the roads and tunnels in the order you drive them', () => {
@@ -160,12 +161,12 @@ test('each category lists only the alternatives for that kind of trip', () => {
   assert.deepEqual(byId.harbour.roads, [], 'there is no free harbour crossing');
 
   assert.deepEqual(byId['kln-ntw'].tunnels, ['tlt']);
-  assert.deepEqual(byId['kln-ntw'].roads.map((road) => road.tc), ['屯門公路']);
+  assert.deepEqual(byId['kln-ntw'].roads.map((road) => road.name.tc), ['屯門公路']);
 
   assert.deepEqual(byId['nte-ntw'].tunnels, ['smt']);
 
   // Tai Po Road borders both east Kowloon areas, but is one corridor
-  assert.deepEqual(byId['kln-nte'].roads.map((road) => road.tc), ['大埔道', '龍翔道']);
+  assert.deepEqual(byId['kln-nte'].roads.map((road) => road.name.tc), ['大埔道', '龍翔道']);
 });
 
 test('every tunnel in the graph belongs to exactly one trip category', () => {

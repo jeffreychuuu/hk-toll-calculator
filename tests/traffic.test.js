@@ -31,12 +31,16 @@ const journeyXml = (rows) => `<jtis_journey_list>${rows.map((row) => `<jtis_jour
 </jtis_journey_time>`).join('')}</jtis_journey_list>`;
 
 test('the worst reading wins per tunnel', () => {
-  const { tunnels } = normaliseJourneyTimes(journeyXml([
+  const result = normaliseJourneyTimes(journeyXml([
     { location: 'H1', dest: 'CH', type: 1, data: 4, colour: 3 },  // green, 4 min
     { location: 'K01', dest: 'CH', type: 1, data: 18, colour: 2 }, // amber, 18 min
     { location: 'H6', dest: 'ABT', type: 1, data: 3, colour: 3 },
     { location: 'SJ1', dest: 'TSCA', type: 1, data: 12, colour: 3 }, // Route 8: Sharp Island corridor
+    { location: 'SJ5', dest: 'TWTM', type: 1, data: 22, colour: 2 }, // Tuen Mun Road
+    { location: 'N05', dest: 'TPR', type: 1, data: 9, colour: 3 },   // Tai Po Road
+    { location: 'SJ4', dest: 'TWCP', type: 1, data: 25, colour: 2 }, // Castle Peak Road
   ]));
+  const { tunnels } = result;
 
   assert.equal(tunnels.cht.state, 'slow', 'amber beats green overall');
   assert.equal(tunnels.cht.minutes, 18, 'and the longest journey time is kept');
@@ -46,6 +50,12 @@ test('the worst reading wins per tunnel', () => {
   assert.deepEqual(tunnels.cht.byDirection.island, { state: 'slow', minutes: 18 }, 'towards the island');
   assert.equal(tunnels.abt.state, 'free');
   assert.equal(tunnels.stg.minutes, 12, 'Route 8 is the Sharp Island / Sha Tin Heights corridor');
+  assert.equal(result.roads.tmr.minutes, 22, 'Tuen Mun Road is measured too');
+  assert.equal(result.roads.tmr.state, 'slow');
+  assert.equal(result.roads.tpr.minutes, 9, 'and Tai Po Road');
+  assert.equal(result.roads.lamkam.minutes, 25, 'and the Castle Peak Road corridor');
+  assert.deepEqual(result.roads.tmr.byDirection.tsuenwan, { state: 'slow', minutes: 22 },
+    'a free road keeps its direction too');
   assert.equal(tunnels.ehc, undefined, 'destinations we do not list are ignored');
 });
 
@@ -88,11 +98,12 @@ test('an incident is tied to the tunnels it names', () => {
 });
 
 test('each reading keeps the direction it travels', () => {
-  const { tunnels } = normaliseJourneyTimes(journeyXml([
+  const result = normaliseJourneyTimes(journeyXml([
     { location: 'H3', dest: 'EH', type: 1, data: 7, colour: 3 },   // Island side
     { location: 'K08', dest: 'EH', type: 1, data: 9, colour: 3 },  // Kowloon side
     { location: 'SJ2', dest: 'TCT', type: 1, data: 6, colour: 3 }, // Sha Tin side
   ]));
+  const { tunnels } = result;
   assert.deepEqual(Object.keys(tunnels.ehc.byDirection).sort(), ['island', 'kowloon']);
   // Tate's Cairn only points one way: towards east Kowloon.
   assert.deepEqual(tunnels.tct.byDirection['kowloon-e'], { state: 'free', minutes: 6 });

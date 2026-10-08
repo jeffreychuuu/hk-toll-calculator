@@ -242,7 +242,7 @@ function renderResult() {
   const { amount, periodType } = getToll(state);
   $('live-traffic').innerHTML = traffic && !isShowingNow()
     ? `<span class="traffic-hint">${esc(t().trafficOnlyNow)}</span>`
-    : trafficChip(state.tunnelId);
+    : trafficChip('tunnel', state.tunnelId);
   const badge = $('period-badge');
   badge.textContent = copy.period[periodType];
   badge.className = `badge ${periodType}`;
@@ -271,7 +271,7 @@ function alternativeRows(group, canonical) {
   const copy = t();
   const options = [
     ...group.tunnels.map((id) => ({ kind: 'tunnel', id, name: nameOf(tunnelById(id)) })),
-    ...group.roads.map((road) => ({ kind: 'road', id: `road:${road.en}`, name: road[state.lang] })),
+    ...group.roads.map((road) => ({ kind: 'road', id: road.id, name: road.name[state.lang] })),
   ]
     .map((option) => ({
       ...option,
@@ -286,7 +286,7 @@ function alternativeRows(group, canonical) {
     if (option.amount === cheapest) tags.push(copy.planCheapest);
     const best = tags.includes(copy.planCheapest);
     const content = `<span class="compare-name">${esc(option.name)}</span>`
-      + (option.kind === 'tunnel' ? trafficChip(option.id) : '')
+      + trafficChip(option.kind, option.id)
       + `<span class="compare-price">HK$ ${option.amount.toFixed(2)}</span>`
       + (tags.length ? `<span class="compare-tag">${esc(tags.join(' · '))}</span>` : '');
     // Roads are places, not choices: only tunnels switch the selector.
@@ -314,13 +314,15 @@ const DIRECTION_LABEL = {
   'kowloon-e': 'dirKowloonE',
   'kowloon-w': 'dirKowloonW',
   tsuenwan: 'dirTsuenWan',
+  shatin: 'dirShatin',
   wanchai: 'dirWanChai',
   tingkau: 'dirTingKau',
 };
 
-function trafficChip(tunnelId) {
+function trafficChip(kind, id) {
   if (!isShowingNow()) return '';
-  const report = traffic && traffic.tunnels ? traffic.tunnels[tunnelId] : null;
+  const source = traffic ? traffic[kind === 'road' ? 'roads' : 'tunnels'] : null;
+  const report = source ? source[id] : null;
   if (!report) return '';
   const copy = t();
   const label = copy[`traffic${report.state[0].toUpperCase()}${report.state.slice(1)}`];

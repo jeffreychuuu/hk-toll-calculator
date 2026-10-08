@@ -30,40 +30,31 @@ export const TUNNEL_EDGES = [
 // is absent matters most: nothing crosses the harbour for free.
 export const FREE_EDGES = [
   {
-    a: 'ntw', b: 'nte', compare: false,
-    name: { tc: '林錦公路／青山公路', sc: '林锦公路／青山公路', en: 'Lam Kam Road / Castle Peak Road' },
+    a: 'ntw', b: 'nte', id: 'lamkam', compare: false,    name: { tc: '林錦公路／青山公路', sc: '林锦公路／青山公路', en: 'Lam Kam Road / Castle Peak Road' },
   },
   {
-    a: 'ntw', b: 'klw', compare: true,
-    name: { tc: '屯門公路', sc: '屯门公路', en: 'Tuen Mun Road' },
+    a: 'ntw', b: 'klw', id: 'tmr', compare: true,    name: { tc: '屯門公路', sc: '屯门公路', en: 'Tuen Mun Road' },
   },
   {
-    a: 'nte', b: 'klw', compare: true,
-    name: { tc: '大埔道', sc: '大埔道', en: 'Tai Po Road' },
+    a: 'nte', b: 'klw', id: 'tpr', compare: true,    name: { tc: '大埔道', sc: '大埔道', en: 'Tai Po Road' },
   },
   {
-    a: 'nte', b: 'klc', compare: true,
-    name: { tc: '大埔道', sc: '大埔道', en: 'Tai Po Road' },
+    a: 'nte', b: 'klc', id: 'tpr', compare: true,    name: { tc: '大埔道', sc: '大埔道', en: 'Tai Po Road' },
   },
   {
-    a: 'nte', b: 'kle', compare: true,
-    name: { tc: '龍翔道', sc: '龙翔道', en: 'Lung Cheung Road' },
+    a: 'nte', b: 'kle', id: 'lungcheung', compare: true,    name: { tc: '龍翔道', sc: '龙翔道', en: 'Lung Cheung Road' },
   },
   {
-    a: 'klw', b: 'klc', compare: true,
-    name: { tc: '西九龍走廊', sc: '西九龙走廊', en: 'West Kowloon Corridor' },
+    a: 'klw', b: 'klc', id: 'wkc', compare: true,    name: { tc: '西九龍走廊', sc: '西九龙走廊', en: 'West Kowloon Corridor' },
   },
   {
-    a: 'klc', b: 'kle', compare: false,
-    name: { tc: '太子道東', sc: '太子道东', en: 'Prince Edward Road East' },
+    a: 'klc', b: 'kle', id: 'ped', compare: false,    name: { tc: '太子道東', sc: '太子道东', en: 'Prince Edward Road East' },
   },
   {
-    a: 'isw', b: 'isc', compare: false,
-    name: { tc: '干諾道', sc: '干诺道', en: 'Connaught Road' },
+    a: 'isw', b: 'isc', id: 'connaught', compare: false,    name: { tc: '干諾道', sc: '干诺道', en: 'Connaught Road' },
   },
   {
-    a: 'isc', b: 'ise', compare: false,
-    name: { tc: '東區走廊', sc: '东区走廊', en: 'Island Eastern Corridor' },
+    a: 'isc', b: 'ise', id: 'iec', compare: false,    name: { tc: '東區走廊', sc: '东区走廊', en: 'Island Eastern Corridor' },
   },
 ];
 
@@ -71,7 +62,7 @@ export const FREE_EDGES = [
 export const COMPARE_ROADS = FREE_EDGES
   .filter((edge) => edge.compare)
   .filter((edge, index, all) => all.findIndex((x) => x.name.en === edge.name.en) === index)
-  .map((edge) => ({ id: `road:${edge.name.en}`, name: edge.name }));
+  .map((edge) => ({ id: edge.id, name: edge.name }));
 
 // The comparison is organised by the kind of trip, because only options that
 // serve the same trip are alternatives: a Tuen Mun driver compares Tai Lam
@@ -103,8 +94,8 @@ export function compareGroups() {
     const roads = [];
     for (const edge of FREE_EDGES) {
       if (!pairs.has(pairKey(edge.a, edge.b))) continue;
-      if (roads.some((road) => road.en === edge.name.en)) continue;
-      roads.push(edge.name);
+      if (roads.some((road) => road.name.en === edge.name.en)) continue;
+      roads.push({ id: edge.id, name: edge.name });
     }
     return { id: category.id, tunnels, roads };
   });
