@@ -230,6 +230,7 @@ function renderResult() {
   $('live-traffic').innerHTML = traffic && !isShowingNow()
     ? `<span class="traffic-hint">${esc(copy.trafficOnlyNow)}</span>`
     : trafficChip('tunnel', state.tunnelId);
+  $('price-amount').textContent = amount.toFixed(2);
   const badge = $('period-badge');
   badge.textContent = copy.period[periodType];
   badge.className = `badge ${periodType}`;

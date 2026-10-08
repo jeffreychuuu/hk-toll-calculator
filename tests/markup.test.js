@@ -34,7 +34,7 @@ const section = (id) => {
 
 test('every control lives with what it belongs to', () => {
   const current = section('current-card');
-  for (const id of ['result-name', 'live-traffic']) {
+  for (const id of ['result-name', 'live-traffic', 'price-amount']) {
     assert.ok(current.includes(`id="${id}"`), `#${id} names the chosen tunnel at the top`);
   }
 
