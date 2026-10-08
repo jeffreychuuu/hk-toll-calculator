@@ -432,6 +432,7 @@ select:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible
 /* The reference copy folded into the footer — real text for search engines, but
    fine print rather than a section of its own */
 .site-footer p { margin: 0; }
+.site-footer .credit { margin: 8px 0 0; }
 .site-footer summary { cursor: pointer; }
 .site-footer details[open] > summary { color: var(--focus); }
 .site-footer h3 { margin: 14px 0 4px; font-size: 0.84rem; color: var(--ink); }
