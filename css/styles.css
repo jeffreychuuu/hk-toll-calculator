@@ -228,6 +228,8 @@ body {
 /* Same-trip alternatives: corridor chips over a priced list */
 .alt-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; }
 .alt-vehicle { display: inline-flex; align-items: center; gap: 6px; }
+/* A fixed width, so the control never shifts as the classes change length */
+.alt-vehicle select { width: 22rem; max-width: 100%; }
 .alt-vehicle-label { color: var(--muted); font-size: 0.85rem; font-weight: 600; }
 .pick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .chip {
