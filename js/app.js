@@ -4,7 +4,7 @@ import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison }
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 import { compareGroups, categoryForTunnel } from './regions.js';
-import { incidentsForTunnels } from './traffic.js';
+import { incidentsForCorridor } from './traffic.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
 const FOOTER_LINKS = ['tvt', 'flat', 'taiLam'];
@@ -73,6 +73,7 @@ const CATEGORY_LABEL = {
   'nte-ntw': 'cmpCatNteNtw',
   island: 'cmpCatIsland',
   kowloon: 'cmpCatKowloon',
+  'ntw-airport': 'cmpCatAirport',
 };
 
 
@@ -162,6 +163,7 @@ function fillTunnelSelect() {
   const option = (tunnel) => `<option value="${tunnel.id}">${esc(nameOf(tunnel))}</option>`;
 
   $('tunnel-select').innerHTML = groups
+    .filter((group) => group.tunnels.length) // a corridor of free roads only has nothing to pick here
     .map((group) => `<optgroup label="${esc(copy[CATEGORY_LABEL[group.id]])}">`
       + group.tunnels.map((id) => option(tunnelById(id))).join('') + '</optgroup>')
     .join('')
@@ -319,6 +321,7 @@ const DIRECTION_LABEL = {
   'kowloon-w': 'dirKowloonW',
   tsuenwan: 'dirTsuenWan',
   shatin: 'dirShatin',
+  airport: 'dirAirport',
   wanchai: 'dirWanChai',
   tingkau: 'dirTingKau',
 };
@@ -329,20 +332,35 @@ function trafficChip(kind, id) {
   const report = source ? source[id] : null;
   if (!report) return '';
   const copy = t();
-  const label = copy[`traffic${report.state[0].toUpperCase()}${report.state.slice(1)}`];
+  const condition = (state) => copy[`traffic${state[0].toUpperCase()}${state.slice(1)}`];
+  const chip = (state, inner) => `<span class="traffic traffic-${state}">${inner}</span>`;
+
   const sides = Object.entries(report.byDirection || {})
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([direction, side]) => `${copy.trafficTowards.replace('{place}', copy[DIRECTION_LABEL[direction]] || direction)} `
-      + copy.trafficMinutes.replace('{minutes}', String(side.minutes)));
-  const detail = report.state === 'closed' || !sides.length
-    ? ''
-    : ` <span class="traffic-detail">${esc(sides.join(' · '))}</span>`;
-  return `<span class="traffic traffic-${report.state}">${esc(label)}</span>${detail}`;
+    .sort(([a], [b]) => a.localeCompare(b));
+
+  // Closed, or nothing directional to say: one chip for the tunnel as a whole.
+  if (report.state === 'closed' || !sides.length) {
+    return chip(report.state, esc(condition(report.state)));
+  }
+
+  // Each direction stands on its own — one way can be jammed while the other
+  // runs free, and a single colour for both would hide exactly that.
+  return sides.map(([direction, side]) => {
+    const place = copy[DIRECTION_LABEL[direction]] || direction;
+    const minutes = side.minutes > 0
+      ? ` ${esc(copy.trafficMinutes.replace('{minutes}', String(side.minutes)))}`
+      : '';
+    return chip(side.state, `${esc(copy.trafficTowards.replace('{place}', place))} `
+      + `${esc(condition(side.state))}${minutes}`);
+  }).join(' ');
 }
 
 const corridorIncidents = (group) =>
   (isShowingNow() && traffic && traffic.incidents
-    ? incidentsForTunnels(traffic.incidents, group.tunnels)
+    ? incidentsForCorridor(traffic.incidents, {
+      tunnels: group.tunnels,
+      roads: (group.roads || []).map((road) => road.id),
+    })
     : []);
 
 function incidentBlock(group) {

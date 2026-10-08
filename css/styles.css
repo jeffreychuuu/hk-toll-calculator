@@ -297,7 +297,6 @@ div.compare-row:hover { background: transparent; }
 .traffic-slow { color: #a2650f; }
 .traffic-jam { color: #b91c1c; }
 .traffic-closed { color: #6b7280; }
-.traffic-detail { color: var(--muted); font-weight: 600; font-size: 0.75rem; }
 .live-traffic { margin: 8px 0 0; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .live-traffic:empty { display: none; }
 .traffic-hint { color: var(--muted); font-size: 0.78rem; }

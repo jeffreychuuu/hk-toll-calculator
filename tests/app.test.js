@@ -477,7 +477,7 @@ test('the result card lists the ways to make the same trip, current tunnel first
   assert.ok(current.includes('現用'), 'marked as the current choice');
   assert.ok(current.includes('最平'), 'and as cheapest, because it is');
   const chips = $('alt-categories').innerHTML;
-  assert.equal((chips.match(/data-group=/g) || []).length, 6, 'every corridor is one click away');
+  assert.equal((chips.match(/data-group=/g) || []).length, 7, 'every corridor is one click away');
   const harbourChip = chips.slice(chips.indexOf('data-group="harbour"'), chips.indexOf('data-group="kln-nte"'));
   assert.ok(harbourChip.includes('aria-pressed="true"'), 'its corridor is preselected');
 });
@@ -521,6 +521,20 @@ test('choosing another corridor swaps the list in one click', () => {
   // and back to the selected tunnel's corridor
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-nte' } }) } });
   assert.ok($('alt-list').innerHTML.includes('現用'));
+});
+
+test('the airport corridor is the two free roads to Chek Lap Kok', () => {
+  fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'ntw-airport' } }) } });
+  const list = $('alt-list').innerHTML;
+  assert.ok(list.includes('屯門赤鱲角隧道'), 'the Tuen Mun link is listed');
+  assert.ok(list.includes('青嶼幹線／北大嶼山公路'), 'and the Lantau Link');
+  assert.ok(!list.includes('現用'), 'no tunnel of ours serves it');
+});
+
+test('the tunnel dropdown groups tunnels only, never an empty corridor', () => {
+  const html = $('tunnel-select').innerHTML;
+  assert.ok(!html.includes('"></optgroup>'), 'a road-only corridor is left out of the picker');
+  assert.ok(html.includes('九龍 ↔ 新界東'), 'and every tunnel still has its group');
 });
 
 test('the result and the schedule sit on the same page', () => {
@@ -579,6 +593,14 @@ test('live conditions from the transport department sit beside the tunnels', asy
         textCn: '東區海底隧道(往柴灣方向)部分行車線封閉',
         textEn: 'Part of the Eastern Harbour Crossing (Chai Wan bound) is closed',
         tunnels: ['ehc'],
+        roads: [],
+      }, {
+        id: '147700',
+        at: '2026-10-08T22:10:00',
+        textCn: '屯門公路(往九龍方向)近深井的部分行車線封閉',
+        textEn: 'Part of Tuen Mun Road (Kowloon bound) near Sham Tseng is closed',
+        tunnels: [],
+        roads: ['tmr'],
       }],
     }),
   });
@@ -588,19 +610,21 @@ test('live conditions from the transport department sit beside the tunnels', asy
 
   const list = $('alt-list').innerHTML;
   assert.ok(list.includes('擠塞'), 'the congested reading shows');
-  assert.ok(list.includes('往港島 18 分鐘'), 'the congested direction, towards the island');
-  assert.ok(list.includes('往九龍 4 分鐘'), 'and the other direction separately');
-  assert.ok(list.includes('暢通'), 'and the free-flowing one');
+  assert.ok(list.includes('往港島 擠塞 18 分鐘'), 'the congested direction, towards the island');
+  assert.ok(list.includes('往九龍 暢通 4 分鐘'), 'and the free one gets its own chip, not the worst shared');
+  assert.ok(list.includes('暢通'), 'the free-flowing one');
   assert.ok(list.includes('交通消息'), 'the incident block appears');
   assert.ok(list.includes('東區海底隧道(往柴灣方向)部分行車線封閉'));
   assert.ok(list.includes('更新於 22:57'), 'and the source is dated');
   assert.ok($('alt-categories').innerHTML.includes('⚠️'), 'the affected corridor is flagged');
-  assert.ok($('live-traffic').innerHTML.includes('往港島 18 分鐘'),
+  assert.ok($('live-traffic').innerHTML.includes('往港島 擠塞 18 分鐘'),
     'the chosen tunnel\'s directions show on the headline card too');
 
   // a free corridor is measured too, when its row is on screen
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-ntw' } }) } });
-  assert.ok($('alt-list').innerHTML.includes('往荃灣 22 分鐘'), 'Tuen Mun Road carries a reading');
+  assert.ok($('alt-list').innerHTML.includes('往荃灣 慢車 22 分鐘'), 'Tuen Mun Road carries a reading');
+  assert.ok($('alt-list').innerHTML.includes('屯門公路(往九龍方向)'),
+    'and its own road incident is shown with it');
 
   // picking the schedule already on screen keeps us at now
   $('daytype-select').value = 'weekday';

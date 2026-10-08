@@ -8,7 +8,7 @@
 // This is "which tunnels serve this trip", never a claim about speed: the data
 // to answer that does not live in this project.
 
-export const NODES = ['ntw', 'nte', 'klw', 'klc', 'kle', 'isw', 'isc', 'ise', 'iss'];
+export const NODES = ['ntw', 'nte', 'klw', 'klc', 'kle', 'isw', 'isc', 'ise', 'iss', 'ntl'];
 
 // The tunnels, each joining two areas.
 export const TUNNEL_EDGES = [
@@ -55,6 +55,12 @@ export const FREE_EDGES = [
   {
     a: 'isc', b: 'ise', id: 'iec', compare: false,    name: { tc: '東區走廊', sc: '东区走廊', en: 'Island Eastern Corridor' },
   },
+  {
+    a: 'ntw', b: 'ntl', id: 'tmclk', compare: true,    name: { tc: '屯門赤鱲角隧道', sc: '屯门赤鱲角隧道', en: 'Tuen Mun–Chek Lap Kok Link' },
+  },
+  {
+    a: 'ntw', b: 'ntl', id: 'lantau', compare: true,    name: { tc: '青嶼幹線／北大嶼山公路', sc: '青屿干线／北大屿山公路', en: 'Lantau Link / North Lantau Highway' },
+  },
 ];
 
 // The named free corridors offered side by side with the tunnels.
@@ -73,6 +79,7 @@ const CORRIDOR_CATEGORIES = [
   { id: 'nte-ntw', pairs: [['ntw', 'nte']] },
   { id: 'island', pairs: [['isw', 'isc'], ['isc', 'ise'], ['isc', 'iss']] },
   { id: 'kowloon', pairs: [['klw', 'klc'], ['klc', 'kle']] },
+  { id: 'ntw-airport', pairs: [['ntw', 'ntl']] },
 ];
 
 const pairKey = (a, b) => [a, b].sort().join('-');
