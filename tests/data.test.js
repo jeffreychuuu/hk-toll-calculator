@@ -1,0 +1,45 @@
+// tests/data.test.js
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  TUNNELS, FLAT_TOLLS, TVT_FIXED, vehiclesFor,
+  TVT_VEHICLES, FLAT8_VEHICLES, TCT_VEHICLES, DBT_VEHICLES,
+} from '../js/data.js';
+
+test('tunnel registry covers all ten paid tunnels', () => {
+  assert.deepEqual(
+    TUNNELS.map((t) => t.id),
+    ['cht', 'ehc', 'whc', 'tlt', 'abt', 'smt', 'lrt', 'stg', 'tct', 'dbt'],
+  );
+  assert.equal(TUNNELS.find((t) => t.id === 'whc').pricing, 'tvt');
+  assert.equal(TUNNELS.find((t) => t.id === 'abt').pricing, 'flat');
+});
+
+test('vehicle options depend on the tunnel', () => {
+  assert.deepEqual(vehiclesFor('cht'), TVT_VEHICLES);
+  assert.deepEqual(vehiclesFor('abt'), FLAT8_VEHICLES);
+  assert.deepEqual(vehiclesFor('tct'), TCT_VEHICLES);
+  assert.deepEqual(vehiclesFor('dbt'), DBT_VEHICLES);
+  assert.throws(() => vehiclesFor('nope'));
+});
+
+test('flat toll tables hold the published rates', () => {
+  assert.equal(FLAT_TOLLS.abt.all, 8);
+  assert.equal(FLAT_TOLLS.stg.all, 8);
+  assert.equal(FLAT_TOLLS.tct.dbus, 35); // double-deck bus, Tate's Cross
+  assert.equal(FLAT_TOLLS.tct.mc, 15); // motorcycle, Tate's Cross
+  assert.equal(FLAT_TOLLS.dbt.c6, 250); // heavy goods vehicle, Discovery Bay
+  assert.equal(FLAT_TOLLS.dbt.c4, 120); // light goods vehicle, Discovery Bay
+});
+
+test('fixed time-varying vehicles carry per-tunnel rates', () => {
+  assert.deepEqual(TVT_FIXED.cht, { taxi: 25, other: 50 });
+  assert.deepEqual(TVT_FIXED.tlt, { taxi: 28, other: 43 });
+});
+
+test('every tunnel has either a flat table or a fixed table or schedules', () => {
+  for (const t of TUNNELS) {
+    const ok = t.pricing === 'flat' ? !!FLAT_TOLLS[t.id] : !!TVT_FIXED[t.id];
+    assert.ok(ok, `missing toll table for ${t.id}`);
+  }
+});
