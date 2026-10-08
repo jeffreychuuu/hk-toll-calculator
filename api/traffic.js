@@ -31,11 +31,12 @@ export default async function handler(_request, response) {
     return;
   }
 
-  const payload = { updatedAt: null, tunnels: {}, incidents: [] };
+  const payload = { updatedAt: null, tunnels: {}, roads: {}, incidents: [] };
   if (journey.status === 'fulfilled') {
     const parsed = normaliseJourneyTimes(journey.value);
     payload.updatedAt = parsed.updatedAt;
     payload.tunnels = parsed.tunnels;
+    payload.roads = parsed.roads;
   }
   if (news.status === 'fulfilled') {
     const items = normaliseIncidents(news.value).items;

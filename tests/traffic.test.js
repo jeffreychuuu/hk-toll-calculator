@@ -133,3 +133,33 @@ test('an incident is offered to the corridor it affects', () => {
   assert.deepEqual(incidentsForTunnels(incidents, ['lrt', 'tct', 'stg']).map((i) => i.id), ['a', 'b']);
   assert.deepEqual(incidentsForTunnels(incidents, ['cht', 'ehc', 'whc']), []);
 });
+
+test('the proxy hands on the roads as well as the tunnels', async () => {
+  const journey = `<jtis_journey_list>
+    <jtis_journey_time><LOCATION_ID>K01</LOCATION_ID><DESTINATION_ID>CH</DESTINATION_ID>
+      <CAPTURE_DATE>2026-10-08T22:57:00</CAPTURE_DATE><JOURNEY_TYPE>1</JOURNEY_TYPE>
+      <JOURNEY_DATA>8</JOURNEY_DATA><COLOUR_ID>3</COLOUR_ID></jtis_journey_time>
+    <jtis_journey_time><LOCATION_ID>SJ5</LOCATION_ID><DESTINATION_ID>TWTM</DESTINATION_ID>
+      <CAPTURE_DATE>2026-10-08T22:57:00</CAPTURE_DATE><JOURNEY_TYPE>1</JOURNEY_TYPE>
+      <JOURNEY_DATA>22</JOURNEY_DATA><COLOUR_ID>2</COLOUR_ID></jtis_journey_time>
+  </jtis_journey_list>`;
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, text: async () => journey });
+
+  const { default: handler } = await import('../api/traffic.js');
+  const response = {
+    statusCode: 0,
+    headers: {},
+    status(code) { this.statusCode = code; return this; },
+    setHeader(key, value) { this.headers[key] = value; },
+    json(payload) { this.body = payload; return this; },
+  };
+  await handler({}, response);
+  globalThis.fetch = realFetch;
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.headers['Cache-Control'], 's-maxage=60, stale-while-revalidate=300');
+  assert.ok(response.body.tunnels.cht, 'the tunnel reading travels');
+  assert.ok(response.body.roads.tmr, 'and so does the road reading');
+  assert.equal(response.body.roads.tmr.minutes, 22);
+});
