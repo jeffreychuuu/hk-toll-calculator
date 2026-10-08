@@ -192,7 +192,25 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 
 .compare-empty { margin: 8px 0 0; color: var(--muted); font-size: 0.9rem; }
 
-/* Cheapest harbour crossing */
+/* Toll comparison picker */
+.compare-picks { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.pick-group { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.pick-label { color: var(--muted); font-size: 0.78rem; font-weight: 600; min-width: 4.6em; }
+.pick-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+.chip.on { border-color: #bcd7ff; background: #e8f1ff; color: var(--focus); font-weight: 700; }
+.compare-tag { color: var(--muted); font-size: 0.78rem; font-weight: 700; }
+.compare-row.cheapest .compare-tag { color: #157a4d; }
+
 .compare-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .compare-row {
   display: flex;

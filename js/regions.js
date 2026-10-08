@@ -23,19 +23,54 @@ export const TUNNEL_EDGES = [
   { a: 'isc', b: 'iss', tunnel: 'abt' }, // Aberdeen
 ];
 
-// Free roads. Note what is absent: nothing crosses the harbour for free, so
-// every harbour trip in the graph must pay for a crossing.
-const FREE_EDGES = [
-  ['ntw', 'nte'],
-  ['ntw', 'klw'],
-  ['nte', 'klw'],
-  ['nte', 'klc'],
-  ['nte', 'kle'],
-  ['klw', 'klc'],
-  ['klc', 'kle'],
-  ['isw', 'isc'],
-  ['isc', 'ise'],
+// Free roads, named so a route reads naturally ("Tai Po Road then the red
+// tunnel"). `compare` marks the corridors that are worth offering as
+// alternatives to a tolled tunnel in the comparison list; the note about what
+// is absent matters most: nothing crosses the harbour for free.
+export const FREE_EDGES = [
+  {
+    a: 'ntw', b: 'nte', compare: false,
+    name: { tc: '林錦公路／青山公路', sc: '林锦公路／青山公路', en: 'Lam Kam Road / Castle Peak Road' },
+  },
+  {
+    a: 'ntw', b: 'klw', compare: true,
+    name: { tc: '屯門公路', sc: '屯门公路', en: 'Tuen Mun Road' },
+  },
+  {
+    a: 'nte', b: 'klw', compare: true,
+    name: { tc: '大埔道', sc: '大埔道', en: 'Tai Po Road' },
+  },
+  {
+    a: 'nte', b: 'klc', compare: true,
+    name: { tc: '大埔道', sc: '大埔道', en: 'Tai Po Road' },
+  },
+  {
+    a: 'nte', b: 'kle', compare: true,
+    name: { tc: '龍翔道', sc: '龙翔道', en: 'Lung Cheung Road' },
+  },
+  {
+    a: 'klw', b: 'klc', compare: true,
+    name: { tc: '西九龍走廊', sc: '西九龙走廊', en: 'West Kowloon Corridor' },
+  },
+  {
+    a: 'klc', b: 'kle', compare: false,
+    name: { tc: '太子道東', sc: '太子道东', en: 'Prince Edward Road East' },
+  },
+  {
+    a: 'isw', b: 'isc', compare: false,
+    name: { tc: '干諾道', sc: '干诺道', en: 'Connaught Road' },
+  },
+  {
+    a: 'isc', b: 'ise', compare: false,
+    name: { tc: '東區走廊', sc: '东区走廊', en: 'Island Eastern Corridor' },
+  },
 ];
+
+// The named free corridors offered side by side with the tunnels.
+export const COMPARE_ROADS = FREE_EDGES
+  .filter((edge) => edge.compare)
+  .filter((edge, index, all) => all.findIndex((x) => x.name.en === edge.name.en) === index)
+  .map((edge) => ({ id: `road:${edge.name.en}`, name: edge.name }));
 
 export const REGIONS = [
   // Hong Kong Island
@@ -87,7 +122,7 @@ const distanceTo = (node, to) => Math.abs(X[node] - X[to]) + Math.abs(Y[node] - 
 
 const EDGES = [
   ...TUNNEL_EDGES.map((edge) => ({ a: edge.a, b: edge.b, tunnel: edge.tunnel })),
-  ...FREE_EDGES.map(([a, b]) => ({ a, b, tunnel: null })),
+  ...FREE_EDGES.map((edge) => ({ a: edge.a, b: edge.b, tunnel: null, road: edge.name })),
 ];
 
 const neighbours = (node) => EDGES.filter((edge) => edge.a === node || edge.b === node);
@@ -141,16 +176,18 @@ export function planRoutes({ fromId, toId } = {}) {
 
   const seen = new Set();
   const routes = [];
-  const addRoute = (tunnels) => {
+  const addRoute = (legs) => {
+    const tunnels = legs.filter((leg) => leg.tunnel).map((leg) => leg.tunnel);
+    const roads = legs.filter((leg) => leg.road).map((leg) => leg.road);
     // A route that crosses the harbour more than once is not a route anyone drives.
     if (tunnels.filter((id) => HARBOUR_TUNNELS.includes(id)).length > 1) return;
     if (tunnels.length > 2) return;
     // Off the harbour there is never a reason to use two tolled tunnels.
     if (!crossesHarbour && tunnels.length > 1) return;
-    const key = tunnels.slice().sort().join('+');
+    const key = legs.map((leg) => leg.tunnel || `road:${leg.road.tc}`).sort().join('>');
     if (seen.has(key)) return;
     seen.add(key);
-    routes.push({ tunnels });
+    routes.push({ tunnels, roads, legs });
   };
 
   for (const fromNode of from.nodes) {
@@ -163,7 +200,7 @@ export function planRoutes({ fromId, toId } = {}) {
       walk(fromNode, toNode, new Set([fromNode]), [], paths);
       for (const path of paths) {
         if (!toward(nodesOn(path, fromNode), fromNode, toNode)) continue;
-        addRoute(path.map((edge) => edge.tunnel).filter(Boolean));
+        addRoute(path.map((edge) => (edge.tunnel ? { tunnel: edge.tunnel } : { road: edge.road })));
       }
     }
   }

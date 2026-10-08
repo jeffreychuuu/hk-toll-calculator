@@ -1,7 +1,7 @@
 // tests/regions.test.js
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { REGIONS, NODES, TUNNEL_EDGES, regionById, planRoutes } from '../js/regions.js';
+import { REGIONS, NODES, TUNNEL_EDGES, FREE_EDGES, COMPARE_ROADS, regionById, planRoutes } from '../js/regions.js';
 
 const sets = (routes) => routes.map((route) => route.tunnels.slice().sort().join('+'));
 
@@ -37,6 +37,31 @@ test('the macro graph has the published tunnels as its edges', () => {
   for (const edge of TUNNEL_EDGES) {
     assert.ok(NODES.includes(edge.a) && NODES.includes(edge.b), `${edge.tunnel} endpoints`);
   }
+});
+
+test('the free corridors are named in three languages and listed once each', () => {
+  for (const edge of FREE_EDGES) {
+    for (const lang of ['tc', 'sc', 'en']) {
+      assert.ok(edge.name[lang] && edge.name[lang].trim().length > 0, `${edge.a}-${edge.b}.${lang}`);
+    }
+  }
+  const names = COMPARE_ROADS.map((road) => road.name.tc);
+  assert.equal(new Set(names).size, names.length, 'no duplicate corridors');
+  assert.ok(names.includes('屯門公路'));
+  assert.ok(names.includes('大埔道'));
+  assert.ok(names.includes('龍翔道'));
+  for (const road of COMPARE_ROADS) assert.ok(road.id.startsWith('road:'));
+});
+
+test('a route carries the roads and tunnels in the order you drive them', () => {
+  // Sha Tin to Tsuen Wan: the free route is the Lam Kam road, the tolled one is Shing Mun
+  const free = planRoutes({ fromId: 'nt-st', toId: 'nt-tw' }).routes.find((r) => r.tunnels.length === 0);
+  assert.deepEqual(free.roads.map((road) => road.tc), ['林錦公路／青山公路']);
+
+  // Sha Tin to Wan Chai via Tai Po Road: road first, then the crossing
+  const viaRoad = planRoutes({ fromId: 'nt-st', toId: 'hki-wc' }).routes
+    .find((r) => r.roads.length > 0 && r.tunnels.join() === 'cht');
+  assert.deepEqual(viaRoad.roads.map((road) => road.tc), ['大埔道']);
 });
 
 test('a cross-harbour trip offers both the tunnel approach and the free one', () => {
@@ -82,7 +107,8 @@ test('a trip that needs no tunnel reports the free route', () => {
 test('an island-to-island trip only uses island tunnels', () => {
   const { crossesHarbour, routes } = planRoutes({ fromId: 'hki-cw', toId: 'hki-south' });
   assert.equal(crossesHarbour, false);
-  assert.deepEqual(sets(routes), ['abt']);
+  assert.deepEqual([...new Set(sets(routes))], ['abt'], 'Aberdeen Tunnel only');
+  for (const route of routes) assert.deepEqual(route.tunnels, ['abt']);
 });
 
 test('the new territories to the island offers big-lam and free approaches', () => {
@@ -93,12 +119,14 @@ test('the new territories to the island offers big-lam and free approaches', () 
 });
 
 test('routes are deduplicated and bounded', () => {
+  const key = (route) =>
+    route.tunnels.slice().sort().join('+') + '|' + route.roads.map((road) => road.en).sort().join('+');
   const pairs = [['nt-st', 'hki-wc'], ['nt-tm', 'hki-cw'], ['kln-kt', 'hki-cw'], ['nt-sk', 'hki-cw']];
   for (const [fromId, toId] of pairs) {
     const routes = planRoutes({ fromId, toId }).routes;
-    const unique = new Set(sets(routes));
-    assert.equal(unique.size, routes.length, `duplicate tunnel sets for ${fromId}->${toId}`);
-    assert.ok(routes.length <= 12, `too many routes for ${fromId}->${toId}: ${routes.length}`);
+    const unique = new Set(routes.map(key));
+    assert.equal(unique.size, routes.length, `duplicate routes for ${fromId}->${toId}`);
+    assert.ok(routes.length <= 24, `too many routes for ${fromId}->${toId}: ${routes.length}`);
     for (const route of routes) assert.ok(route.tunnels.length <= 2, 'at most two tunnels per route');
   }
 });

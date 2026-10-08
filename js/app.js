@@ -3,7 +3,7 @@ import { TUNNELS, vehiclesFor, CROSS_HARBOUR_IDS, canonicalFor } from './data.js
 import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison, priceRoute } from './engine.js';
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
-import { REGIONS, regionById, planRoutes } from './regions.js';
+import { REGIONS, regionById, planRoutes, COMPARE_ROADS } from './regions.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
 const FOOTER_LINKS = ['tvt', 'flat', 'taiLam'];
@@ -17,6 +17,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 
 const STORAGE_KEY = 'hk-toll-calculator.selection';
 const LANG_KEY = 'hk-toll-calculator.lang';
+const COMPARE_KEY = 'hk-toll-calculator.compare';
 
 const t = () => UI[state.lang];
 
@@ -65,6 +66,46 @@ function saveSelection() {
   }
 }
 
+// The toll comparison lets the visitor tick any tunnel or free corridor.
+// Tunnels are split the way the tool thinks about them; corridors come from
+// the macro graph.
+function compareCatalog() {
+  const other = TUNNELS.filter((x) => !CROSS_HARBOUR_IDS.includes(x.id));
+  return {
+    harbour: CROSS_HARBOUR_IDS.map((id) => tunnelById(id)),
+    tunnel: other,
+    road: COMPARE_ROADS,
+  };
+}
+
+function defaultCompare() {
+  return CROSS_HARBOUR_IDS.slice();
+}
+
+function loadCompare() {
+  try {
+    const raw = localStorage.getItem(COMPARE_KEY);
+    if (!raw) return defaultCompare();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return defaultCompare();
+    const known = new Set([
+      ...TUNNELS.map((x) => x.id),
+      ...COMPARE_ROADS.map((road) => road.id),
+    ]);
+    return parsed.filter((id) => known.has(id));
+  } catch {
+    return defaultCompare();
+  }
+}
+
+function saveCompare() {
+  try {
+    localStorage.setItem(COMPARE_KEY, JSON.stringify(state.compare));
+  } catch {
+    // persistence is a convenience, never a failure
+  }
+}
+
 function loadLang() {
   try {
     const saved = localStorage.getItem(LANG_KEY);
@@ -88,6 +129,7 @@ const initialDayType = defaultDayType();
 const state = {
   lang: 'tc',
   view: 'fares',           // which output section is open
+  compare: [],             // ids ticked in the toll comparison
   fromId: '',              // journey suggestion — deliberately not persisted
   toId: '',
   mode: 'date',            // 'date' picks a calendar day; 'category' picks a schedule
@@ -252,26 +294,56 @@ function renderResult(tunnel) {
 }
 
 function renderCompare() {
-  const isCrossHarbour = CROSS_HARBOUR_IDS.includes(state.tunnelId);
-  $('compare-card').hidden = !isCrossHarbour;
-  $('compare-empty').hidden = isCrossHarbour;
-  if (!isCrossHarbour) return;
-
   const copy = t();
-  const { amount, cheapest, options } = getCrossHarbourComparison(state);
-  $('compare-list').innerHTML = options.map((option) => {
-    const tunnel = TUNNELS.find((x) => x.id === option.tunnelId);
-    const best = cheapest.includes(option.tunnelId);
-    return `<li><button type="button" class="compare-row${best ? ' cheapest' : ''}"`
-      + ` data-tunnel-id="${option.tunnelId}"${best ? ' aria-current="true"' : ''}>`
-      + `<span class="compare-name">${esc(nameOf(tunnel))}</span>`
-      + `<span class="compare-price">HK$ ${option.amount.toFixed(2)}</span>`
-      + '</button></li>';
+  const catalog = compareCatalog();
+  const groupLabel = {
+    harbour: copy.compareGroupHarbour,
+    tunnel: copy.compareGroupTunnel,
+    road: copy.compareGroupRoad,
+  };
+
+  $('compare-picks').innerHTML = ['harbour', 'tunnel', 'road'].map((kind) => {
+    const chips = catalog[kind].map((item) => {
+      const on = state.compare.includes(item.id);
+      return `<button type="button" class="chip${on ? ' on' : ''}" data-pick="${item.id}"`
+        + ` aria-pressed="${on}">${esc(nameOf(item))}</button>`;
+    }).join('');
+    return `<div class="pick-group"><span class="pick-label">${esc(groupLabel[kind])}</span>`
+      + `<div class="pick-chips">${chips}</div></div>`;
   }).join('');
 
-  const tied = cheapest.length === CROSS_HARBOUR_IDS.length;
+  const vehicle = canonicalFor(state.tunnelId, state.vehicleId);
+  const chosen = [];
+  for (const kind of ['harbour', 'tunnel', 'road']) {
+    for (const item of catalog[kind]) {
+      if (!state.compare.includes(item.id)) continue;
+      const tunnels = kind === 'road' ? [] : [item.id];
+      chosen.push({
+        item,
+        tunnels,
+        amount: priceRoute({ tunnels, vehicle, dayType: state.dayType, minutes: state.minutes }),
+      });
+    }
+  }
+  chosen.sort((a, b) => a.amount - b.amount);
+
+  const cheapest = chosen.length ? chosen[0].amount : 0;
+  $('compare-empty').hidden = chosen.length > 0;
+  $('compare-list').innerHTML = chosen.map((entry) => {
+    const best = entry.amount === cheapest;
+    const content = `<span class="compare-name">${esc(nameOf(entry.item))}</span>`
+      + `<span class="compare-price">HK$ ${entry.amount.toFixed(2)}</span>`
+      + (best ? `<span class="compare-tag">${esc(copy.planCheapest)}</span>` : '');
+    // Roads are places, not choices: only tunnels switch the selector.
+    return entry.tunnels.length
+      ? `<li><button type="button" class="compare-row${best ? ' cheapest' : ''}"`
+        + ` data-tunnel-id="${entry.item.id}"${best ? ' aria-current="true"' : ''}>${content}</button></li>`
+      : `<li><div class="compare-row${best ? ' cheapest' : ''}">${content}</div></li>`;
+  }).join('');
+
+  const tied = chosen.length > 1 && chosen.every((entry) => entry.amount === cheapest);
   $('compare-note').hidden = !tied;
-  $('compare-note').textContent = tied ? copy.compareTie.replace('{amount}', amount.toFixed(2)) : '';
+  $('compare-note').textContent = tied ? copy.compareTie.replace('{amount}', cheapest.toFixed(2)) : '';
 }
 
 const tunnelById = (id) => TUNNELS.find((x) => x.id === id);
@@ -310,17 +382,20 @@ function renderPlan() {
   const vehicle = canonicalFor(state.tunnelId, state.vehicleId);
   const priced = routes
     .map((route) => ({
+      legs: route.legs,
       tunnels: route.tunnels,
-      amount: priceRoute({ tunnels: route.tunnels, vehicle, dayType: state.dayType, minutes: state.minutes }),
+      amount: priceRoute({
+        tunnels: route.tunnels, vehicle, dayType: state.dayType, minutes: state.minutes,
+      }),
     }))
     .sort((a, b) => a.amount - b.amount)
     .slice(0, ROUTES_SHOWN);
 
   const cheapest = priced.length ? priced[0].amount : 0;
   result.innerHTML = priced.map((route) => {
-    const name = route.tunnels.length
-      ? route.tunnels.map((id) => esc(nameOf(tunnelById(id)))).join('<span class="plan-sep">·</span>')
-      : esc(copy.planFree);
+    const name = route.legs
+      .map((leg) => esc(leg.tunnel ? nameOf(tunnelById(leg.tunnel)) : leg.road[state.lang]))
+      .join('<span class="plan-sep">·</span>');
     const tag = route.amount === cheapest
       ? copy.planCheapest
       : (route.tunnels.length ? copy.planPricier : '');
@@ -409,6 +484,8 @@ function chooseLang(lang) {
 function init() {
   state.lang = loadLang();
 
+  state.compare = loadCompare();
+
   const saved = loadSelection();
   if (saved) {
     state.tunnelId = saved.tunnelId;
@@ -458,6 +535,16 @@ function init() {
   $('to-select').addEventListener('change', (e) => {
     state.toId = e.target.value;
     renderPlan();
+  });
+  $('compare-picks').addEventListener('click', (e) => {
+    const chip = e.target.closest('button[data-pick]');
+    if (!chip) return;
+    const id = chip.dataset.pick;
+    state.compare = state.compare.includes(id)
+      ? state.compare.filter((x) => x !== id)
+      : [...state.compare, id];
+    saveCompare();
+    renderCompare();
   });
   $('compare-list').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-tunnel-id]');
