@@ -1,5 +1,5 @@
 // js/app.js
-import { TUNNELS, vehiclesFor, CROSS_HARBOUR_IDS, canonicalFor, classIdFor } from './data.js';
+import { TUNNELS, TVT_VEHICLES, vehiclesFor, CROSS_HARBOUR_IDS, canonicalFor, classIdFor } from './data.js';
 import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison } from './engine.js';
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
@@ -529,15 +529,24 @@ const vehicleIdFor = (tunnelId, canonical) => {
   return (hit || options[0]).id;
 };
 
-// Switching tunnel keeps the kind of vehicle you picked: each tunnel names its
-// classes differently (Tate's Cairn has no "other", Discovery Bay lumps them
-// all together), so translate through the canonical class rather than letting
-// the picker fall back to the first option.
+// Every tunnel names its vehicle classes, but some name them in a way of their
+// own (Discovery Bay has government / private car / ... instead of car / moto /
+// taxi / other). Those cannot hold the class you had, so it is remembered.
+const COMMON_VEHICLE_IDS = new Set(TVT_VEHICLES.map((vehicle) => vehicle.id));
+const ownVehicleClasses = (tunnelId) =>
+  !vehiclesFor(tunnelId).some((vehicle) => COMMON_VEHICLE_IDS.has(vehicle.id));
+let commonVehicle = 'car'; // the ordinary class the visitor is using
+
+// Switching tunnel keeps the kind of vehicle you picked, translating through the
+// canonical class rather than letting the picker fall back to the first option.
 function setTunnel(tunnelId) {
   if (tunnelId === state.tunnelId) return;
   const canonical = canonicalFor(state.tunnelId, state.vehicleId);
+  if (!ownVehicleClasses(state.tunnelId)) commonVehicle = canonical;
   state.tunnelId = tunnelId;
-  state.vehicleId = vehicleIdFor(tunnelId, canonical);
+  state.vehicleId = ownVehicleClasses(tunnelId)
+    ? vehicleIdFor(tunnelId, canonical)
+    : vehicleIdFor(tunnelId, commonVehicle);
   // A flat-rate tunnel has no schedule, so there is no other time to be at.
   if (isFlatDay()) goNow();
   saveSelection();
@@ -570,6 +579,7 @@ function init() {
     state.vehicleId = saved.vehicleId;
     if (saved.category) state.category = saved.category;
   }
+  commonVehicle = canonicalFor(state.tunnelId, state.vehicleId) || 'car';
 
   fillTimeSelects();
   applyLanguage();
