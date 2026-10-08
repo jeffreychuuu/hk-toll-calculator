@@ -457,6 +457,14 @@ function render() {
   renderToll();
 }
 
+// Return to the present moment: follow the clock again, on today's date.
+function goNow() {
+  following = true;
+  datePinned = false;
+  state.minutes = nowMinutes();
+  state.date = toDateKey(new Date());
+}
+
 function selectTime(minutes) {
   following = false;
   state.minutes = minutes;
@@ -532,9 +540,16 @@ function init() {
     render();
   });
   $('daytype-select').addEventListener('change', (e) => {
-    // Choosing a schedule jumps to the next date that actually has it.
-    state.date = nextDateOfType(e.target.value, state.date);
-    datePinned = state.date !== toDateKey(new Date());
+    // A schedule means the next day from today that has it — and today itself
+    // means the present, so choosing today's schedule is going back to now.
+    const today = toDateKey(new Date());
+    const target = nextDateOfType(e.target.value, today);
+    if (target === today) {
+      goNow();
+    } else {
+      state.date = target;
+      datePinned = true;
+    }
     render();
   });
   $('date-input').addEventListener('change', (e) => {
@@ -555,10 +570,7 @@ function init() {
   });
   $('time-slider').addEventListener('input', (e) => selectTime(Number(e.target.value)));
   $('back-to-now').addEventListener('click', () => {
-    following = true;
-    datePinned = false;
-    state.minutes = nowMinutes();
-    state.date = toDateKey(new Date());
+    goNow();
     render();
   });
 
