@@ -17,14 +17,15 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
 - **All paid tunnels in Hong Kong**
   - Time-varying toll: Cross-Harbour Tunnel (Hung Hom), Eastern Harbour Crossing, Western Harbour Crossing, Tai Lam Tunnel
   - Flat-rate tunnels: Aberdeen, Shing Mun, Lion Rock, Sha Tin Pass / Tsuen Shin / Tai Wai, Tate's Cross, Discovery Bay Tunnel
+- **The chosen tunnel, named up top** — its name and its live journey time lead the page
 - **Live conditions, shown only while it is now** — the Transport Department's journey times sit beside each tunnel and free corridor, one chip per direction (往…) with its own condition and minutes, together with that corridor's traffic news, whether the news names a tunnel or the road itself
-- **A corridor at a glance** — the page leads with the comparison: corridor chips, then every tunnel and free road that serves the trip, each with its live reading and its toll (the cheapest tunnel marked 最平 in blue, the free corridors reading 免費 in green). Every tunnel is a chip away, including one off the macro map
-- **24-hour chart, one band per tunnel** — a corridor's tunnels share one clock, so each gets a band of its own and the differences between them (the Western crossing's later, dearer peak) fall out at a glance. Also the current period badge, the date / day-type / clock controls, a marker labelled 現在 while the view is the present moment (or the time you picked), one pill that reads 現在 at now and becomes the 回到現在 button once you leave, and the next-period hint. A corridor whose tunnels all charge one flat rate all day (and Tai Lam on a Sunday) has nothing to chart, so the card steps aside
+- **A corridor at a glance** — the comparison carries the 車種 selector and lists, corridor by corridor, every tunnel and free road that serves the trip, each with its live reading and its toll (the cheapest tunnel marked 最平 in blue, the free corridors — Tuen Mun Road, Tai Po Road, Lam Kam Road / Castle Peak Road — reading 免費 in green). Every tunnel is a chip away, including one off the macro map
+- **24-hour toll-period chart** — the current period badge, colour-coded periods, the date / day-type / clock controls, a marker labelled 現在 while the view is the present moment (or the time you picked), one pill that reads 現在 at now and becomes the 回到現在 button once you leave, and the next-period hint. A tunnel that charges one flat rate all day (and Tai Lam on a Sunday) simply shows a single band across the day
 - **Flexible inputs**
   - Vehicle class selector (private car, motorcycle, taxi, goods vehicles, buses, etc.), on the comparison card because it changes every price there
   - A **date** and a **day type** (Mon–Sat non-holiday / Sunday and public holidays): the schedule follows the date, and picking a day type jumps to the next day (counted from today) that has it — or straight back to now when today already does
   - Hour and minute dropdowns for any time of day, a slider, plus a **back-to-now** button
-- **One page** — the comparison and the chart sit together
+- **One page** — the chosen tunnel, the comparison and the chart sit together
 - **Remembers your choice** — the last tunnel and vehicle class are restored on the next visit (localStorage)
 - **Three languages** — 繁體中文 / 简体中文 / English, picked automatically from the browser language and remembered once chosen
 - **Transition-aware pricing** — computes exact stepwise rates during transition windows (e.g. +$2 every 2 minutes for private cars), matching TD's minute-by-minute schedule

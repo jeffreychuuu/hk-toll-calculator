@@ -72,7 +72,7 @@ function mk(id) {
   };
 }
 for (const id of ['period-badge', 'next-hint',
-  'chart-bands', 'chart-marker', 'legend', 'vehicle-select',
+  'chart-bar', 'chart-marker', 'legend', 'vehicle-select', 'result-name', 'live-traffic', 'current-card',
   'wrap', 'chart-card',
   'date-input', 'daytype-select', 'traffic-footnote',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
@@ -114,13 +114,13 @@ const showsTunnel = (id, text) => {
   return [name.tc, name.sc, name.en].some((value) => text.includes(value));
 };
 
-// The chosen tunnel is the row marked 現用 in the comparison list.
-const SELECTED_TAGS = ['現用', '现用', 'Current'];
+// The chosen tunnel is the row flagged aria-current in the comparison list,
+// and it is named at the top of the page.
 const selectedRow = () => {
   const rows = $('alt-list').innerHTML.split('<li>');
-  return rows.find((row) => SELECTED_TAGS.some((tag) => row.includes(tag))) || '';
+  return rows.find((row) => row.includes('aria-current="true"')) || '';
 };
-const selectedName = () => (selectedRow().match(/compare-name">([^<]*)</) || ['', ''])[1];
+const selectedName = () => $('result-name').textContent;
 const selectedPrice = () => (selectedRow().match(/HK\$ ([\d.]+)/) || ['', ''])[1];
 const setTime = (hh, mm) => {
   $('hour-select').value = hh;
@@ -484,12 +484,11 @@ test('the result card lists the ways to make the same trip, current tunnel first
   assert.ok(list.includes('海底隧道（紅隧）'), 'the selected tunnel is listed too');
   assert.equal((list.match(/compare-row/g) || []).length, 3);
 
-  // the selected tunnel carries 現用, and 最平 when it ties for cheapest at noon
-  const current = list.slice(list.indexOf('海底隧道（紅隧）'), list.indexOf('東區海底隧道'));
-  assert.ok(current.includes('現用'), 'marked as the current choice');
-  assert.ok(current.includes('最平'), 'and as cheapest, because it is');
+  // the chosen tunnel is flagged, and 最平 marks the cheapest at noon
+  assert.ok(selectedRow().includes('海底隧道（紅隧）'), 'the chosen tunnel is flagged');
+  assert.ok(selectedRow().includes('最平'), 'and is marked cheapest, because it is');
   const chips = $('alt-categories').innerHTML;
-  assert.equal((chips.match(/data-group=/g) || []).length, 8, 'every corridor is one click away');
+  assert.equal((chips.match(/data-group=/g) || []).length, 6, 'every corridor is one click away');
   const harbourChip = chips.slice(chips.indexOf('data-group="harbour"'), chips.indexOf('data-group="kln-nte"'));
   assert.ok(harbourChip.includes('aria-pressed="true"'), 'its corridor is preselected');
 });
@@ -506,7 +505,7 @@ test('the category selector follows the selected tunnel', () => {
   assert.ok(list.includes('大埔道'));
   // a free corridor reads 免費 and is never the one wearing 最平: that goes to
   // the cheapest tunnel, in a colour of its own
-  const freeRow = list.slice(list.indexOf('compare-row free'), list.indexOf('龍翔道'));
+  const freeRow = list.split('<li>').find((row) => row.includes('compare-row free')) || '';
   assert.ok(freeRow.includes('免費'), 'a free corridor has no price');
   assert.ok(!freeRow.includes('HK$'), 'and no dollar figure at all');
   assert.ok(!freeRow.includes('最平'), 'a free corridor is not 最平');
@@ -518,7 +517,7 @@ test('clicking an alternative switches the tunnel', () => {
   assert.ok(showsTunnel('tct', selectedName()), 'the result follows the click');
   const rows = $('alt-list').innerHTML.split('<li>').filter((row) => row.includes('大老山隧道'));
   assert.equal(rows.length, 1, 'the list follows the new selection');
-  assert.ok(rows[0].includes('現用'), 'and marks it as the current choice');
+  assert.ok(rows[0].includes('aria-current="true"'), 'and flags it as the chosen one');
 });
 
 test('choosing another corridor swaps the list in one click', () => {
@@ -528,30 +527,20 @@ test('choosing another corridor swaps the list in one click', () => {
   assert.ok(rows.includes('西區海底隧道（西隧）'));
   assert.ok(rows.includes('東區海底隧道（東隧）'));
   assert.ok(!rows.includes('大老山隧道'), 'nothing from other corridors');
-  assert.ok(!rows.includes('現用'), 'the selected tunnel belongs to another corridor');
+  assert.ok(!rows.includes('aria-current="true"'), 'the chosen tunnel belongs to another corridor');
 
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'nte-ntw' } }) } });
   assert.ok($('alt-list').innerHTML.includes('城門隧道'), 'another corridor, one click');
 
-  // and back to the selected tunnel's corridor
+  // and back to the chosen tunnel's corridor
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-nte' } }) } });
-  assert.ok($('alt-list').innerHTML.includes('現用'));
-});
-
-test('the airport corridor is the two free roads to Chek Lap Kok', () => {
-  fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'ntw-airport' } }) } });
-  const list = $('alt-list').innerHTML;
-  assert.ok(list.includes('屯門赤鱲角隧道'), 'the Tuen Mun link is listed');
-  assert.ok(list.includes('青嶼幹線／北大嶼山公路'), 'and the Lantau Link');
-  assert.ok(!list.includes('現用'), 'no tunnel of ours serves it');
-  assert.ok(!list.includes('HK$'), 'free roads carry no price at all');
-  assert.equal((list.match(/免費/g) || []).length, 2, 'each one reads 免費');
+  assert.ok($('alt-list').innerHTML.includes('aria-current="true"'));
 });
 
 test('every corridor the visitor can pick is offered as a chip', () => {
   const chips = $('alt-categories').innerHTML;
   assert.ok(!chips.includes('undefined'), 'no corridor label is missing');
-  for (const label of ['過海', '九龍市內', '其他隧道']) {
+  for (const label of ['過海', '港島市內', '其他隧道']) {
     assert.ok(chips.includes(label), `missing ${label}`);
   }
 });
@@ -572,20 +561,17 @@ test('a tunnel off the macro map still gets a corridor of its own', () => {
   assert.equal($('alt-card').hidden, false);
 });
 
-test('the chart draws one band per tunnel, and steps aside when none vary', () => {
-  selectTunnel('cht'); // the harbour corridor: red, eastern and western crossings
-  const bands = $('chart-bands').innerHTML;
-  assert.equal((bands.match(/band-row/g) || []).length, 3, 'one band per tunnel in the corridor');
-  assert.ok(bands.includes('band-row active'), 'the chosen tunnel is the highlighted band');
-  assert.ok(showsTunnel('whc', bands), 'the western crossing has a band of its own');
-
-  selectTunnel('lrt'); // Lion Rock's corridor is flat all day: nothing to chart
-  assert.equal($('chart-card').hidden, true);
-  assert.equal($('wrap').className, 'wrap no-chart', 'and the empty column drops away');
-
+test('the chart always shows the chosen tunnel, flat all day or not', () => {
   selectTunnel('cht');
   assert.equal($('chart-card').hidden, false);
-  assert.equal($('wrap').className, 'wrap');
+  assert.ok(($('chart-bar').innerHTML.match(/class="seg/g) || []).length > 1,
+    'the red tunnel varies through the day');
+
+  selectTunnel('lrt'); // Lion Rock is flat all day: one band covers the whole day
+  assert.equal($('chart-card').hidden, false);
+  assert.equal(($('chart-bar').innerHTML.match(/class="seg flat/g) || []).length, 1);
+
+  selectTunnel('cht');
 });
 
 test('the alternatives follow the chosen vehicle', () => {

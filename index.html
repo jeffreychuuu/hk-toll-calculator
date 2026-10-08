@@ -26,6 +26,11 @@
       </div>
     </nav>
 
+    <section class="card" id="current-card">
+      <h2 class="result-name" id="result-name">海底隧道（紅隧）</h2>
+      <p class="live-traffic" id="live-traffic"></p>
+    </section>
+
     <section class="card" id="alt-card" hidden>
       <div class="alt-head">
         <label class="alt-vehicle">
@@ -56,8 +61,8 @@
         </div>
       </div>
       <div class="chart" id="chart">
-        <div class="chart-bands" id="chart-bands"></div>
         <span class="marker-label" id="marker-label"></span>
+        <div class="chart-bar" id="chart-bar"></div>
         <div class="chart-marker" id="chart-marker"></div>
         <input id="time-slider" type="range" min="0" max="1439" step="1" value="0" aria-label="通行時間">
       </div>

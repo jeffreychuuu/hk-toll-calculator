@@ -33,9 +33,14 @@ const section = (id) => {
 };
 
 test('every control lives with what it belongs to', () => {
+  const current = section('current-card');
+  for (const id of ['result-name', 'live-traffic']) {
+    assert.ok(current.includes(`id="${id}"`), `#${id} names the chosen tunnel at the top`);
+  }
+
   const chart = section('chart-card');
   for (const id of ['date-input', 'daytype-select', 'hour-select', 'minute-select',
-    'time-slider', 'back-to-now', 'period-badge', 'next-hint', 'chart-bands']) {
+    'time-slider', 'back-to-now', 'period-badge', 'next-hint', 'chart-bar']) {
     assert.ok(chart.includes(`id="${id}"`), `#${id} should sit with the 24-hour chart`);
   }
 
@@ -44,6 +49,4 @@ test('every control lives with what it belongs to', () => {
     'holiday-notice', 'traffic-footnote']) {
     assert.ok(alt.includes(`id="${id}"`), `#${id} belongs with the comparison`);
   }
-
-  assert.ok(!html.includes('id="result-card"'), 'the separate result card is gone');
 });
