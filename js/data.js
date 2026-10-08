@@ -5,6 +5,10 @@
 // - https://www.td.gov.hk/tc/transport_in_hong_kong/tunnels_and_bridges_n/tlt/index.html
 // Rates as of October 2026.
 
+// The three harbour crossings share the time-varying scheme, so they are the
+// set a "cheapest crossing" comparison looks at.
+export const CROSS_HARBOUR_IDS = ['cht', 'ehc', 'whc'];
+
 const GROUP_TVT = { tc: '分時段收費', sc: '分时段收费', en: 'Time-varying toll' };
 const GROUP_FLAT = { tc: '劃一收費', sc: '划一收费', en: 'Flat rate' };
 
@@ -127,6 +131,29 @@ export const DBT_VEHICLES = [
 ];
 
 const FLAT8 = ['abt', 'smt', 'lrt', 'stg'];
+
+// A journey route mixes tunnels that classify vehicles differently, so routes
+// are priced through four canonical classes (car / moto / taxi / other) and
+// mapped per tunnel. Tate's Cairn has no "other" class, so goods traffic is
+// priced as its light goods vehicle.
+const CANONICAL = { car: 'car', moto: 'moto', taxi: 'taxi', other: 'other' };
+const ALL_CLASSES = { car: 'all', moto: 'all', taxi: 'all', other: 'all' };
+
+export const CANONICAL_FOR_TUNNEL = {
+  cht: CANONICAL, ehc: CANONICAL, whc: CANONICAL, tlt: CANONICAL,
+  abt: ALL_CLASSES, smt: ALL_CLASSES, lrt: ALL_CLASSES, stg: ALL_CLASSES,
+  tct: { car: 'pc', moto: 'mc', taxi: 'taxi', other: 'lgv' },
+  dbt: { car: 'c7', moto: 'c7', taxi: 'c7', other: 'c7' },
+};
+
+export const classIdFor = (tunnelId, canonical) => CANONICAL_FOR_TUNNEL[tunnelId]?.[canonical];
+
+export function canonicalFor(tunnelId, classId) {
+  const map = CANONICAL_FOR_TUNNEL[tunnelId];
+  if (!map) return 'car';
+  const hit = Object.entries(map).find(([, id]) => id === classId);
+  return hit ? hit[0] : 'other';
+}
 
 export const FLAT_TOLLS = {
   abt: { all: 8 },

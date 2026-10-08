@@ -39,12 +39,16 @@ const STORAGE_KEY = 'hk-toll-calculator.selection';
 
 const mkButton = (ds) => ({
   dataset: ds, ariaPressed: null, textContent: '', disabled: false,
-  setAttribute(k, v) { if (k === 'aria-pressed') this.ariaPressed = v; },
+  setAttribute(k, v) {
+    if (k === 'aria-pressed') this.ariaPressed = v;
+    if (k === 'aria-selected') this.ariaSelected = v;
+  },
   addEventListener() {}, closest() { return this; },
 });
 const daytypeButtons = ['weekday', 'weekend'].map((dt) => mkButton({ daytype: dt }));
 const modeButtons = ['date', 'category'].map((m) => mkButton({ mode: m }));
-const buttonsFor = { 'daytype-toggle': daytypeButtons, 'mode-toggle': modeButtons };
+const viewButtons = ['fares', 'journey', 'schedule'].map((view) => mkButton({ view }));
+const buttonsFor = { 'daytype-toggle': daytypeButtons, 'mode-toggle': modeButtons, 'view-tabs': viewButtons };
 
 const elements = new Map();
 function mk(id) {
@@ -74,6 +78,9 @@ for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amou
   'date-input', 'date-field', 'category-field', 'mode-toggle', 'daytype-toggle',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
   'chart-title', 'label-tunnel', 'label-vehicle', 'label-date', 'label-category', 'label-time', 'lang-picker',
+  'compare-card', 'compare-title', 'compare-picks', 'compare-list', 'compare-note',
+  'plan-card', 'plan-title', 'label-from', 'label-to', 'from-select', 'to-select', 'plan-result',
+  'view-tabs', 'view-fares', 'view-journey', 'view-schedule',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
 globalThis.document = {
@@ -290,6 +297,8 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal(document.title, 'HK Toll Calculator');
   assert.equal($('lang-current').textContent, 'English');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
+  assert.equal($('compare-title').textContent, 'Toll comparison');
+  assert.equal($('plan-title').textContent, 'Journey suggestion');
   assert.equal($('label-tunnel').textContent, 'Tunnel');
   assert.equal($('label-vehicle').textContent, 'Vehicle class');
   assert.equal($('label-time').textContent, 'Crossing time');
@@ -456,6 +465,166 @@ test('a picked date is not overwritten by the clock tick', () => {
 
   assert.equal($('date-input').value, '2026-10-19', 'the tick must not overwrite a picked date');
   assert.equal($('price-amount').textContent, '25.00'); // still the holiday schedule
+});
+
+test('the comparison is organised by the kind of trip', async () => {
+  storage.delete('hk-toll-calculator.selection');
+  storage.delete('hk-toll-calculator.compareGroup');
+  fakeNowMs = new RealDate(2026, 9, 8, 12, 0).getTime(); // midweek noon
+  await import('../js/app.js?cmp=1');
+
+  const chips = $('compare-picks').innerHTML;
+  assert.equal((chips.match(/data-group=/g) || []).length, 6, 'six corridor categories');
+  for (const label of ['過海', '九龍 ↔ 新界東', '九龍 ↔ 新界西', '新界東 ↔ 新界西', '港島市內', '九龍市內']) {
+    assert.ok(chips.includes(label), `missing category ${label}`);
+  }
+
+  const list = $('compare-list').innerHTML;
+  assert.equal((list.match(/compare-row/g) || []).length, 3, 'the harbour crossings by default');
+  for (const name of ['海底隧道（紅隧）', '東區海底隧道（東隧）', '西區海底隧道（西隧）']) {
+    assert.ok(list.includes(name), `missing ${name}`);
+  }
+  assert.equal((list.match(/HK\$ 30\.00/g) || []).length, 3);
+});
+
+test('choosing a corridor category shows its own alternatives, cheapest first', () => {
+  fire('compare-picks', 'click', { target: { closest: () => ({ dataset: { group: 'kln-ntw' } }) } });
+
+  const list = $('compare-list').innerHTML;
+  assert.ok(list.includes('屯門公路'), 'the free corridor is offered beside the tunnel');
+  assert.ok(list.includes('大欖隧道'));
+  assert.ok(list.includes('HK$ 0.00'));
+  assert.ok(list.indexOf('屯門公路') < list.indexOf('大欖隧道'), 'sorted cheapest first');
+});
+
+test('the cheapest is marked inside the category, not across categories', () => {
+  const list = $('compare-list').innerHTML;
+  assert.equal((list.match(/cheapest/g) || []).length, 1, 'exactly one winner here');
+  assert.equal((list.match(/最平/g) || []).length, 1);
+  assert.ok(list.indexOf('最平') > list.indexOf('屯門公路'), 'the free corridor wins this one');
+});
+
+test('the chosen category is remembered', async () => {
+  assert.equal(storage.get('hk-toll-calculator.compareGroup'), 'kln-ntw');
+
+  await import('../js/app.js?cmp=2');
+  assert.ok($('compare-list').innerHTML.includes('大欖隧道'), 'still on the north-west corridor');
+});
+
+test('clicking a tunnel row switches the selected tunnel', () => {
+  fire('compare-list', 'click', { target: { closest: () => ({ dataset: { tunnelId: 'tlt' } }) } });
+  assert.equal($('tunnel-select').value, 'tlt');
+  assert.equal($('result-title').textContent, '大欖隧道');
+});
+
+test('a tie inside a category says so', () => {
+  fire('compare-picks', 'click', { target: { closest: () => ({ dataset: { group: 'harbour' } }) } });
+  setTime('12', '00');
+  assert.equal($('compare-note').hidden, false);
+  assert.ok($('compare-note').textContent.includes('30.00'));
+});
+
+test('the journey card groups districts by macro area', async () => {
+  const { REGIONS: ALL_DISTRICTS } = await import('../js/regions.js');
+  storage.delete('hk-toll-calculator.selection');
+  fakeNowMs = new RealDate(2026, 9, 8, 12, 0).getTime();
+  await import('../js/app.js?plan=2');
+
+  const from = $('from-select').innerHTML;
+  assert.equal((from.match(/<optgroup/g) || []).length, 3, 'island / kowloon / new territories');
+  for (const label of ['港島', '九龍', '新界']) assert.ok(from.includes(label), `missing group ${label}`);
+  assert.equal((from.match(/<option/g) || []).length, ALL_DISTRICTS.length + 1, 'every district plus unset');
+  assert.ok($('plan-result').innerHTML.includes('揀返起點同終點'));
+});
+
+test('a harbour trip lists routes with their tunnels and total toll', () => {
+  $('from-select').value = 'nt-st';
+  fire('from-select', 'change');
+  $('to-select').value = 'hki-wc';
+  fire('to-select', 'change');
+
+  const html = $('plan-result').innerHTML;
+  assert.ok(html.includes('獅子山隧道'), 'the approach tunnel is named');
+  assert.ok(html.includes('海底隧道（紅隧）'));
+  assert.ok(html.includes('東區海底隧道（東隧）'));
+  assert.ok(html.includes('HK$ 38.00'), 'Lion Rock + red tunnel at noon');
+  assert.ok(html.includes('大埔道'), 'the free corridor is named');
+  assert.ok(html.indexOf('大埔道') < html.indexOf('海底隧道（紅隧）'), 'road then crossing, in order');
+  assert.ok(html.includes('最平'), 'the cheapest route is labelled');
+});
+
+test('a route with no tunnel is labelled as free roads', () => {
+  $('from-select').value = 'nt-st';
+  fire('from-select', 'change');
+  $('to-select').value = 'nt-tw';
+  fire('to-select', 'change');
+
+  const html = $('plan-result').innerHTML;
+  assert.ok(html.includes('林錦公路／青山公路'), 'the free corridor is named');
+  assert.ok(html.includes('HK$ 0.00'));
+  assert.ok(html.includes('城門隧道'));
+  assert.ok(html.includes('HK$ 8.00'));
+});
+
+test('a trip that needs no tunnel at all still gets a suggestion', () => {
+  $('from-select').value = 'kln-ytm';
+  fire('from-select', 'change');
+  $('to-select').value = 'kln-kt';
+  fire('to-select', 'change');
+
+  const html = $('plan-result').innerHTML;
+  assert.ok(html.includes('太子道東'), 'the free road is named');
+  assert.ok(html.includes('HK$ 0.00'));
+  assert.ok(html.includes('最平'));
+});
+
+test('the route list is capped so the card stays readable', () => {
+  $('from-select').value = 'nt-tm'; // Tuen Mun: the widest choice of options
+  fire('from-select', 'change');
+  $('to-select').value = 'hki-cw';
+  fire('to-select', 'change');
+
+  const rows = ($('plan-result').innerHTML.match(/plan-route-name/g) || []).length;
+  assert.ok(rows >= 1 && rows <= 6, `expected 1-6 routes, got ${rows}`);
+});
+
+test('the route totals follow the chosen vehicle', () => {
+  $('from-select').value = 'nt-st';
+  fire('from-select', 'change');
+  $('to-select').value = 'hki-wc';
+  fire('to-select', 'change');
+  assert.ok($('plan-result').innerHTML.includes('HK$ 38.00'));
+
+  $('vehicle-select').value = 'moto';
+  fire('vehicle-select', 'change');
+  assert.ok($('plan-result').innerHTML.includes('HK$ 20.00'), 'motorcycle: Lion Rock $8 + red tunnel $12');
+});
+
+test('the output is split into sections and only one is shown', async () => {
+  await import('../js/app.js?tabs=1');
+
+  assert.equal(viewButtons.length, 3);
+  assert.equal(viewButtons[0].ariaSelected, 'true', 'the fare comparison is the default section');
+  assert.equal($('view-fares').hidden, false);
+  assert.equal($('view-journey').hidden, true);
+  assert.equal($('view-schedule').hidden, true);
+});
+
+test('choosing a section reveals that section alone', () => {
+  fire('view-tabs', 'click', { target: viewButtons[1] }); // journey
+  assert.equal($('view-fares').hidden, true);
+  assert.equal($('view-journey').hidden, false);
+  assert.equal($('view-schedule').hidden, true);
+  assert.equal(viewButtons[1].ariaSelected, 'true');
+  assert.equal(viewButtons[0].ariaSelected, 'false');
+
+  fire('view-tabs', 'click', { target: viewButtons[2] }); // schedule
+  assert.equal($('view-journey').hidden, true);
+  assert.equal($('view-schedule').hidden, false);
+
+  fire('view-tabs', 'click', { target: viewButtons[0] }); // back to fares
+  assert.equal($('view-fares').hidden, false);
+  assert.equal($('view-schedule').hidden, true);
 });
 
 test('a stale, string-named data module can never render undefined', async () => {

@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  TUNNELS, FLAT_TOLLS, TVT_FIXED, vehiclesFor,
+  TUNNELS, FLAT_TOLLS, TVT_FIXED, vehiclesFor, classIdFor, canonicalFor,
   TVT_VEHICLES, FLAT8_VEHICLES, TCT_VEHICLES, DBT_VEHICLES,
 } from '../js/data.js';
 
@@ -69,4 +69,20 @@ test('every tunnel has either a flat table or a fixed table or schedules', () =>
     const ok = t.pricing === 'flat' ? !!FLAT_TOLLS[t.id] : !!TVT_FIXED[t.id];
     assert.ok(ok, `missing toll table for ${t.id}`);
   }
+});
+
+test('the canonical vehicle classes map onto each tunnel\'s own taxonomy', () => {
+  assert.equal(classIdFor('cht', 'car'), 'car');
+  assert.equal(classIdFor('tlt', 'other'), 'other');
+  assert.equal(classIdFor('abt', 'car'), 'all');
+  assert.equal(classIdFor('smt', 'moto'), 'all');
+  assert.equal(classIdFor('tct', 'car'), 'pc');
+  assert.equal(classIdFor('tct', 'moto'), 'mc');
+  assert.equal(classIdFor('tct', 'other'), 'lgv');
+
+  assert.equal(canonicalFor('cht', 'moto'), 'moto');
+  assert.equal(canonicalFor('tct', 'pc'), 'car');
+  assert.equal(canonicalFor('tct', 'mc'), 'moto');
+  assert.equal(canonicalFor('tct', 'dbus'), 'other');
+  assert.equal(canonicalFor('abt', 'all'), 'car');
 });

@@ -38,6 +38,39 @@
       <div class="hint" id="next-hint" hidden></div>
     </section>
 
+    <div class="view-tabs" id="view-tabs" role="tablist">
+      <button type="button" role="tab" data-view="fares" aria-selected="true">收費比較</button>
+      <button type="button" role="tab" data-view="journey" aria-selected="false">行程建議</button>
+      <button type="button" role="tab" data-view="schedule" aria-selected="false">時間表</button>
+    </div>
+
+    <div class="view-panel" id="view-fares">
+    <section class="card" id="compare-card">
+      <h2 id="compare-title">隧道收費比較</h2>
+      <div class="compare-picks" id="compare-picks"></div>
+      <ul class="compare-list" id="compare-list"></ul>
+      <p class="compare-note" id="compare-note" hidden></p>
+    </section>
+    </div>
+
+    <div class="view-panel" id="view-journey" hidden>
+      <section class="card" id="plan-card">
+        <h2 id="plan-title">行程建議</h2>
+        <div class="field-row">
+          <label class="field">
+            <span class="field-label" id="label-from">起點</span>
+            <select id="from-select"></select>
+          </label>
+          <label class="field">
+            <span class="field-label" id="label-to">終點</span>
+            <select id="to-select"></select>
+          </label>
+        </div>
+        <div class="plan-result" id="plan-result"></div>
+      </section>
+    </div>
+
+    <div class="view-panel" id="view-schedule" hidden>
     <section class="card" id="chart-card">
       <div class="chart-head">
         <h2 id="chart-title">24小時收費時段分佈圖</h2>
@@ -52,6 +85,7 @@
       </div>
       <ul class="legend" id="legend"></ul>
     </section>
+    </div>
 
     <section class="card form-card">
       <div class="field-row">
