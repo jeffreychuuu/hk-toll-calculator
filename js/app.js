@@ -1,6 +1,6 @@
 // js/app.js
-import { TUNNELS, vehiclesFor, CROSS_HARBOUR_IDS, canonicalFor } from './data.js';
-import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison, priceRoute } from './engine.js';
+import { TUNNELS, vehiclesFor, CROSS_HARBOUR_IDS, canonicalFor, classIdFor } from './data.js';
+import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison } from './engine.js';
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 import { REGIONS, regionById, planRoutes, compareGroups } from './regions.js';
@@ -299,12 +299,7 @@ function renderCompare() {
     ...active.roads.map((road) => ({ kind: 'road', id: `road:${road.en}`, name: road[state.lang] })),
   ].map((option) => ({
     ...option,
-    amount: priceRoute({
-      tunnels: option.kind === 'tunnel' ? [option.id] : [],
-      vehicle,
-      dayType: state.dayType,
-      minutes: state.minutes,
-    }),
+    amount: option.kind === 'tunnel' ? priceTunnelFor(option.id, vehicle) : 0,
   })).sort((a, b) => a.amount - b.amount);
 
   const cheapest = options.length ? options[0].amount : 0;
@@ -326,6 +321,19 @@ function renderCompare() {
 }
 
 const tunnelById = (id) => TUNNELS.find((x) => x.id === id);
+
+// Other tunnels are priced through the canonical class, but the tunnel the
+// visitor actually picked keeps their exact class, so the comparison can never
+// disagree with the result card (a minibus on Tate's Cairn is $23, not $24).
+const classForTunnel = (tunnelId, canonical) =>
+  (tunnelId === state.tunnelId ? state.vehicleId : classIdFor(tunnelId, canonical));
+
+const priceTunnelFor = (tunnelId, canonical) => getToll({
+  tunnelId,
+  vehicleId: classForTunnel(tunnelId, canonical),
+  dayType: state.dayType,
+  minutes: state.minutes,
+}).amount;
 
 function fillPlanSelects() {
   const copy = t();
@@ -363,9 +371,7 @@ function renderPlan() {
     .map((route) => ({
       legs: route.legs,
       tunnels: route.tunnels,
-      amount: priceRoute({
-        tunnels: route.tunnels, vehicle, dayType: state.dayType, minutes: state.minutes,
-      }),
+      amount: route.tunnels.reduce((sum, id) => sum + priceTunnelFor(id, vehicle), 0),
     }))
     .sort((a, b) => a.amount - b.amount)
     .slice(0, ROUTES_SHOWN);

@@ -18,6 +18,8 @@ test('tunnel registry covers all ten paid tunnels', () => {
 test('vehicle options depend on the tunnel', () => {
   assert.deepEqual(vehiclesFor('cht'), TVT_VEHICLES);
   assert.deepEqual(vehiclesFor('abt'), FLAT8_VEHICLES);
+  assert.deepEqual(vehiclesFor('abt').map((v) => v.id), ['car', 'moto', 'taxi', 'other'],
+    'the flat-rate tunnels name the four classes so the vehicle is never guessed');
   assert.deepEqual(vehiclesFor('tct'), TCT_VEHICLES);
   assert.deepEqual(vehiclesFor('dbt'), DBT_VEHICLES);
   assert.throws(() => vehiclesFor('nope'));
@@ -84,5 +86,7 @@ test('the canonical vehicle classes map onto each tunnel\'s own taxonomy', () =>
   assert.equal(canonicalFor('tct', 'pc'), 'car');
   assert.equal(canonicalFor('tct', 'mc'), 'moto');
   assert.equal(canonicalFor('tct', 'dbus'), 'other');
-  assert.equal(canonicalFor('abt', 'all'), 'car');
+  assert.equal(canonicalFor('abt', 'car'), 'car', 'a canonical class stays itself');
+  assert.equal(canonicalFor('stg', 'moto'), 'moto');
+  assert.equal(canonicalFor('abt', 'all'), 'car', 'the legacy all-vehicles id still resolves');
 });

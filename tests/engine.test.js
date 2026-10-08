@@ -60,6 +60,18 @@ test('fixed-rate vehicles are flat all day', () => {
   assert.equal(toll('tlt', 'other', 'weekend', '03:00').amount, 43);
 });
 
+test('every vehicle class is charged the same on a flat-rate tunnel', () => {
+  for (const tunnelId of ['abt', 'smt', 'lrt', 'stg']) {
+    for (const vehicleId of ['car', 'moto', 'taxi', 'other']) {
+      assert.equal(
+        getToll({ tunnelId, vehicleId, dayType: 'weekday', minutes: 720 }).amount,
+        8,
+        `${tunnelId} / ${vehicleId}`,
+      );
+    }
+  }
+});
+
 test('flat tunnels and per-class tables', () => {
   assert.deepEqual(toll('abt', 'all', 'weekday', '12:00'), { amount: 8, periodType: 'flat' });
   assert.equal(toll('tct', 'dbus', 'weekday', '12:00').amount, 35);
