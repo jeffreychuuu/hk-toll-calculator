@@ -1,14 +1,7 @@
 // js/engine.js
 // Pure toll calculation. No DOM access, no side effects — importable by Node.
+// User-facing copy lives in js/i18n.js; this module returns period types only.
 import { TUNNELS, FLAT_TOLLS, TVT_FIXED, TVT_SCHEDULES } from './data.js';
-
-export const PERIOD_LABEL = {
-  'non-peak': '非繁忙時段',
-  normal: '一般時段',
-  peak: '繁忙時段',
-  transition: '過渡期',
-  flat: '全日劃一',
-};
 
 const findSegment = (schedule, minutes) =>
   schedule.find((seg) => minutes >= seg.s && minutes <= seg.e);

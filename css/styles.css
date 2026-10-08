@@ -42,6 +42,21 @@ body {
   box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
 }
 
+/* Language switch — a slim top bar keeps the switcher out of the cards */
+.topbar { display: flex; justify-content: flex-end; }
+.lang-switch { display: inline-flex; background: #fff; border-radius: 999px; padding: 3px; gap: 2px; }
+.lang-switch button {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+.lang-switch button[aria-pressed="true"] { background: #e8f1ff; color: var(--focus); font-weight: 700; }
+
 /* Result card */
 .result-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
@@ -218,13 +233,15 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
     grid-template-areas:
+      "topbar topbar"
       "result form"
       "chart  form"
       "footer footer";
     align-items: start;
     gap: 14px;
-    padding-top: 18px;
+    padding-top: 14px;
   }
+  .topbar { grid-area: topbar; }
   #result-card { grid-area: result; }
   #chart-card { grid-area: chart; }
   .form-card { grid-area: form; }

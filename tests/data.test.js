@@ -37,6 +37,33 @@ test('fixed time-varying vehicles carry per-tunnel rates', () => {
   assert.deepEqual(TVT_FIXED.tlt, { taxi: 28, other: 43 });
 });
 
+test('every tunnel and vehicle name exists in all three languages', () => {
+  const langs = ['tc', 'sc', 'en'];
+  const checkName = (name, id, lang) => {
+    assert.equal(typeof name[lang], 'string', `${id}.${lang} missing`);
+    assert.ok(name[lang].trim().length > 0, `${id}.${lang} empty`);
+  };
+  for (const t of TUNNELS) {
+    for (const lang of langs) {
+      checkName(t.name, t.id, lang);
+      checkName(t.group, `${t.id}.group`, lang);
+    }
+    if (t.note) for (const lang of langs) checkName(t.note, `${t.id}.note`, lang);
+  }
+  for (const list of [TVT_VEHICLES, FLAT8_VEHICLES, TCT_VEHICLES, DBT_VEHICLES]) {
+    for (const v of list) for (const lang of langs) checkName(v.name, v.id, lang);
+  }
+});
+
+test('the transport department English names are used', () => {
+  const byId = Object.fromEntries(TUNNELS.map((t) => [t.id, t.name]));
+  assert.equal(byId.tct.en, "Tate's Cairn Tunnel");
+  assert.equal(byId.cht.en, 'Cross-Harbour Tunnel (Hung Hom)');
+  assert.equal(byId.whc.en, 'Western Harbour Crossing');
+  assert.equal(byId.tlt.en, 'Tai Lam Tunnel');
+  assert.equal(byId.abt.en, 'Aberdeen Tunnel');
+});
+
 test('every tunnel has either a flat table or a fixed table or schedules', () => {
   for (const t of TUNNELS) {
     const ok = t.pricing === 'flat' ? !!FLAT_TOLLS[t.id] : !!TVT_FIXED[t.id];
