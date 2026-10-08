@@ -5,55 +5,125 @@
 // - https://www.td.gov.hk/tc/transport_in_hong_kong/tunnels_and_bridges_n/tlt/index.html
 // Rates as of October 2026.
 
+const GROUP_TVT = { tc: '分時段收費', sc: '分时段收费', en: 'Time-varying toll' };
+const GROUP_FLAT = { tc: '劃一收費', sc: '划一收费', en: 'Flat rate' };
+
 export const TUNNELS = [
-  { id: 'cht', name: '海底隧道（紅隧）', pricing: 'tvt', group: '分時段收費' },
-  { id: 'ehc', name: '東區海底隧道（東隧）', pricing: 'tvt', group: '分時段收費' },
-  { id: 'whc', name: '西區海底隧道（西隧）', pricing: 'tvt', group: '分時段收費' },
-  { id: 'tlt', name: '大欖隧道', pricing: 'tvt', group: '分時段收費' },
-  { id: 'abt', name: '香港仔隧道', pricing: 'flat', group: '劃一收費' },
-  { id: 'smt', name: '城門隧道', pricing: 'flat', group: '劃一收費' },
-  { id: 'lrt', name: '獅子山隧道', pricing: 'flat', group: '劃一收費' },
-  { id: 'stg', name: '沙田嶺／尖山／大圍隧道', pricing: 'flat', group: '劃一收費' },
-  { id: 'tct', name: '大老山隧道', pricing: 'flat', group: '劃一收費' },
+  {
+    id: 'cht',
+    name: { tc: '海底隧道（紅隧）', sc: '海底隧道（红隧）', en: 'Cross-Harbour Tunnel (Hung Hom)' },
+    pricing: 'tvt',
+    group: GROUP_TVT,
+  },
+  {
+    id: 'ehc',
+    name: { tc: '東區海底隧道（東隧）', sc: '东区海底隧道（东隧）', en: 'Eastern Harbour Crossing' },
+    pricing: 'tvt',
+    group: GROUP_TVT,
+  },
+  {
+    id: 'whc',
+    name: { tc: '西區海底隧道（西隧）', sc: '西区海底隧道（西隧）', en: 'Western Harbour Crossing' },
+    pricing: 'tvt',
+    group: GROUP_TVT,
+  },
+  {
+    id: 'tlt',
+    name: { tc: '大欖隧道', sc: '大榄隧道', en: 'Tai Lam Tunnel' },
+    pricing: 'tvt',
+    group: GROUP_TVT,
+  },
+  {
+    id: 'abt',
+    name: { tc: '香港仔隧道', sc: '香港仔隧道', en: 'Aberdeen Tunnel' },
+    pricing: 'flat',
+    group: GROUP_FLAT,
+  },
+  {
+    id: 'smt',
+    name: { tc: '城門隧道', sc: '城门隧道', en: 'Shing Mun Tunnels' },
+    pricing: 'flat',
+    group: GROUP_FLAT,
+  },
+  {
+    id: 'lrt',
+    name: { tc: '獅子山隧道', sc: '狮子山隧道', en: 'Lion Rock Tunnel' },
+    pricing: 'flat',
+    group: GROUP_FLAT,
+  },
+  {
+    id: 'stg',
+    name: {
+      tc: '沙田嶺／尖山／大圍隧道',
+      sc: '沙田岭／尖山／大围隧道',
+      en: "Sha Tin Heights / Eagle's Nest / Tai Wai Tunnels",
+    },
+    pricing: 'flat',
+    group: GROUP_FLAT,
+  },
+  {
+    id: 'tct',
+    name: { tc: '大老山隧道', sc: '大老山隧道', en: "Tate's Cairn Tunnel" },
+    pricing: 'flat',
+    group: GROUP_FLAT,
+  },
   {
     id: 'dbt',
-    name: '愉景灣隧道',
+    name: { tc: '愉景灣隧道', sc: '愉景湾隧道', en: 'Discovery Bay Tunnel' },
     pricing: 'flat',
-    group: '劃一收費',
-    note: '僅向往愉景灣方向嘅車輛收取，的士免費',
+    group: GROUP_FLAT,
+    note: {
+      tc: '僅向往愉景灣方向嘅車輛收取，的士免費',
+      sc: '仅向往愉景湾方向的车辆收取，的士免费',
+      en: 'Charged only towards Discovery Bay; taxis are not charged',
+    },
   },
 ];
 
 export const TVT_VEHICLES = [
-  { id: 'car', name: '私家車' },
-  { id: 'moto', name: '電單車／機動三輪車' },
-  { id: 'taxi', name: '的士' },
-  { id: 'other', name: '其他商用車輛（貨車／小巴／巴士）' },
+  { id: 'car', name: { tc: '私家車', sc: '私家车', en: 'Private car' } },
+  { id: 'moto', name: { tc: '電單車／機動三輪車', sc: '电单车／机动三轮车', en: 'Motorcycle / motor tricycle' } },
+  { id: 'taxi', name: { tc: '的士', sc: '的士', en: 'Taxi' } },
+  {
+    id: 'other',
+    name: {
+      tc: '其他商用車輛（貨車／小巴／巴士）',
+      sc: '其他商用车辆（货车／小巴／巴士）',
+      en: 'Other commercial vehicles (goods vehicles, minibuses, buses)',
+    },
+  },
 ];
 
-export const FLAT8_VEHICLES = [{ id: 'all', name: '所有車輛' }];
+export const FLAT8_VEHICLES = [{ id: 'all', name: { tc: '所有車輛', sc: '所有车辆', en: 'All vehicles' } }];
 
 export const TCT_VEHICLES = [
-  { id: 'mc', name: '電單車、機動三輪車' },
-  { id: 'pc', name: '私家車' },
-  { id: 'taxi', name: '的士' },
-  { id: 'pmb', name: '公共小型巴士' },
-  { id: 'pvmb', name: '私家小型巴士' },
-  { id: 'lgv', name: '輕型貨車（≤5.5 公噸）' },
-  { id: 'mgv', name: '中型貨車（5.5–24 公噸）' },
-  { id: 'hgv', name: '重型貨車（>24 公噸）' },
-  { id: 'sbus', name: '公共及私家單層巴士' },
-  { id: 'dbus', name: '公共及私家雙層巴士' },
+  { id: 'mc', name: { tc: '電單車、機動三輪車', sc: '电单车、机动三轮车', en: 'Motorcycle, motor tricycle' } },
+  { id: 'pc', name: { tc: '私家車', sc: '私家车', en: 'Private car' } },
+  { id: 'taxi', name: { tc: '的士', sc: '的士', en: 'Taxi' } },
+  { id: 'pmb', name: { tc: '公共小型巴士', sc: '公共小型巴士', en: 'Public minibus' } },
+  { id: 'pvmb', name: { tc: '私家小型巴士', sc: '私家小型巴士', en: 'Private minibus' } },
+  { id: 'lgv', name: { tc: '輕型貨車（≤5.5 公噸）', sc: '轻型货车（≤5.5 公吨）', en: 'Light goods vehicle (≤5.5 t)' } },
+  { id: 'mgv', name: { tc: '中型貨車（5.5–24 公噸）', sc: '中型货车（5.5–24 公吨）', en: 'Medium goods vehicle (5.5–24 t)' } },
+  { id: 'hgv', name: { tc: '重型貨車（>24 公噸）', sc: '重型货车（>24 公吨）', en: 'Heavy goods vehicle (>24 t)' } },
+  { id: 'sbus', name: { tc: '公共及私家單層巴士', sc: '公共及私家单层巴士', en: 'Public & private single-deck bus' } },
+  { id: 'dbus', name: { tc: '公共及私家雙層巴士', sc: '公共及私家双层巴士', en: 'Public & private double-deck bus' } },
 ];
 
 export const DBT_VEHICLES = [
-  { id: 'c1', name: '政府／救護／消防／警務／海關／懲教車輛' },
-  { id: 'c2', name: '私家小型巴士' },
-  { id: 'c3', name: '公共及私家巴士' },
-  { id: 'c4', name: '輕型貨車（≤5.5 公噸）' },
-  { id: 'c5', name: '中型貨車（5.5–24 公噸）' },
-  { id: 'c6', name: '重型貨車（>24 公噸）' },
-  { id: 'c7', name: '其他車輛（的士除外）' },
+  {
+    id: 'c1',
+    name: {
+      tc: '政府／救護／消防／警務／海關／懲教車輛',
+      sc: '政府／救护／消防／警务／海关／惩教车辆',
+      en: 'Government, ambulance, fire, police, customs or correctional services vehicle',
+    },
+  },
+  { id: 'c2', name: { tc: '私家小型巴士', sc: '私家小型巴士', en: 'Private minibus' } },
+  { id: 'c3', name: { tc: '公共及私家巴士', sc: '公共及私家巴士', en: 'Public & private bus' } },
+  { id: 'c4', name: { tc: '輕型貨車（≤5.5 公噸）', sc: '轻型货车（≤5.5 公吨）', en: 'Light goods vehicle (≤5.5 t)' } },
+  { id: 'c5', name: { tc: '中型貨車（5.5–24 公噸）', sc: '中型货车（5.5–24 公吨）', en: 'Medium goods vehicle (5.5–24 t)' } },
+  { id: 'c6', name: { tc: '重型貨車（>24 公噸）', sc: '重型货车（>24 公吨）', en: 'Heavy goods vehicle (>24 t)' } },
+  { id: 'c7', name: { tc: '其他車輛（的士除外）', sc: '其他车辆（的士除外）', en: 'Other vehicles (except taxis)' } },
 ];
 
 const FLAT8 = ['abt', 'smt', 'lrt', 'stg'];

@@ -16,12 +16,14 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
   - Time-varying toll: Cross-Harbour Tunnel (Hung Hom), Eastern Harbour Crossing, Western Harbour Crossing, Tai Lam Tunnel
   - Flat-rate tunnels: Aberdeen, Shing Mun, Lion Rock, Sha Tin Pass / Tsuen Shin / Tai Wai, Tate's Cross, Discovery Bay Tunnel
 - **Real-time toll card** — current period badge (peak / normal / non-peak / transition), price, and next-period hint
-- **24-hour distribution chart** — colour-coded periods with a current-time marker and legend
+- **24-hour distribution chart** — colour-coded periods with a live date/time label and a current-time marker
 - **Flexible inputs**
   - Tunnel selector
   - Vehicle class selector (private car, motorcycle, taxi, goods vehicles, buses, etc.)
-  - Day type: auto-detects Hong Kong public holidays, with manual override (Mon–Sat vs Sun & public holiday)
-  - Time picker + slider for any time of day
+  - Date mode switch — pick a **specific date** (the weekday / Sun-and-public-holiday schedule follows it automatically) or a **date type** for a general rate; each mode remembers its own value
+  - Hour and minute dropdowns for any time of day, a slider, plus a **back-to-now** button
+- **Remembers your choice** — the last tunnel and vehicle class are restored on the next visit (localStorage)
+- **Three languages** — 繁體中文 / 简体中文 / English, picked automatically from the browser language and remembered once chosen
 - **Transition-aware pricing** — computes exact stepwise rates during transition windows (e.g. +$2 every 2 minutes for private cars), matching TD's minute-by-minute schedule
 - **Pure static** — no backend, no build step, no runtime dependencies
 
@@ -48,6 +50,7 @@ hk-toll-calculator/
 ├── js/
 │   ├── data.js         # toll schedules + vehicle classes
 │   ├── holidays.js     # HK public holiday dates
+│   ├── i18n.js         # UI copy + bundle language detection
 │   ├── engine.js       # pure toll calculation functions
 │   └── app.js          # UI wiring & rendering
 ├── tests/              # Node test runner suites
