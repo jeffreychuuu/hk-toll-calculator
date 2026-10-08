@@ -270,8 +270,9 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 .alt-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .compare-row {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 2px 10px;
   width: 100%;
   border: 0;
   background: transparent;
@@ -285,7 +286,9 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 }
 .compare-row:hover { background: var(--form); }
 .compare-row.cheapest { background: #e7f6ee; color: #157a4d; font-weight: 700; }
-.compare-name { flex: 1 1 auto; min-width: 0; }
+/* The name takes a line of its own, so it is never squeezed into a column of
+   single Chinese characters; the readings, price and tags follow underneath. */
+.compare-name { flex: 1 1 100%; min-width: 0; }
 .compare-price { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .compare-tag { color: var(--muted); font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
 .compare-row.cheapest .compare-price,
@@ -293,19 +296,13 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 div.compare-row { cursor: default; }
 div.compare-row:hover { background: transparent; }
 
-/* Narrow screens: the name would be squeezed to one character per line beside
-   the readings, the price and the tags, so give it a line of its own. */
-@media (max-width: 640px) {
-  .compare-row { flex-wrap: wrap; row-gap: 2px; }
-  .compare-name { flex: 1 1 100%; }
-}
-
 /* Live conditions from the Transport Department */
 .traffic { font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
 .traffic-free { color: #157a4d; }
 .traffic-slow { color: #a2650f; }
 .traffic-jam { color: #b91c1c; }
 .traffic-closed { color: #6b7280; }
+.traffic-sides { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 1px; }
 .live-traffic { margin: 8px 0 0; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .live-traffic:empty { display: none; }
 .traffic-hint { color: var(--muted); font-size: 0.78rem; }
