@@ -46,7 +46,11 @@ body {
 }
 
 /* Language picker — globe trigger with a drop-down menu */
-.topbar { display: flex; justify-content: flex-end; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.site-name { margin: 0; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.01em; }
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.icon-link { display: inline-flex; color: var(--muted); }
+.icon-link:hover { color: var(--ink); }
 .lang-picker { position: relative; }
 
 .lang-trigger {
@@ -372,7 +376,7 @@ select {
   font-family: inherit;
   color: var(--ink);
 }
-select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+select:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 
 .time-selects { display: flex; align-items: center; gap: 8px; }
 #hour-select, #minute-select {
@@ -425,6 +429,21 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 
 .site-footer { color: var(--muted); font-size: 0.78rem; line-height: 1.65; padding: 0 4px; }
 .site-footer a { color: var(--focus); }
+/* The reference copy folded into the footer — real text for search engines, but
+   fine print rather than a section of its own */
+.site-footer p { margin: 0; }
+.site-footer summary { cursor: pointer; }
+.site-footer details[open] > summary { color: var(--focus); }
+.site-footer h3 { margin: 14px 0 4px; font-size: 0.84rem; color: var(--ink); }
+.site-footer h4 { margin: 10px 0 2px; font-size: 0.8rem; color: var(--ink); }
+.site-footer .tbl-day { margin: 6px 0 2px; font-weight: 600; color: var(--ink); }
+.site-footer .faq { margin: 0; }
+.site-footer .faq dt { margin-top: 10px; color: var(--ink); font-weight: 600; }
+.site-footer .faq dd { margin: 3px 0 0; }
+.site-footer table { width: 100%; border-collapse: collapse; margin: 3px 0 10px; font-size: 0.76rem; }
+.site-footer th, .site-footer td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+.site-footer th { color: var(--muted); font-weight: 600; }
+.site-footer th:last-child, .site-footer td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Wide screens: the comparison left, the chart right */
 @media (min-width: 900px) {
@@ -432,7 +451,7 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
     grid-template-areas:
-      "topbar topbar"
+      "topbar  topbar"
       "alt     chart"
       "footer  footer";
     align-items: start;

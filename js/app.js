@@ -226,7 +226,7 @@ function renderFooter() {
   const copy = t().footer;
   const links = FOOTER_LINKS.map((key, i) =>
     `<a href="https://www.td.gov.hk/${state.lang}${TD_PATHS[key]}" target="_blank" rel="noopener">${esc(copy.links[i])}</a>`).join('、');
-  $('site-footer').innerHTML = `${esc(copy.source)} ${links}。${esc(copy.disclaimer)}`;
+  $('footer-source').innerHTML = `${esc(copy.source)} ${links}。${esc(copy.disclaimer)}`;
 }
 
 function applyLanguage() {
@@ -234,6 +234,9 @@ function applyLanguage() {
   const lang = LANGS.find((l) => l.id === state.lang);
   document.documentElement.lang = lang.htmlLang;
   document.title = copy.pageTitle;
+  $('site-name').textContent = copy.siteName;
+  $('github-link').setAttribute('aria-label', copy.github);
+  $('github-link').setAttribute('title', copy.github);
   $('chart-title').textContent = copy.chartTitle;
   $('label-vehicle-class').textContent = copy.compareVehicle;
   $('vehicle-select').setAttribute('aria-label', copy.labelVehicle);

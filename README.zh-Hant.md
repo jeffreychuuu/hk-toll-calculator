@@ -1,4 +1,4 @@
-# 香港隧道收費計算器
+# 香港隧道實時收費
 
 [English](README.md) | **繁體中文**
 
@@ -26,6 +26,8 @@
   - **日期**同**日期類型**（星期一至六非假期／星期日及公眾假期）：時程跟住日期，揀日期類型會跳去由今日起下一個有嗰個時程嘅日子；如果今日已經係，就直接返去現在
   - 時／分下拉選單 + 時間滑桿，全日任一時間可查，加「回到現在」掣
 - **同一頁** — 行程比較同 24 小時圖放埋一齊
+- **可摺起嘅參考資料** — 每條隧道嘅收費時段表、常見問題、車種類別說明，都摺埋喺 footer 一行：工具行先，想睇細節嘅人同搜尋引擎都攞到
+- **有自己嘅 icon** — 隧道口，SVG favicon ＋ 180px touch icon
 - **記住上次選擇** — 隧道同車輛類別存喺 localStorage，下次開頁自動還原
 - **三種語言** — 繁體中文 / 简体中文 / English，首次跟瀏覽器語言自動揀，揀過之後記住
 - **過渡期精準計價** — 按運輸署分鐘級收費表計算過渡時段步進收費（例如私家車每 2 分鐘 +$2）
@@ -49,7 +51,10 @@
 
 ```
 hk-toll-calculator/
-├── index.html          # 單頁 UI
+├── index.html          # 單頁 UI ＋ 靜態 SEO 文案
+├── favicon.svg         # 隧道 icon；apple-touch-icon.png、og-image.png
+├── robots.txt          # 爬蟲規則 ＋ sitemap 位置
+├── sitemap.xml
 ├── css/
 │   └── styles.css      # 佈局同組件
 ├── js/
@@ -57,8 +62,13 @@ hk-toll-calculator/
 │   ├── holidays.js     # 香港公眾假期日期
 │   ├── i18n.js         # 三語文案 + 瀏覽器語言偵測
 │   ├── traffic.js      # 運輸署行車時間／交通消息解析
+│   ├── toll-tables.js  # 產生嵌入 index.html 嘅收費表
 │   ├── engine.js       # 純收費計算函數
 │   └── app.js          # UI 綁定同渲染
+├── scripts/
+│   └── print-toll-tables.mjs   # node scripts/print-toll-tables.mjs
+├── api/
+│   └── traffic.js      # 唯一嘅 serverless function（實時路況）
 ├── tests/              # Node 測試套件
 ├── package.json        # test script（type: module）
 ├── README.md
