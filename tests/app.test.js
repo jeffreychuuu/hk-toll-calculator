@@ -47,8 +47,7 @@ const mkButton = (ds) => ({
 });
 const daytypeButtons = ['weekday', 'weekend'].map((dt) => mkButton({ daytype: dt }));
 const modeButtons = ['date', 'category'].map((m) => mkButton({ mode: m }));
-const viewButtons = ['journey', 'schedule'].map((view) => mkButton({ view }));
-const buttonsFor = { 'daytype-toggle': daytypeButtons, 'mode-toggle': modeButtons, 'view-tabs': viewButtons };
+const buttonsFor = { 'daytype-toggle': daytypeButtons, 'mode-toggle': modeButtons };
 
 const elements = new Map();
 function mk(id) {
@@ -80,8 +79,8 @@ for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amou
   'chart-title', 'label-tunnel', 'label-vehicle', 'label-date', 'label-category', 'label-time', 'lang-picker',
   'compare-note',
   'plan-card', 'plan-title', 'label-from', 'label-to', 'from-select', 'to-select', 'plan-result',
-  'view-tabs', 'view-journey', 'view-schedule',
   'alternatives', 'alt-title', 'alt-caption', 'alt-list', 'alt-toggle', 'alt-others',
+  'alt-categories', 'alt-other-caption', 'alt-other-list',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
 globalThis.document = {
@@ -298,7 +297,7 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal(document.title, 'HK Toll Calculator');
   assert.equal($('lang-current').textContent, 'English');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
-  assert.equal($('alt-title').textContent, 'Other options for the same trip');
+  assert.equal($('alt-title').textContent, 'Options for the same trip');
   assert.equal($('alt-toggle').textContent, 'Other categories');
   assert.equal($('plan-title').textContent, 'Journey suggestion');
   assert.equal($('label-tunnel').textContent, 'Tunnel');
@@ -469,7 +468,7 @@ test('a picked date is not overwritten by the clock tick', () => {
   assert.equal($('price-amount').textContent, '25.00'); // still the holiday schedule
 });
 
-test('the result card lists the other ways to make the same trip', async () => {
+test('the result card lists the ways to make the same trip, current tunnel first', async () => {
   storage.delete('hk-toll-calculator.selection');
   fakeNowMs = new RealDate(2026, 9, 8, 12, 0).getTime(); // midweek noon
   await import('../js/app.js?alt=1');
@@ -480,9 +479,14 @@ test('the result card lists the other ways to make the same trip', async () => {
   const list = $('alt-list').innerHTML;
   assert.ok(list.includes('東區海底隧道（東隧）'));
   assert.ok(list.includes('西區海底隧道（西隧）'));
-  assert.ok(!list.includes('海底隧道（紅隧）'), 'the selected tunnel is not repeated');
-  assert.equal((list.match(/compare-row/g) || []).length, 2);
-  assert.ok(!$('alt-others').hidden === false, 'other categories start collapsed');
+  assert.ok(list.includes('海底隧道（紅隧）'), 'the selected tunnel is listed too');
+  assert.equal((list.match(/compare-row/g) || []).length, 3);
+
+  // the selected tunnel carries 現用, and 最平 when it ties for cheapest at noon
+  const current = list.slice(list.indexOf('海底隧道（紅隧）'), list.indexOf('東區海底隧道'));
+  assert.ok(current.includes('現用'), 'marked as the current choice');
+  assert.ok(current.includes('最平'), 'and as cheapest, because it is');
+  assert.equal($('alt-others').hidden, true, 'other categories start collapsed');
 });
 
 test('a category is derived from the selected tunnel, not chosen', () => {
@@ -501,19 +505,39 @@ test('clicking an alternative switches the tunnel', () => {
   fire('alt-list', 'click', { target: { closest: () => ({ dataset: { tunnelId: 'tct' } }) } });
   assert.equal($('tunnel-select').value, 'tct');
   assert.equal($('result-title').textContent, '大老山隧道');
-  assert.ok(!$('alt-list').innerHTML.includes('大老山隧道'), 'the list follows the new selection');
+  const rows = $('alt-list').innerHTML.split('<li>').filter((row) => row.includes('大老山隧道'));
+  assert.equal(rows.length, 1, 'the list follows the new selection');
+  assert.ok(rows[0].includes('現用'), 'and marks it as the current choice');
 });
 
-test('other categories are available behind a toggle', () => {
+test('other categories are a second step: names first, then that category', () => {
   assert.equal($('alt-others').hidden, true);
 
   fire('alt-toggle', 'click');
   assert.equal($('alt-others').hidden, false);
   assert.equal($('alt-toggle').getAttribute('aria-expanded'), 'true');
-  assert.ok($('alt-others').innerHTML.includes('過海'), 'the harbour category is offered');
 
-  fire('alt-toggle', 'click');
-  assert.equal($('alt-others').hidden, true);
+  // first step: only the category names, never every option at once
+  const chips = $('alt-categories').innerHTML;
+  assert.equal((chips.match(/data-group=/g) || []).length, 5, 'the five other corridors');
+  assert.ok(chips.includes('過海'));
+  assert.ok(!$('alt-other-list').innerHTML.includes('西區海底隧道'), 'no harbour rows yet');
+
+  // second step: choosing a corridor shows that corridor only
+  fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'harbour' } }) } });
+  const rows = $('alt-other-list').innerHTML;
+  assert.ok(rows.includes('西區海底隧道（西隧）'));
+  assert.ok(!rows.includes('大老山隧道'), 'nothing from the other corridors');
+  assert.ok($('alt-other-caption').textContent.includes('過海'));
+
+  fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'nte-ntw' } }) } });
+  assert.ok($('alt-other-list').innerHTML.includes('城門隧道'), 'switching corridors swaps the rows');
+});
+
+test('the result and the schedule sit on the same page, with the journey last', () => {
+  assert.equal($('alternatives').hidden, false, 'the comparison is part of the result card');
+  assert.equal($('chart-marker') !== undefined, true, 'the chart is on screen too');
+  assert.ok($('plan-result').innerHTML.length > 0, 'the journey section is rendered at the bottom');
 });
 
 test('a tunnel outside the macro map shows no alternatives', () => {
@@ -608,27 +632,6 @@ test('the route totals follow the chosen vehicle', () => {
   $('vehicle-select').value = 'moto';
   fire('vehicle-select', 'change');
   assert.ok($('plan-result').innerHTML.includes('HK$ 20.00'), 'motorcycle: Lion Rock $8 + red tunnel $12');
-});
-
-test('the output is split into sections and only one is shown', async () => {
-  await import('../js/app.js?tabs=1');
-
-  assert.equal(viewButtons.length, 2);
-  assert.equal(viewButtons[0].ariaSelected, 'true', 'the journey section is the default');
-  assert.equal($('view-journey').hidden, false);
-  assert.equal($('view-schedule').hidden, true);
-});
-
-test('choosing a section reveals that section alone', () => {
-  fire('view-tabs', 'click', { target: viewButtons[1] }); // schedule
-  assert.equal($('view-journey').hidden, true);
-  assert.equal($('view-schedule').hidden, false);
-  assert.equal(viewButtons[1].ariaSelected, 'true');
-  assert.equal(viewButtons[0].ariaSelected, 'false');
-
-  fire('view-tabs', 'click', { target: viewButtons[0] }); // back to the journey
-  assert.equal($('view-journey').hidden, false);
-  assert.equal($('view-schedule').hidden, true);
 });
 
 test('a stale, string-named data module can never render undefined', async () => {
