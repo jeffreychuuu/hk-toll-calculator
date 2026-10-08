@@ -27,23 +27,64 @@
     </nav>
 
     <section class="card" id="result-card">
-      <div class="result-head">
-        <div>
-          <h1 id="result-title">—</h1>
-          <p class="subtitle" id="result-subtitle">—</p>
+      <div class="controls">
+        <div class="field-row">
+          <label class="field">
+            <span class="field-label" id="label-tunnel">選擇隧道</span>
+            <select id="tunnel-select"></select>
+          </label>
+          <label class="field">
+            <span class="field-label" id="label-vehicle">車輛類別</span>
+            <select id="vehicle-select"></select>
+          </label>
         </div>
-        <span class="badge" id="period-badge">—</span>
-      </div>
-      <p class="price"><span class="currency">HK$</span><span id="price-amount">0.00</span></p>
-      <div class="hint" id="next-hint" hidden></div>
 
-      <div class="alt" id="alternatives" hidden>
-        <div class="alt-head">
-          <span class="alt-title" id="alt-title">同類行程嘅選擇</span>
+        <div class="field">
+          <div class="segmented mode-toggle" id="mode-toggle">
+            <button type="button" data-mode="date">指定日期</button>
+            <button type="button" data-mode="category">日期類型</button>
+          </div>
         </div>
-        <div class="pick-chips" id="alt-categories"></div>
-        <ul class="compare-list" id="alt-list"></ul>
-        <p class="compare-note" id="compare-note" hidden></p>
+
+        <div class="field" id="date-field">
+          <span class="field-label" id="label-date">日期</span>
+          <input id="date-input" class="date-input" type="date">
+        </div>
+
+        <div class="field" id="category-field">
+          <span class="field-label" id="label-category">日期類型</span>
+          <div class="segmented" id="daytype-toggle">
+            <button type="button" data-daytype="weekday">星期一至六（非假期）</button>
+            <button type="button" data-daytype="weekend">星期日及公眾假期</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="time-row">
+            <span class="field-label" id="label-time">通行時間</span>
+            <button type="button" class="link-btn" id="back-to-now">回到現在</button>
+          </div>
+          <div class="time-selects">
+            <select id="hour-select" aria-label="小時"></select>
+            <span class="time-colon">:</span>
+            <select id="minute-select" aria-label="分鐘"></select>
+          </div>
+          <input id="time-slider" type="range" min="0" max="1439" step="1" value="0" aria-label="時間滑桿">
+        </div>
+
+        <p class="notice" id="holiday-notice" hidden></p>
+      </div>
+
+      <div class="answer">
+        <div class="result-head">
+          <div>
+            <h1 id="result-title">—</h1>
+            <p class="subtitle" id="result-subtitle">—</p>
+          </div>
+          <span class="badge" id="period-badge">—</span>
+        </div>
+        <p class="price"><span class="currency">HK$</span><span id="price-amount">0.00</span></p>
+        <div class="hint" id="next-hint" hidden></div>
       </div>
     </section>
 
@@ -60,54 +101,6 @@
         <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:59</span>
       </div>
       <ul class="legend" id="legend"></ul>
-    </section>
-
-    <section class="card form-card">
-      <div class="field-row">
-        <label class="field">
-          <span class="field-label" id="label-tunnel">選擇隧道</span>
-          <select id="tunnel-select"></select>
-        </label>
-        <label class="field">
-          <span class="field-label" id="label-vehicle">車輛類別</span>
-          <select id="vehicle-select"></select>
-        </label>
-      </div>
-
-      <div class="field">
-        <div class="segmented mode-toggle" id="mode-toggle">
-          <button type="button" data-mode="date">指定日期</button>
-          <button type="button" data-mode="category">日期類型</button>
-        </div>
-      </div>
-
-      <div class="field" id="date-field">
-        <span class="field-label" id="label-date">日期</span>
-        <input id="date-input" class="date-input" type="date">
-      </div>
-
-      <div class="field" id="category-field">
-        <span class="field-label" id="label-category">日期類型</span>
-        <div class="segmented" id="daytype-toggle">
-          <button type="button" data-daytype="weekday">星期一至六（非假期）</button>
-          <button type="button" data-daytype="weekend">星期日及公眾假期</button>
-        </div>
-      </div>
-
-      <div class="field">
-        <div class="time-row">
-          <span class="field-label" id="label-time">通行時間</span>
-          <button type="button" class="link-btn" id="back-to-now">回到現在</button>
-        </div>
-        <div class="time-selects">
-          <select id="hour-select" aria-label="小時"></select>
-          <span class="time-colon">:</span>
-          <select id="minute-select" aria-label="分鐘"></select>
-        </div>
-        <input id="time-slider" type="range" min="0" max="1439" step="1" value="0" aria-label="時間滑桿">
-      </div>
-
-      <p class="notice" id="holiday-notice" hidden></p>
     </section>
 
     <section class="card" id="plan-card">
