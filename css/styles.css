@@ -115,7 +115,9 @@ body {
   .lang-trigger { transition: none; }
 }
 
-/* The chosen tunnel, named at the top of the page */
+/* The chosen tunnel, named at the top of the page, with its toll */
+.current-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.current-titles { min-width: 0; }
 .result-name {
   margin: 0;
   font-size: 1.35rem;
@@ -126,6 +128,16 @@ body {
 }
 .live-traffic { margin: 8px 0 0; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .live-traffic:empty { display: none; }
+.price {
+  flex: 0 0 auto;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.price .currency { font-size: 0.42em; font-weight: 700; color: var(--muted); margin-right: 6px; }
 
 /* The tunnel is chosen where the vehicles and prices are compared */
 .inline-select {

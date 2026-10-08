@@ -72,7 +72,7 @@ function mk(id) {
   };
 }
 for (const id of ['period-badge', 'next-hint',
-  'chart-bar', 'chart-marker', 'legend', 'vehicle-select', 'result-name', 'live-traffic', 'current-card',
+  'chart-bar', 'chart-marker', 'legend', 'vehicle-select', 'result-name', 'live-traffic', 'price-amount', 'current-card',
   'wrap', 'chart-card',
   'date-input', 'daytype-select', 'traffic-footnote',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
@@ -559,6 +559,12 @@ test('a tunnel off the macro map still gets a corridor of its own', () => {
 
   selectTunnel('cht');
   assert.equal($('alt-card').hidden, false);
+});
+
+test('the toll sits beside the chosen tunnel at the top', () => {
+  selectTunnel('cht');
+  assert.equal($('price-amount').textContent, selectedPrice(),
+    'the headline toll agrees with the chosen row');
 });
 
 test('the chart always shows the chosen tunnel, flat all day or not', () => {
