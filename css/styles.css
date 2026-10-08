@@ -289,7 +289,7 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 /* The name takes a line of its own, so it is never squeezed into a column of
    single Chinese characters; the readings, price and tags follow underneath. */
 .compare-name { flex: 1 1 100%; min-width: 0; }
-.compare-price { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.compare-price { font-variant-numeric: tabular-nums; white-space: nowrap; margin-left: auto; }
 .compare-tag { color: var(--muted); font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
 .compare-row.cheapest .compare-price,
 .compare-row.cheapest .compare-tag { color: #157a4d; }
