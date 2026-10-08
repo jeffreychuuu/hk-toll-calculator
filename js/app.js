@@ -21,6 +21,11 @@ const state = {
   dataCurrent: initialDayType.dataCurrent,
 };
 
+// While true, the toll card follows the real clock. Any manual time selection
+// (slider or typed time) pins it.
+let following = true;
+const currentTunnel = () => TUNNELS.find((t) => t.id === state.tunnelId);
+
 function fillTunnelSelect() {
   const groups = [...new Set(TUNNELS.map((t) => t.group))];
   $('tunnel-select').innerHTML = groups.map((group) => {
@@ -132,22 +137,31 @@ function init() {
     render();
   });
   $('time-slider').addEventListener('input', (e) => {
+    following = false;
     state.minutes = Number(e.target.value);
     renderTime();
-    renderResult(TUNNELS.find((t) => t.id === state.tunnelId));
+    renderResult(currentTunnel());
     renderChart();
   });
   $('time-input').addEventListener('change', (e) => {
     const parsed = parseTimeInput(e.target.value);
+    if (parsed != null) following = false;
     state.minutes = parsed == null ? state.minutes : parsed;
     renderTime();
-    renderResult(TUNNELS.find((t) => t.id === state.tunnelId));
+    renderResult(currentTunnel());
     renderChart();
   });
 
   render();
   renderClock();
-  setInterval(renderClock, 30000);
+  setInterval(() => {
+    renderClock();
+    if (!following) return;
+    state.minutes = nowMinutes();
+    renderTime();
+    renderResult(currentTunnel());
+    renderChart();
+  }, 30000);
 }
 
 init();

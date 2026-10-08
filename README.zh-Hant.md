@@ -36,7 +36,7 @@
 
 - HTML5 / CSS3 / vanilla JavaScript（ES modules）
 - 冇框架、冇 bundler、冇依賴
-- 數據內嵌為靜態 JS module（直接開檔案都用到）
+- 數據內嵌為靜態 JS module（冇 fetch、冇 build step）
 
 ## 專案結構
 
@@ -52,16 +52,19 @@ hk-toll-calculator/
 │   └── app.js          # UI 綁定同渲染
 ├── tests/              # Node 測試套件
 ├── package.json        # test script（type: module）
+├── README.md
 └── README.zh-Hant.md
 ```
 
 ## 本地執行
 
+頁面用 ES module，瀏覽器只會經 HTTP 載入 — 直接開 `index.html` 會白畫面，要起個 server：
+
 ```bash
 git clone https://github.com/jeffreychuuu/hk-toll-calculator.git
 cd hk-toll-calculator
-open index.html          # 或：python3 -m http.server 8000
-npm test                 # 跑 engine／假期單元測試
+python3 -m http.server 8000   # 然後開 http://localhost:8000
+npm test                      # 跑 engine、收費表同 UI 單元測試
 ```
 
 ## 部署到 Vercel

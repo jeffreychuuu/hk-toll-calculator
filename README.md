@@ -36,7 +36,7 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
 
 - HTML5 / CSS3 / vanilla JavaScript (ES modules)
 - No framework, no bundler, no dependencies
-- Data embedded as static JS modules (works when opened directly from disk)
+- Data embedded as static JS modules (no fetch, no build step)
 
 ## Project Structure
 
@@ -52,16 +52,20 @@ hk-toll-calculator/
 │   └── app.js          # UI wiring & rendering
 ├── tests/              # Node test runner suites
 ├── package.json        # test script (type: module)
-└── README.md
+├── README.md
+└── README.zh-Hant.md
 ```
 
 ## Run Locally
 
+The page uses ES modules, which browsers only load over HTTP — opening `index.html`
+straight from the file system shows a blank page. Serve the folder instead:
+
 ```bash
 git clone https://github.com/jeffreychuuu/hk-toll-calculator.git
 cd hk-toll-calculator
-open index.html          # or: python3 -m http.server 8000
-npm test                 # run the engine/holiday unit tests
+python3 -m http.server 8000   # then open http://localhost:8000
+npm test                      # run the engine, schedule and UI unit tests
 ```
 
 ## Deploy to Vercel

@@ -36,7 +36,7 @@ hk-toll-calculator/
 └── README.zh-Hant.md   # Traditional Chinese
 ```
 
-- ES modules loaded with `<script type="module">`; data lives in JS modules (not fetched JSON) so the page also works from `file://`.
+- ES modules loaded with `<script type="module">`; data lives in JS modules (not fetched JSON), so there is no fetch/build step — but ES modules require the page to be served over HTTP (`python3 -m http.server`); opening `index.html` via `file://` is blocked by browsers.
 - `engine.js` is DOM-free and side-effect-free so it can be tested under Node (`node --test`) without a browser.
 - Deployment: Vercel static, no build command, output = repo root.
 
