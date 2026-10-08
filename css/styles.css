@@ -152,7 +152,7 @@ body {
 /* The chart card carries the date and the time */
 .chart-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .chart-controls .date-input { width: auto; min-width: 9rem; padding: 6px 10px; font-size: 0.85rem; }
-.chart-controls .time-selects select { width: auto; min-width: 4.6rem; padding: 6px 26px 6px 10px; font-size: 0.85rem; font-weight: 700; }
+.time-selects .time-colon { color: var(--muted); font-weight: 700; }
 .chart-controls .link-btn { font-size: 0.82rem; }
 
 /* The bar is the slider: an invisible range sits on top of it */
@@ -274,6 +274,7 @@ div.compare-row:hover { background: transparent; }
 .traffic-slow { color: #a2650f; }
 .traffic-jam { color: #b91c1c; }
 .traffic-closed { color: #6b7280; }
+.traffic-detail { color: var(--muted); font-weight: 600; font-size: 0.75rem; }
 .incidents { margin-top: 10px; background: #fdf6e8; border-radius: 12px; padding: 10px 12px; }
 .incidents-title { margin: 0 0 4px; font-size: 0.85rem; font-weight: 700; color: #a2650f; }
 .incident { margin: 0; font-size: 0.85rem; line-height: 1.55; }

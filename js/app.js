@@ -297,16 +297,24 @@ function alternativeRows(group, canonical) {
   return { rows, tied, cheapest };
 }
 
-// Live condition for one tunnel, when the feed has a reading for it.
+// Live condition for one tunnel, per side of the harbour, when the feed has a
+// reading for it. The worst reading sets the colour; the sides are spelled out
+// because a journey time only means something for the direction you drive.
+const ORIGIN_LABEL = { island: 'originIsland', kowloon: 'originKowloon', nt: 'originNt', shatin: 'originShatin' };
+
 function trafficChip(tunnelId) {
   const report = traffic && traffic.tunnels ? traffic.tunnels[tunnelId] : null;
   if (!report) return '';
   const copy = t();
   const label = copy[`traffic${report.state[0].toUpperCase()}${report.state.slice(1)}`];
-  const minutes = report.state === 'closed'
+  const sides = Object.entries(report.byOrigin || {})
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([region, side]) => `${copy[ORIGIN_LABEL[region]] || region} `
+      + copy.trafficMinutes.replace('{minutes}', String(side.minutes)));
+  const detail = report.state === 'closed' || !sides.length
     ? ''
-    : ` ${copy.trafficMinutes.replace('{minutes}', String(report.minutes))}`;
-  return `<span class="traffic traffic-${report.state}">${esc(label)}${esc(minutes)}</span>`;
+    : ` <span class="traffic-detail">${esc(sides.join(' · '))}</span>`;
+  return `<span class="traffic traffic-${report.state}">${esc(label)}</span>${detail}`;
 }
 
 const corridorIncidents = (group) =>
