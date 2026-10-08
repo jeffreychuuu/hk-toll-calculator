@@ -260,36 +260,32 @@ function renderResult(tunnel) {
     .replace('{amount}', next.amount.toFixed(2));
 }
 
-function alternativeRows(group, canonical) {
+function altOptions(group, canonical) {
   const copy = t();
-  const options = [
+  const entries = [
     ...group.tunnels.map((id) => ({ kind: 'tunnel', id, name: nameOf(tunnelById(id)) })),
     ...group.roads.map((road) => ({ kind: 'road', id: `road:${road.en}`, name: road[state.lang] })),
-  ]
-    .map((option) => ({
-      ...option,
-      amount: option.kind === 'tunnel' ? priceTunnelFor(option.id, canonical) : 0,
-    }))
-    .sort((a, b) => a.amount - b.amount);
+  ].map((entry) => ({
+    ...entry,
+    amount: entry.kind === 'tunnel' ? priceTunnelFor(entry.id, canonical) : 0,
+  })).sort((a, b) => a.amount - b.amount);
 
-  const cheapest = options.length ? options[0].amount : 0;
-  const rows = options.map((option) => {
+  const amounts = entries.map((entry) => entry.amount);
+  const cheapest = amounts.length > 1 ? Math.min(...amounts) : undefined;
+  const html = entries.map((entry) => {
     const tags = [];
-    if (option.kind === 'tunnel' && option.id === state.tunnelId) tags.push(copy.compareCurrent);
-    if (option.amount === cheapest) tags.push(copy.planCheapest);
-    const best = tags.includes(copy.planCheapest);
-    const content = `<span class="compare-name">${esc(option.name)}</span>`
-      + `<span class="compare-price">HK$ ${option.amount.toFixed(2)}</span>`
-      + (tags.length ? `<span class="compare-tag">${esc(tags.join(' · '))}</span>` : '');
-    // Roads are places, not choices: only tunnels switch the selector.
-    return option.kind === 'tunnel'
-      ? `<li><button type="button" class="compare-row${best ? ' cheapest' : ''}"`
-        + ` data-tunnel-id="${option.id}"${best ? ' aria-current="true"' : ''}>${content}</button></li>`
-      : `<li><div class="compare-row${best ? ' cheapest' : ''}">${content}</div></li>`;
+    if (entry.kind === 'tunnel' && entry.id === state.tunnelId) tags.push(copy.compareCurrent);
+    if (cheapest !== undefined && entry.amount === cheapest) tags.push(copy.planCheapest);
+    const label = `${esc(entry.name)} — HK$ ${entry.amount.toFixed(2)}`
+      + (tags.length ? ` · ${tags.join(' · ')}` : '');
+    // A free corridor has no schedule to chart, so it is shown but not selectable.
+    return entry.kind === 'tunnel'
+      ? `<option value="${entry.id}">${label}</option>`
+      : `<option disabled value="">${label}</option>`;
   }).join('');
 
-  const tied = options.length > 1 && options.every((option) => option.amount === cheapest);
-  return { rows, tied, cheapest };
+  const tied = amounts.length > 1 && amounts.every((amount) => amount === amounts[0]);
+  return { html, tied, cheapest };
 }
 
 function renderAlternatives() {
@@ -316,11 +312,16 @@ function renderAlternatives() {
       + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]])}</button>`;
   }).join('');
 
-  const rows = alternativeRows(active, vehicle);
-  $('alt-list').innerHTML = rows.rows;
-  $('compare-note').hidden = !rows.tied;
-  $('compare-note').textContent = rows.tied
-    ? copy.compareTie.replace('{amount}', rows.cheapest.toFixed(2))
+  const options = altOptions(active, vehicle);
+  const inCorridor = active.tunnels.includes(state.tunnelId);
+  $('alt-select').innerHTML = (inCorridor ? '' : `<option value="">${esc(copy.altPick)}</option>`)
+    + options.html;
+  $('alt-select').value = inCorridor ? state.tunnelId : '';
+
+  const tied = options.tied && inCorridor;
+  $('compare-note').hidden = !tied;
+  $('compare-note').textContent = tied
+    ? copy.compareTie.replace('{amount}', options.cheapest.toFixed(2))
     : '';
 }
 
@@ -516,11 +517,10 @@ function init() {
     altCategory = chip.dataset.group;
     renderAlternatives();
   });
-  $('alt-list').addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-tunnel-id]');
-    if (!btn) return;
-    state.tunnelId = btn.dataset.tunnelId;
-    altCategory = null;
+  $('alt-select').addEventListener('change', (e) => {
+    if (!e.target.value) return;
+    state.tunnelId = e.target.value;
+    altCategory = null; // follow the new tunnel's corridor
     fillTunnelSelect();
     fillVehicleSelect();
     saveSelection();
