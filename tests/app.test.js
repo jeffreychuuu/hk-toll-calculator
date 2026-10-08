@@ -232,7 +232,7 @@ test('a saved vehicle that does not exist for the saved tunnel falls back to the
   storage.set(STORAGE_KEY, JSON.stringify({ tunnelId: 'abt', vehicleId: 'car' }));
   await import('../js/app.js?mismatch=1');
   assert.equal($('tunnel-select').value, 'abt');
-  assert.equal($('vehicle-select').value, 'all');
+  assert.equal($('vehicle-select').value, 'car');
 });
 
 test('storage failures do not break rendering', async () => {
@@ -517,7 +517,46 @@ test('clicking a tunnel row switches the selected tunnel', () => {
   assert.equal($('result-title').textContent, '大欖隧道');
 });
 
+test('the comparison follows the vehicle picked on a flat-rate tunnel', () => {
+  $('tunnel-select').value = 'stg'; // a flat-rate tunnel: every class pays 8
+  fire('tunnel-select', 'change');
+  $('vehicle-select').value = 'other'; // ...but the trip is a goods vehicle
+  fire('vehicle-select', 'change');
+  fire('compare-picks', 'click', { target: { closest: () => ({ dataset: { group: 'harbour' } }) } });
+  setTime('12', '00');
+
+  assert.equal($('price-amount').textContent, '8.00', 'the flat tunnel itself');
+  assert.ok($('compare-list').innerHTML.includes('HK$ 50.00'),
+    'the harbour crossings are priced for a goods vehicle, not a car');
+});
+
+test('the selected tunnel keeps its exact class inside the comparison', () => {
+  $('tunnel-select').value = 'tct';
+  fire('tunnel-select', 'change');
+  $('vehicle-select').value = 'pmb'; // public minibus: 23, not the 24 light-goods rate
+  fire('vehicle-select', 'change');
+  fire('compare-picks', 'click', { target: { closest: () => ({ dataset: { group: 'kln-nte' } }) } });
+
+  assert.equal($('price-amount').textContent, '23.00');
+  assert.ok($('compare-list').innerHTML.includes('HK$ 23.00'),
+    'the comparison matches the result card for the selected tunnel');
+});
+
+test('the journey card follows the chosen vehicle too', () => {
+  $('from-select').value = 'nt-st';
+  fire('from-select', 'change');
+  $('to-select').value = 'hki-wc';
+  fire('to-select', 'change');
+
+  // Tate's Cairn (minibus 23) then the eastern crossing (commercial 50)
+  assert.ok($('plan-result').innerHTML.includes('HK$ 73.00'));
+  // Lion Rock (8) then the red tunnel (50)
+  assert.ok($('plan-result').innerHTML.includes('HK$ 58.00'));
+});
+
 test('a tie inside a category says so', () => {
+  $('tunnel-select').value = 'cht'; // back to a private car
+  fire('tunnel-select', 'change');
   fire('compare-picks', 'click', { target: { closest: () => ({ dataset: { group: 'harbour' } }) } });
   setTime('12', '00');
   assert.equal($('compare-note').hidden, false);
