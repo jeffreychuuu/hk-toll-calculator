@@ -10,7 +10,37 @@ const DAYTYPE_LABEL = { weekday: '星期一至六（非假期）', weekend: '星
 const $ = (id) => document.getElementById(id);
 const nowMinutes = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
 const fmtTime = (min) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+const WEEKDAY = ['日', '一', '二', '三', '四', '五', '六'];
+const fmtDate = (d) => `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${WEEKDAY[d.getDay()]}）`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const STORAGE_KEY = 'hk-toll-calculator.selection';
+
+// Restore the last tunnel/vehicle pair, validated against the current data so a
+// stale or renamed id can never break the page. Day type is deliberately not
+// stored: it is derived from today's date.
+function loadSelection() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const tunnel = TUNNELS.find((t) => t.id === parsed?.tunnelId);
+    if (!tunnel) return null;
+    const options = vehiclesFor(tunnel.id);
+    const vehicleId = options.some((v) => v.id === parsed.vehicleId) ? parsed.vehicleId : options[0].id;
+    return { tunnelId: tunnel.id, vehicleId };
+  } catch {
+    return null;
+  }
+}
+
+function saveSelection() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ tunnelId: state.tunnelId, vehicleId: state.vehicleId }));
+  } catch {
+    // storage disabled or full — persistence is a convenience, never a failure
+  }
+}
 
 const initialDayType = defaultDayType();
 const state = {
@@ -91,12 +121,22 @@ function renderChart() {
 }
 
 function renderTime() {
-  $('time-input').value = fmtTime(state.minutes);
-  $('time-slider').value = String(state.minutes);
+  const hh = String(Math.floor(state.minutes / 60)).padStart(2, '0');
+  const mm = String(state.minutes % 60).padStart(2, '0');
+  $('hour-select').value = hh;
+  $('minute-select').value = mm;
+  $('back-to-now').disabled = following;
+}
+
+function fillTimeSelects() {
+  $('hour-select').innerHTML = Array.from({ length: 24 }, (_, h) => `<option value="${String(h).padStart(2, '0')}">${String(h).padStart(2, '0')}</option>`).join('');
+  $('minute-select').innerHTML = Array.from({ length: 60 }, (_, m) => `<option value="${String(m).padStart(2, '0')}">${String(m).padStart(2, '0')}</option>`).join('');
 }
 
 function renderClock() {
-  $('now-time').textContent = fmtTime(nowMinutes());
+  const now = new Date();
+  $('now-date').textContent = fmtDate(now);
+  $('now-time').textContent = fmtTime(now.getHours() * 60 + now.getMinutes());
 }
 
 function render() {
@@ -108,26 +148,24 @@ function render() {
   $('holiday-notice').hidden = state.dataCurrent;
 }
 
-function parseTimeInput(raw) {
-  const m = raw.trim().match(/^(\d{1,2})[:：]?(\d{2})?$/);
-  if (!m) return null;
-  const h = Number(m[1]);
-  const min = m[2] ? Number(m[2]) : 0;
-  if (h > 23 || min > 59) return null;
-  return h * 60 + min;
-}
-
 function init() {
+  const saved = loadSelection();
+  if (saved) {
+    state.tunnelId = saved.tunnelId;
+    state.vehicleId = saved.vehicleId;
+  }
   fillTunnelSelect();
   fillVehicleSelect();
 
   $('tunnel-select').addEventListener('change', (e) => {
     state.tunnelId = e.target.value;
     fillVehicleSelect();
+    saveSelection();
     render();
   });
   $('vehicle-select').addEventListener('change', (e) => {
     state.vehicleId = e.target.value;
+    saveSelection();
     render();
   });
   $('daytype-toggle').addEventListener('click', (e) => {
@@ -136,22 +174,24 @@ function init() {
     state.dayType = btn.dataset.daytype;
     render();
   });
-  $('time-slider').addEventListener('input', (e) => {
+  const applyTimeSelects = () => {
     following = false;
-    state.minutes = Number(e.target.value);
+    state.minutes = Number($('hour-select').value) * 60 + Number($('minute-select').value);
     renderTime();
     renderResult(currentTunnel());
     renderChart();
-  });
-  $('time-input').addEventListener('change', (e) => {
-    const parsed = parseTimeInput(e.target.value);
-    if (parsed != null) following = false;
-    state.minutes = parsed == null ? state.minutes : parsed;
+  };
+  $('hour-select').addEventListener('change', applyTimeSelects);
+  $('minute-select').addEventListener('change', applyTimeSelects);
+  $('back-to-now').addEventListener('click', () => {
+    following = true;
+    state.minutes = nowMinutes();
     renderTime();
     renderResult(currentTunnel());
     renderChart();
   });
 
+  fillTimeSelects();
   render();
   renderClock();
   setInterval(() => {
