@@ -26,6 +26,8 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
   - A **date** and a **day type** (Mon–Sat non-holiday / Sunday and public holidays): the schedule follows the date, and picking a day type jumps to the next day (counted from today) that has it — or straight back to now when today already does
   - Hour and minute dropdowns for any time of day, a slider, plus a **back-to-now** button
 - **One page** — the comparison and the chart sit together
+- **A reference you can open, not read past** — the toll-period table for every tunnel, the FAQ and the vehicle-class notes sit in collapsible sections at the foot of the page, so the tool stays first while search engines and curious readers still get the detail
+- **An icon of its own** — a tunnel mouth, as an SVG favicon and a 180px touch icon
 - **Remembers your choice** — the last tunnel and vehicle class are restored on the next visit (localStorage)
 - **Three languages** — 繁體中文 / 简体中文 / English, picked automatically from the browser language and remembered once chosen
 - **Transition-aware pricing** — computes exact stepwise rates during transition windows (e.g. +$2 every 2 minutes for private cars), matching TD's minute-by-minute schedule
@@ -49,7 +51,10 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
 
 ```
 hk-toll-calculator/
-├── index.html          # single-page UI
+├── index.html          # single-page UI + the static SEO copy
+├── favicon.svg         # the tunnel icon; apple-touch-icon.png, og-image.png
+├── robots.txt          # crawl rules, and where the sitemap is
+├── sitemap.xml
 ├── css/
 │   └── styles.css      # layout & components
 ├── js/
@@ -57,8 +62,13 @@ hk-toll-calculator/
 │   ├── holidays.js     # HK public holiday dates
 │   ├── i18n.js         # UI copy + bundle language detection
 │   ├── traffic.js      # TD journey-time and traffic-news parsing
+│   ├── toll-tables.js  # renders the toll tables embedded in index.html
 │   ├── engine.js       # pure toll calculation functions
 │   └── app.js          # UI wiring & rendering
+├── scripts/
+│   └── print-toll-tables.mjs   # node scripts/print-toll-tables.mjs
+├── api/
+│   └── traffic.js      # the one serverless function (live traffic)
 ├── tests/              # Node test runner suites
 ├── package.json        # test script (type: module)
 ├── README.md
