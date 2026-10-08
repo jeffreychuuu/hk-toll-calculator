@@ -182,10 +182,7 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 .alt-title { font-size: 0.9rem; font-weight: 700; }
 .alt-caption { color: var(--muted); font-size: 0.8rem; }
 .alt .compare-list { margin-top: 8px; }
-.alt-others { margin-top: 10px; }
-.pick-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.alt-others .alt-caption { margin: 10px 0 2px; font-weight: 600; }
-.alt-others .compare-list { margin-top: 4px; }
+.pick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 
 /* Toll comparison picker */
 .chip {
