@@ -99,6 +99,9 @@ function deriveDayType(dateKey) {
 // While true, the toll card follows the real clock. Any manual time selection
 // (slider or dropdowns) pins it; the back-to-now button releases it.
 let following = true;
+// 'auto' derives the schedule from the picked date; 'weekday' / 'weekend' let
+// the visitor ask "what if this date were an ordinary day / a holiday?".
+let dayTypeMode = 'auto';
 // Set when the user picks their own date. Kept separate from `following` so a
 // pinned date is neither reported as "showing now" nor rolled over by the clock.
 let datePinned = false;
@@ -125,9 +128,23 @@ function fillVehicleSelect() {
 }
 
 function renderDateType() {
+  const derived = deriveDayType(state.date);
+  state.dayType = dayTypeMode === 'auto' ? derived.dayType : dayTypeMode;
+  state.dataCurrent = derived.dataCurrent;
+
   $('date-input').value = state.date;
   $('daytype-label').textContent = state.dayType === 'weekend' ? t().dayWeekend : t().dayWeekday;
   $('holiday-notice').hidden = state.dataCurrent;
+  for (const btn of $('daytype-toggle').querySelectorAll('button')) {
+    btn.setAttribute('aria-pressed', String(btn.dataset.daytype === dayTypeMode));
+  }
+}
+
+function labelDayTypeButtons() {
+  const labels = { auto: t().dayAuto, weekday: t().dayWeekday, weekend: t().dayWeekend };
+  for (const btn of $('daytype-toggle').querySelectorAll('button')) {
+    btn.textContent = labels[btn.dataset.daytype];
+  }
 }
 
 function fillLangMenu() {
@@ -170,6 +187,7 @@ function applyLanguage() {
   $('hour-select').setAttribute('aria-label', copy.timeHour);
   $('minute-select').setAttribute('aria-label', copy.timeMinute);
   $('time-slider').setAttribute('aria-label', copy.timeSlider);
+  labelDayTypeButtons();
   fillLangMenu();
   renderFooter();
 }
@@ -308,6 +326,12 @@ function init() {
     saveSelection();
     render();
   });
+  $('daytype-toggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-daytype]');
+    if (!btn) return;
+    dayTypeMode = btn.dataset.daytype;
+    render();
+  });
   $('date-input').addEventListener('change', (e) => {
     const value = e.target.value;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -316,9 +340,6 @@ function init() {
     }
     state.date = value;
     datePinned = true;
-    const derived = deriveDayType(value);
-    state.dayType = derived.dayType;
-    state.dataCurrent = derived.dataCurrent;
     render();
   });
   $('hour-select').addEventListener('change', () => {
@@ -331,11 +352,9 @@ function init() {
   $('back-to-now').addEventListener('click', () => {
     following = true;
     datePinned = false;
+    dayTypeMode = 'auto';
     state.minutes = nowMinutes();
     state.date = toDateKey(new Date());
-    const derived = deriveDayType(state.date);
-    state.dayType = derived.dayType;
-    state.dataCurrent = derived.dataCurrent;
     render();
   });
 
@@ -347,12 +366,7 @@ function init() {
     const now = new Date();
     state.minutes = now.getHours() * 60 + now.getMinutes();
     const today = toDateKey(now);
-    if (!datePinned && today !== state.date) {
-      state.date = today;
-      const derived = deriveDayType(today);
-      state.dayType = derived.dayType;
-      state.dataCurrent = derived.dataCurrent;
-    }
+    if (!datePinned && today !== state.date) state.date = today;
     renderDateType();
     renderTime();
     renderToll();

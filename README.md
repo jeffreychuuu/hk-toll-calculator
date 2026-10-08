@@ -20,7 +20,7 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
 - **Flexible inputs**
   - Tunnel selector
   - Vehicle class selector (private car, motorcycle, taxi, goods vehicles, buses, etc.)
-  - Date picker — any date; Sundays and public holidays switch to the weekend schedule automatically
+  - Date picker — any date; Sundays and public holidays switch to the weekend schedule automatically, with an **auto / weekday / weekend** override for what-if queries
   - Hour and minute dropdowns for any time of day, a slider, plus a **back-to-now** button
 - **Remembers your choice** — the last tunnel and vehicle class are restored on the next visit (localStorage)
 - **Three languages** — 繁體中文 / 简体中文 / English, picked automatically from the browser language and remembered once chosen

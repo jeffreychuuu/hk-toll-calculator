@@ -42,7 +42,8 @@ const mkButton = (ds) => ({
   setAttribute(k, v) { if (k === 'aria-pressed') this.ariaPressed = v; },
   addEventListener() {}, closest() { return this; },
 });
-const buttonsFor = {};
+const daytypeButtons = ['auto', 'weekday', 'weekend'].map((dt) => mkButton({ daytype: dt }));
+const buttonsFor = { 'daytype-toggle': daytypeButtons };
 
 const elements = new Map();
 function mk(id) {
@@ -69,7 +70,7 @@ function mk(id) {
 }
 for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amount', 'next-hint',
   'now-date', 'now-time', 'chart-bar', 'chart-marker', 'legend', 'tunnel-select', 'vehicle-select',
-  'date-input', 'daytype-label', 'hour-select', 'minute-select', 'time-slider', 'back-to-now',
+  'date-input', 'daytype-label', 'daytype-toggle', 'hour-select', 'minute-select', 'time-slider', 'back-to-now',
   'holiday-notice', 'chart-title', 'label-tunnel', 'label-vehicle', 'label-date', 'label-time', 'lang-picker',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
@@ -288,6 +289,7 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal($('label-time').textContent, 'Crossing time');
   assert.equal($('label-date').textContent, 'Date');
   assert.equal($('back-to-now').textContent, 'Back to now');
+  assert.equal(daytypeButtons[0].textContent, 'Auto');
   assert.equal($('daytype-label').textContent, 'Mon–Sat (non-holiday)');
   assert.equal($('result-title').textContent, 'Cross-Harbour Tunnel (Hung Hom)');
   assert.ok($('tunnel-select').innerHTML.includes('Tai Lam Tunnel'));
@@ -426,6 +428,63 @@ test('back-to-now clears a manually picked date', () => {
   fire('back-to-now', 'click');
 
   assert.equal($('date-input').value, '2026-10-08');
+  assert.equal($('daytype-label').textContent, '星期一至六（非假期）');
+  assert.equal($('back-to-now').disabled, true);
+});
+
+test('the category control starts on auto and reflects the picked date', () => {
+  assert.equal(daytypeButtons[0].ariaPressed, 'true', 'auto should be the default');
+  assert.equal(daytypeButtons[1].ariaPressed, 'false');
+  assert.equal(daytypeButtons[2].ariaPressed, 'false');
+
+  $('date-input').value = '2026-10-11'; // Sunday
+  fire('date-input', 'change');
+  assert.equal($('daytype-label').textContent, '星期日及公眾假期');
+  assert.equal(daytypeButtons[0].ariaPressed, 'true', 'a date change keeps auto selected');
+});
+
+test('choosing 平日 overrides a weekend date', () => {
+  $('date-input').value = '2026-10-11'; // Sunday -> weekend by default
+  fire('date-input', 'change');
+  assert.equal($('price-amount').textContent, '25.00');
+
+  fire('daytype-toggle', 'click', { target: daytypeButtons[1] }); // weekday
+
+  assert.equal($('daytype-label').textContent, '星期一至六（非假期）');
+  assert.equal($('price-amount').textContent, '40.00'); // weekday peak at 17:30
+  assert.equal(daytypeButtons[1].ariaPressed, 'true');
+  assert.equal(daytypeButtons[0].ariaPressed, 'false');
+});
+
+test('choosing 星期日及公眾假期 overrides a weekday date', () => {
+  $('date-input').value = '2026-10-09'; // Friday -> weekday by default
+  fire('date-input', 'change');
+  assert.equal($('price-amount').textContent, '40.00');
+
+  fire('daytype-toggle', 'click', { target: daytypeButtons[2] }); // weekend
+
+  assert.equal($('daytype-label').textContent, '星期日及公眾假期');
+  assert.equal($('price-amount').textContent, '25.00');
+});
+
+test('a manual override survives a date change and auto clears it', () => {
+  fire('daytype-toggle', 'click', { target: daytypeButtons[1] }); // weekday
+  $('date-input').value = '2026-10-11'; // Sunday
+  fire('date-input', 'change');
+  assert.equal($('daytype-label').textContent, '星期一至六（非假期）', 'the override sticks across dates');
+
+  fire('daytype-toggle', 'click', { target: daytypeButtons[0] }); // auto
+  assert.equal($('daytype-label').textContent, '星期日及公眾假期', 'auto re-derives from the date');
+});
+
+test('back-to-now clears a manual category override too', () => {
+  fire('daytype-toggle', 'click', { target: daytypeButtons[1] }); // weekday
+  assert.equal(daytypeButtons[1].ariaPressed, 'true');
+
+  fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
+  fire('back-to-now', 'click');
+
+  assert.equal(daytypeButtons[0].ariaPressed, 'true', 'auto should be restored');
   assert.equal($('daytype-label').textContent, '星期一至六（非假期）');
   assert.equal($('back-to-now').disabled, true);
 });

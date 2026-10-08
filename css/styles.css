@@ -224,8 +224,6 @@ select {
 }
 select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 
-.date-row { display: flex; align-items: center; gap: 10px; }
-
 .time-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .time-selects { display: flex; align-items: center; gap: 8px; }
 #hour-select, #minute-select {
@@ -281,6 +279,35 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
   font-weight: 600;
   color: var(--muted);
   white-space: nowrap;
+}
+
+/* Category control: auto / weekday / weekend (overrides the derived schedule) */
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  background: #fff;
+  border-radius: 999px;
+  padding: 3px;
+}
+.segmented button {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 8px;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: center;
+}
+.segmented button[aria-pressed="true"] { background: #e8f1ff; color: var(--focus); font-weight: 700; }
+@media (max-width: 560px) {
+  .segmented { flex-direction: column; border-radius: 16px; }
+  .segmented button { border-radius: 12px; padding: 10px 12px; text-align: left; }
 }
 
 .notice { margin: 0; color: #a2650f; font-size: 0.85rem; }
