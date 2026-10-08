@@ -180,7 +180,6 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 .alt { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
 .alt-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .alt-title { font-size: 0.9rem; font-weight: 700; }
-.alt-caption { color: var(--muted); font-size: 0.8rem; }
 .alt .compare-list { margin-top: 8px; }
 .pick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 
