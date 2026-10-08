@@ -43,12 +43,6 @@ test('the hint template keeps all five placeholders in every language', () => {
   }
 });
 
-test('the tie note keeps its amount placeholder in every language', () => {
-  for (const lang of ['tc', 'sc', 'en']) {
-    assert.ok(UI[lang].compareTie.includes('{amount}'), `${lang}.compareTie missing {amount}`);
-  }
-});
-
 test('period labels cover every period type', () => {
   const periods = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
   for (const lang of ['tc', 'sc', 'en']) {
@@ -93,9 +87,4 @@ test('the language picker has an accessible label in every language', () => {
   assert.ok(UI.tc.langLabel.trim().length > 0);
   assert.ok(UI.sc.langLabel.trim().length > 0);
   assert.equal(UI.en.langLabel, 'Language');
-});
-
-test('the time field is labelled 通行時間, without the cross-harbour wording', () => {
-  assert.equal(UI.tc.labelTime, '通行時間');
-  assert.equal(UI.sc.labelTime, '通行时间');
 });

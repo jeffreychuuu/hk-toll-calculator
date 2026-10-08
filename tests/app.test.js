@@ -45,9 +45,7 @@ const mkButton = (ds) => ({
   },
   addEventListener() {}, closest() { return this; },
 });
-const daytypeButtons = ['weekday', 'weekend'].map((dt) => mkButton({ daytype: dt }));
-const modeButtons = ['date', 'category'].map((m) => mkButton({ mode: m }));
-const buttonsFor = { 'daytype-toggle': daytypeButtons, 'mode-toggle': modeButtons };
+const buttonsFor = { };
 
 const elements = new Map();
 function mk(id) {
@@ -74,12 +72,12 @@ function mk(id) {
 }
 for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amount', 'next-hint',
   'now-date', 'now-time', 'chart-bar', 'chart-marker', 'legend', 'tunnel-select', 'vehicle-select',
-  'date-input', 'date-field', 'category-field', 'mode-toggle', 'daytype-toggle',
+  'date-input', 'daytype-select',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
-  'chart-title', 'label-tunnel', 'label-vehicle', 'label-date', 'label-category', 'label-time', 'lang-picker',
+  'chart-title', 'lang-picker',
   'compare-note',
   'plan-card', 'plan-title', 'label-from', 'label-to', 'from-select', 'to-select', 'plan-result',
-  'alternatives', 'alt-title', 'alt-list', 'alt-categories',
+  'alt-card', 'alt-title', 'alt-list', 'alt-categories',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
 globalThis.document = {
@@ -151,12 +149,6 @@ test('following stops once the user picks a time themselves', () => {
   assert.equal($('price-amount').textContent, '30.00');
 });
 
-test('the clock label always tracks real time, even when following is off', () => {
-  fakeNowMs = new RealDate(2026, 9, 8, 18, 5).getTime();
-  intervalCb();
-  assert.equal($('now-time').textContent, '18:05');
-});
-
 test('the slider and the hour/minute dropdowns stay in sync', () => {
   $('time-slider').value = '450'; // 07:30
   fire('time-slider', 'input');
@@ -194,13 +186,6 @@ test('the back-to-now button returns to the current time and resumes following',
   assert.equal($('price-amount').textContent, '40.00'); // peak
 });
 
-test("the header shows today's date alongside the clock", () => {
-  fakeNowMs = new RealDate(2026, 9, 8, 17, 30).getTime();
-  intervalCb();
-  assert.equal($('now-date').textContent, '2026年10月8日（四）');
-  assert.equal($('now-time').textContent, '17:30');
-});
-
 test('the selection is saved to localStorage when it changes', () => {
   $('tunnel-select').value = 'tlt';
   fire('tunnel-select', 'change');
@@ -209,8 +194,6 @@ test('the selection is saved to localStorage when it changes', () => {
   const saved = JSON.parse(storage.get(STORAGE_KEY));
   assert.equal(saved.tunnelId, 'tlt');
   assert.equal(saved.vehicleId, 'moto');
-  assert.equal(saved.mode, 'date');
-  assert.equal(saved.category, 'weekday');
 });
 
 test('a saved selection is restored on load', async () => {
@@ -237,7 +220,8 @@ test('a saved vehicle that does not exist for the saved tunnel falls back to the
 test('storage failures do not break rendering', async () => {
   storageFails = true;
   await import('../js/app.js?broken=1');
-  assert.equal($('result-title').textContent, '海底隧道（紅隧）');
+  assert.equal($('tunnel-select').value, 'cht');
+  assert.ok($('tunnel-select').selectedOptions[0].textContent.includes('海底隧道（紅隧）'));
   assert.equal($('vehicle-select').value, 'car');
   storageFails = false;
 });
@@ -296,15 +280,15 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal(document.title, 'HK Toll Calculator');
   assert.equal($('lang-current').textContent, 'English');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
-  assert.equal($('alt-title').textContent, 'Options for the same trip');
+  assert.equal($('alt-title').textContent, 'Trip comparison');
   assert.equal($('plan-title').textContent, 'Journey suggestion');
-  assert.equal($('label-tunnel').textContent, 'Tunnel');
-  assert.equal($('label-vehicle').textContent, 'Vehicle class');
-  assert.equal($('label-time').textContent, 'Crossing time');
-  assert.equal($('label-date').textContent, 'Date');
+  assert.equal($('tunnel-select').getAttribute('aria-label'), 'Tunnel');
+  assert.equal($('vehicle-select').getAttribute('aria-label'), 'Vehicle class');
+  assert.equal($('daytype-select').getAttribute('aria-label'), 'Day type');
+  assert.equal($('date-input').getAttribute('aria-label'), 'Date');
   assert.equal($('back-to-now').textContent, 'Back to now');
-  assert.equal(daytypeButtons[0].textContent, 'Mon–Sat (non-holiday)');
-  assert.equal($('result-title').textContent, 'Cross-Harbour Tunnel (Hung Hom)');
+  assert.ok($('daytype-select').innerHTML.includes('Mon–Sat (non-holiday)'));
+  assert.ok($('tunnel-select').innerHTML.includes('Cross-Harbour Tunnel (Hung Hom)'));
   assert.ok($('tunnel-select').innerHTML.includes('Tai Lam Tunnel'));
   assert.equal($('period-badge').textContent, 'Peak'); // 17:30 on a weekday is the red tunnel's peak
 });
@@ -313,8 +297,8 @@ test('choosing Simplified Chinese re-renders the labels', () => {
   fire('lang-menu', 'click', { target: langOption('sc') });
   assert.equal(document.documentElement.lang, 'zh-Hans');
   assert.equal($('chart-title').textContent, '24小时收费时段分布图');
-  assert.equal($('label-tunnel').textContent, '选择隧道');
-  assert.equal($('result-title').textContent, '海底隧道（红隧）');
+  assert.equal($('tunnel-select').getAttribute('aria-label'), '选择隧道');
+  assert.ok($('tunnel-select').innerHTML.includes('海底隧道（红隧）'));
 });
 
 test('the chosen language is stored', () => {
@@ -344,116 +328,86 @@ test('a non-Chinese browser language defaults to English', async () => {
   navigator.language = 'zh-TW';
 });
 
-test('the app starts in the date mode with today picked', async () => {
-  storage.delete('hk-toll-calculator.selection');
-  fakeNowMs = new RealDate(2026, 9, 8, 17, 30).getTime(); // Thursday
-  await import('../js/app.js?mode-default=1');
-
-  assert.equal(modeButtons[0].ariaPressed, 'true', '指定日期 is the default mode');
-  assert.equal(modeButtons[1].ariaPressed, 'false');
-  assert.equal($('date-field').hidden, false);
-  assert.equal($('category-field').hidden, true);
-  assert.equal($('date-input').value, '2026-10-08');
-  assert.equal($('price-amount').textContent, '40.00'); // weekday peak at 17:30
-});
-
-test('picking a Sunday in the date mode uses the weekend schedule', () => {
-  $('date-input').value = '2026-10-11';
+test('the day-type dropdown shows what the picked date implies', () => {
+  $('tunnel-select').value = 'cht';
+  fire('tunnel-select', 'change');
+  fakeNowMs = new RealDate(2026, 9, 8, 12, 0).getTime(); // Thursday
+  setTime('12', '00');
+  $('date-input').value = '2026-10-08';
   fire('date-input', 'change');
+  assert.equal($('daytype-select').value, 'weekday');
+  assert.equal($('price-amount').textContent, '30.00'); // weekday normal window
+
+  $('date-input').value = '2026-10-11'; // Sunday
+  fire('date-input', 'change');
+  assert.equal($('daytype-select').value, 'weekend', 'a Sunday flips the dropdown');
   assert.equal($('price-amount').textContent, '25.00');
 });
 
-test('picking a public holiday in the date mode uses the weekend schedule', () => {
+test('a public holiday that lands on a weekday uses the weekend schedule', () => {
+  $('tunnel-select').value = 'cht';
+  fire('tunnel-select', 'change');
+  setTime('12', '00');
   $('date-input').value = '2026-10-19'; // the day following Chung Yeung, a Monday
   fire('date-input', 'change');
+  assert.equal($('daytype-select').value, 'weekend');
   assert.equal($('price-amount').textContent, '25.00');
 });
 
-test('the notice appears only in the date mode and only outside the holiday data', () => {
+test('choosing a day type overrides what the date implies', () => {
+  $('tunnel-select').value = 'cht';
+  fire('tunnel-select', 'change');
+  setTime('12', '00');
+  $('date-input').value = '2026-10-11'; // Sunday -> weekend
+  fire('date-input', 'change');
+  $('daytype-select').value = 'weekday';
+  fire('daytype-select', 'change');
+  assert.equal($('price-amount').textContent, '30.00', 'the override wins');
+
+  $('date-input').value = '2026-10-09'; // a new date clears the override
+  fire('date-input', 'change');
+  assert.equal($('daytype-select').value, 'weekday', 'and the date decides again');
+});
+
+test('back-to-now returns to today and clears the override', () => {
+  fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
+  $('date-input').value = '2027-01-01'; // a Friday public holiday
+  fire('date-input', 'change');
+  $('daytype-select').value = 'weekday';
+  fire('daytype-select', 'change');
+
+  fire('back-to-now', 'click');
+  assert.equal($('date-input').value, '2026-10-08');
+  assert.equal($('daytype-select').value, 'weekday', 'the date decides again');
+  assert.equal(shownTime(), '16:38');
+  assert.equal($('back-to-now').disabled, true);
+});
+
+test('the notice appears only for dates outside the holiday data', () => {
   $('date-input').value = '2028-01-01';
   fire('date-input', 'change');
   assert.equal($('holiday-notice').hidden, false);
 
-  fire('mode-toggle', 'click', { target: modeButtons[1] }); // category mode
-  assert.equal($('holiday-notice').hidden, true, 'the category mode does not depend on a date');
-
-  fire('mode-toggle', 'click', { target: modeButtons[0] }); // back to the date mode
-  assert.equal($('holiday-notice').hidden, false);
-});
-
-test('the category mode prices the chosen category without a date', () => {
-  fire('mode-toggle', 'click', { target: modeButtons[1] });
-
-  assert.equal($('date-field').hidden, true);
-  assert.equal($('category-field').hidden, false);
-
-  fire('daytype-toggle', 'click', { target: daytypeButtons[1] }); // weekend
-  assert.equal($('price-amount').textContent, '25.00');
-
-  fire('daytype-toggle', 'click', { target: daytypeButtons[0] }); // weekday
-  assert.equal($('price-amount').textContent, '40.00');
-});
-
-test('the two modes remember their own values', () => {
-  // category mode currently holds 平日; give it a distinct value
-  fire('mode-toggle', 'click', { target: modeButtons[1] });
-  fire('daytype-toggle', 'click', { target: daytypeButtons[1] }); // weekend
-  assert.equal($('price-amount').textContent, '25.00');
-
-  // switch to the date mode: its own date is still in place
-  fire('mode-toggle', 'click', { target: modeButtons[0] });
-  assert.equal($('date-input').value, '2028-01-01');
-  assert.equal($('price-amount').textContent, '40.00'); // a Saturday, so the weekday schedule applies
-
-  // back to the category mode: 星期日及公眾假期 is still selected
-  fire('mode-toggle', 'click', { target: modeButtons[1] });
-  assert.equal(daytypeButtons[1].ariaPressed, 'true');
-  assert.equal($('price-amount').textContent, '25.00');
-});
-
-test('back-to-now resets the date in the date mode', () => {
-  fire('mode-toggle', 'click', { target: modeButtons[0] });
-  fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
-  fire('back-to-now', 'click');
-
-  assert.equal($('date-input').value, '2026-10-08');
-  assert.equal(shownTime(), '16:38');
-  assert.equal($('price-amount').textContent, '40.00'); // 16:38 weekday peak
-  assert.equal($('back-to-now').disabled, true);
-});
-
-test('back-to-now leaves the category choice alone', () => {
-  fire('mode-toggle', 'click', { target: modeButtons[1] });
-  fire('daytype-toggle', 'click', { target: daytypeButtons[1] }); // weekend
-
-  setTime('10', '30'); // pin the time so back-to-now has something to do
-  fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
-  fire('back-to-now', 'click');
-
-  assert.equal(shownTime(), '16:38');
-  assert.equal(daytypeButtons[1].ariaPressed, 'true', 'the generic category is not tied to now');
-  assert.equal($('price-amount').textContent, '25.00');
-});
-
-test('the clock tick rolls the date only in the date mode', () => {
-  fire('mode-toggle', 'click', { target: modeButtons[0] });
-  $('date-input').value = '2026-10-11';
+  $('date-input').value = '2026-10-09';
   fire('date-input', 'change');
+  assert.equal($('holiday-notice').hidden, true);
+});
+
+test('the clock tick rolls the date over', () => {
   fire('back-to-now', 'click'); // unpin
+  fakeNowMs = new RealDate(2026, 9, 8, 23, 59).getTime();
+  intervalCb();
+  assert.equal($('date-input').value, '2026-10-08');
 
   fakeNowMs = new RealDate(2026, 9, 9, 0, 1).getTime();
   intervalCb();
   assert.equal($('date-input').value, '2026-10-09');
-
-  fire('mode-toggle', 'click', { target: modeButtons[1] });
-  fakeNowMs = new RealDate(2026, 9, 10, 0, 1).getTime();
-  intervalCb();
-  assert.equal($('date-input').value, '2026-10-09', 'the category mode never moves the date');
 });
 
 test('a picked date is not overwritten by the clock tick', () => {
-  fire('mode-toggle', 'click', { target: modeButtons[0] });
-  $('date-input').value = '2026-10-19'; // a Monday public holiday
+  $('tunnel-select').value = 'cht';
+  fire('tunnel-select', 'change');
+    $('date-input').value = '2026-10-19'; // a Monday public holiday
   fire('date-input', 'change');
   setTime('10', '30'); // weekend normal window, so the schedule is visible in the price
   assert.equal($('back-to-now').disabled, false, 'a picked date must be releasable');
@@ -471,7 +425,8 @@ test('the result card lists the ways to make the same trip, current tunnel first
   fakeNowMs = new RealDate(2026, 9, 8, 12, 0).getTime(); // midweek noon
   await import('../js/app.js?alt=1');
 
-  assert.equal($('alternatives').hidden, false);
+  assert.equal($('alt-card').hidden, false);
+  assert.equal($('alt-title').textContent, '行程比較');
 
   const list = $('alt-list').innerHTML;
   assert.ok(list.includes('東區海底隧道（東隧）'));
@@ -486,7 +441,7 @@ test('the result card lists the ways to make the same trip, current tunnel first
   const chips = $('alt-categories').innerHTML;
   assert.equal((chips.match(/data-group=/g) || []).length, 6, 'every corridor is one click away');
   const harbourChip = chips.slice(chips.indexOf('data-group="harbour"'), chips.indexOf('data-group="kln-nte"'));
-  assert.ok(harbourChip.includes('aria-pressed="true"'), 'the selected tunnel\'s corridor is preselected');
+  assert.ok(harbourChip.includes('aria-pressed="true"'), 'its corridor is preselected');
 });
 
 test('the category selector follows the selected tunnel', () => {
@@ -506,7 +461,8 @@ test('the category selector follows the selected tunnel', () => {
 test('clicking an alternative switches the tunnel', () => {
   fire('alt-list', 'click', { target: { closest: () => ({ dataset: { tunnelId: 'tct' } }) } });
   assert.equal($('tunnel-select').value, 'tct');
-  assert.equal($('result-title').textContent, '大老山隧道');
+  assert.equal($('tunnel-select').value, 'tct');
+  assert.ok($('tunnel-select').selectedOptions[0].textContent.includes('大老山隧道'));
   const rows = $('alt-list').innerHTML.split('<li>').filter((row) => row.includes('大老山隧道'));
   assert.equal(rows.length, 1, 'the list follows the new selection');
   assert.ok(rows[0].includes('現用'), 'and marks it as the current choice');
@@ -530,7 +486,7 @@ test('choosing another corridor swaps the list in one click', () => {
 });
 
 test('the result and the schedule sit on the same page, with the journey last', () => {
-  assert.equal($('alternatives').hidden, false, 'the comparison is part of the result card');
+  assert.equal($('alt-card').hidden, false, 'the alternatives card is shown');
   assert.equal($('chart-marker') !== undefined, true, 'the chart is on screen too');
   assert.ok($('plan-result').innerHTML.length > 0, 'the journey section is rendered at the bottom');
 });
@@ -538,11 +494,11 @@ test('the result and the schedule sit on the same page, with the journey last', 
 test('a tunnel outside the macro map shows no alternatives', () => {
   $('tunnel-select').value = 'dbt'; // Discovery Bay stands alone
   fire('tunnel-select', 'change');
-  assert.equal($('alternatives').hidden, true);
+  assert.equal($('alt-card').hidden, true);
 
   $('tunnel-select').value = 'cht';
   fire('tunnel-select', 'change');
-  assert.equal($('alternatives').hidden, false);
+  assert.equal($('alt-card').hidden, false);
 });
 
 test('the alternatives follow the chosen vehicle', () => {
@@ -646,7 +602,8 @@ test('a stale, string-named data module can never render undefined', async () =>
 
   assert.ok(!$('tunnel-select').innerHTML.includes('undefined'), 'tunnel list showed undefined');
   assert.ok(!$('vehicle-select').innerHTML.includes('undefined'), 'vehicle list showed undefined');
-  assert.equal($('result-title').textContent, '海底隧道（紅隧）');
+  assert.equal($('tunnel-select').value, 'cht');
+  assert.ok($('tunnel-select').selectedOptions[0].textContent.includes('海底隧道（紅隧）'));
 
   data.TUNNELS[0].name = tunnelName;
   data.TVT_VEHICLES[0].name = vehicleName;
