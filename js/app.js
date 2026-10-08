@@ -226,7 +226,7 @@ function renderFooter() {
   const copy = t().footer;
   const links = FOOTER_LINKS.map((key, i) =>
     `<a href="https://www.td.gov.hk/${state.lang}${TD_PATHS[key]}" target="_blank" rel="noopener">${esc(copy.links[i])}</a>`).join('、');
-  $('site-footer').innerHTML = `${esc(copy.source)} ${links}。${esc(copy.disclaimer)}`;
+  $('footer-source').innerHTML = `${esc(copy.source)} ${links}。${esc(copy.disclaimer)}`;
 }
 
 function applyLanguage() {

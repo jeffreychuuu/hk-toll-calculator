@@ -79,7 +79,7 @@ for (const id of ['period-badge', 'next-hint',
   'chart-title', 'marker-label', 'site-name', 'github-link', 'lang-picker',
   'compare-note',
   'alt-card', 'alt-list', 'alt-categories', 'label-vehicle-class',
-  'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
+  'lang-trigger', 'lang-current', 'lang-menu', 'footer-source', 'site-footer']) elements.set(id, mk(id));
 
 globalThis.document = {
   getElementById: (id) => elements.get(id),
