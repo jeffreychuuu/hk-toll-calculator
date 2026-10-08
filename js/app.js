@@ -462,9 +462,18 @@ function renderMoment() {
     : (position > 92 ? 'translateX(-100%)' : 'translateX(-50%)');
 }
 
+// A tunnel that charges one rate, whatever the clock says — so the schedule
+// controls would have nothing to do.
+const isFlatDay = () => getDaySegments(state).every((seg) => seg.periodType === 'flat');
+
 function renderChart() {
   const copy = t();
   const segs = getDaySegments(state);
+  // A tunnel with one flat rate all day has no schedule to pick through, so the
+  // clock and date controls step aside; the badge and the flat band remain.
+  const flat = segs.every((seg) => seg.periodType === 'flat');
+  $('chart-controls').hidden = flat;
+  $('time-slider').hidden = flat;
   $('chart-bar').innerHTML = segs.map((seg) => {
     const width = ((seg.endMin - seg.startMin + 1) / 1440) * 100;
     return `<span class="seg ${seg.periodType}" style="width:${width.toFixed(4)}%"></span>`;
@@ -509,6 +518,30 @@ function goNow() {
   datePinned = false;
   state.minutes = nowMinutes();
   state.date = toDateKey(new Date());
+}
+
+// The id a class has in a tunnel's own picker. Not the same as the pricing id:
+// a flat-rate tunnel prices every class the same, but its picker still names
+// them separately.
+const vehicleIdFor = (tunnelId, canonical) => {
+  const options = vehiclesFor(tunnelId);
+  const hit = options.find((vehicle) => canonicalFor(tunnelId, vehicle.id) === canonical);
+  return (hit || options[0]).id;
+};
+
+// Switching tunnel keeps the kind of vehicle you picked: each tunnel names its
+// classes differently (Tate's Cairn has no "other", Discovery Bay lumps them
+// all together), so translate through the canonical class rather than letting
+// the picker fall back to the first option.
+function setTunnel(tunnelId) {
+  if (tunnelId === state.tunnelId) return;
+  const canonical = canonicalFor(state.tunnelId, state.vehicleId);
+  state.tunnelId = tunnelId;
+  state.vehicleId = vehicleIdFor(tunnelId, canonical);
+  // A flat-rate tunnel has no schedule, so there is no other time to be at.
+  if (isFlatDay()) goNow();
+  saveSelection();
+  render();
 }
 
 function selectTime(minutes) {
@@ -559,10 +592,7 @@ function init() {
   });
 
   $('chart-tunnel').addEventListener('change', (e) => {
-    state.tunnelId = e.target.value;
-    fillVehicleSelect();
-    saveSelection();
-    render();
+    setTunnel(e.target.value);
   });
   $('alt-categories').addEventListener('click', (e) => {
     const chip = e.target.closest('button[data-group]');
@@ -571,18 +601,12 @@ function init() {
     // Switching corridor picks that corridor's first tunnel, and the chart
     // follows the choice.
     if (!group || !group.tunnels.length) return;
-    state.tunnelId = group.tunnels[0];
-    fillVehicleSelect();
-    saveSelection();
-    render();
+    setTunnel(group.tunnels[0]);
   });
   $('alt-list').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-tunnel-id]');
     if (!btn) return;
-    state.tunnelId = btn.dataset.tunnelId;
-    fillVehicleSelect();
-    saveSelection();
-    render();
+    setTunnel(btn.dataset.tunnelId);
   });
   $('vehicle-select').addEventListener('change', (e) => {
     state.vehicleId = e.target.value;
