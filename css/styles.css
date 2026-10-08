@@ -284,17 +284,21 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
   text-align: left;
   cursor: pointer;
 }
-.compare-row:hover { background: var(--form); }
-.compare-row.cheapest { background: #e7f6ee; color: #157a4d; font-weight: 700; }
+button.compare-row:hover { background: var(--form); }
+/* A free corridor reads 免費 and wears green; the cheapest tunnel wears blue,
+   so the two best-value rows are never confused for each other. */
+.compare-row.free { background: #e7f6ee; color: #157a4d; font-weight: 700; }
+.compare-row.free .compare-price,
+.compare-row.free .compare-tag { color: #157a4d; }
+.compare-row.cheapest { background: #e8eefc; color: #1d4ed8; font-weight: 700; }
 /* The name takes a line of its own, so it is never squeezed into a column of
    single Chinese characters; the readings, price and tags follow underneath. */
 .compare-name { flex: 1 1 100%; min-width: 0; }
 .compare-price { font-variant-numeric: tabular-nums; white-space: nowrap; margin-left: auto; }
 .compare-tag { color: var(--muted); font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
 .compare-row.cheapest .compare-price,
-.compare-row.cheapest .compare-tag { color: #157a4d; }
+.compare-row.cheapest .compare-tag { color: #1d4ed8; }
 div.compare-row { cursor: default; }
-div.compare-row:hover { background: transparent; }
 
 /* Live conditions from the Transport Department */
 .traffic { font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
