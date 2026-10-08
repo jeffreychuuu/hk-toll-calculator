@@ -3,6 +3,7 @@ import { TUNNELS, vehiclesFor, CROSS_HARBOUR_IDS } from './data.js';
 import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison } from './engine.js';
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
+import { REGIONS, regionById, planCrossing } from './regions.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
 const FOOTER_LINKS = ['tvt', 'flat', 'taiLam'];
@@ -86,6 +87,9 @@ function saveLang() {
 const initialDayType = defaultDayType();
 const state = {
   lang: 'tc',
+  view: 'fares',           // which output section is open
+  fromId: '',              // journey suggestion — deliberately not persisted
+  toId: '',
   mode: 'date',            // 'date' picks a calendar day; 'category' picks a schedule
   date: toDateKey(new Date()),
   category: 'weekday',
@@ -191,6 +195,15 @@ function applyLanguage() {
   document.title = copy.pageTitle;
   $('chart-title').textContent = copy.chartTitle;
   $('compare-title').textContent = copy.compareTitle;
+  $('compare-empty').textContent = copy.compareEmpty;
+  $('plan-title').textContent = copy.planTitle;
+  $('label-from').textContent = copy.planFrom;
+  $('label-to').textContent = copy.planTo;
+  for (const btn of $('view-tabs').querySelectorAll('button')) {
+    btn.textContent = { fares: copy.viewFares, journey: copy.viewJourney, schedule: copy.viewSchedule }[btn.dataset.view];
+  }
+  fillPlanSelects();
+  renderPlan();
   $('label-tunnel').textContent = copy.labelTunnel;
   $('label-vehicle').textContent = copy.labelVehicle;
   $('label-date').textContent = copy.labelDate;
@@ -241,6 +254,7 @@ function renderResult(tunnel) {
 function renderCompare() {
   const isCrossHarbour = CROSS_HARBOUR_IDS.includes(state.tunnelId);
   $('compare-card').hidden = !isCrossHarbour;
+  $('compare-empty').hidden = isCrossHarbour;
   if (!isCrossHarbour) return;
 
   const copy = t();
@@ -258,6 +272,59 @@ function renderCompare() {
   const tied = cheapest.length === CROSS_HARBOUR_IDS.length;
   $('compare-note').hidden = !tied;
   $('compare-note').textContent = tied ? copy.compareTie.replace('{amount}', amount.toFixed(2)) : '';
+}
+
+const tunnelById = (id) => TUNNELS.find((x) => x.id === id);
+
+function fillPlanSelects() {
+  const blank = `<option value="">${esc(t().planUnset)}</option>`;
+  const options = REGIONS
+    .map((region) => `<option value="${region.id}">${esc(region.name[state.lang])}</option>`)
+    .join('');
+  $('from-select').innerHTML = blank + options;
+  $('to-select').innerHTML = blank + options;
+  $('from-select').value = state.fromId;
+  $('to-select').value = state.toId;
+}
+
+function renderPlan() {
+  const copy = t();
+  const result = $('plan-result');
+
+  if (!regionById(state.fromId) || !regionById(state.toId)) {
+    result.innerHTML = `<p class="plan-note">${esc(copy.planPick)}</p>`;
+    return;
+  }
+
+  const plan = planCrossing({ fromId: state.fromId, toId: state.toId });
+  if (!plan.crossesHarbour) {
+    result.innerHTML = `<p class="plan-note">${esc(copy.planNoCrossing)}</p>`;
+    return;
+  }
+
+  const tunnelButton = (id) =>
+    `<button type="button" class="plan-tunnel" data-tunnel-id="${id}">${esc(nameOf(tunnelById(id)))}</button>`;
+  const [best, ...rest] = plan.tiers;
+  const reason = copy[`planReason${plan.reason[0].toUpperCase()}${plan.reason.slice(1)}`];
+
+  result.innerHTML = [
+    `<p class="plan-best"><span class="plan-label">${esc(copy.planMoreDirect)}</span>`
+      + `${best.map(tunnelButton).join('<span class="plan-sep">·</span>')}</p>`,
+    rest.length
+      ? `<p class="plan-rest"><span class="plan-label">${esc(copy.planLessDirect)}</span>`
+        + `${rest.flat().map(tunnelButton).join('<span class="plan-sep">·</span>')}</p>`
+      : '',
+    `<p class="plan-reason">${esc(reason)}</p>`,
+    `<p class="plan-disclaimer">${esc(copy.planDisclaimer)}</p>`,
+  ].join('');
+}
+
+function renderTabs() {
+  for (const btn of $('view-tabs').querySelectorAll('button')) {
+    const active = btn.dataset.view === state.view;
+    btn.setAttribute('aria-selected', String(active));
+    $(`view-${btn.dataset.view}`).hidden = !active;
+  }
 }
 
 function renderChart() {
@@ -304,6 +371,8 @@ function render() {
   renderDateType();
   renderTime();
   renderToll();
+  renderTabs();
+  renderPlan();
 }
 
 function selectTime(minutes) {
@@ -359,6 +428,29 @@ function init() {
 
   $('tunnel-select').addEventListener('change', (e) => {
     state.tunnelId = e.target.value;
+    fillVehicleSelect();
+    saveSelection();
+    render();
+  });
+  $('view-tabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-view]');
+    if (!btn || btn.dataset.view === state.view) return;
+    state.view = btn.dataset.view;
+    renderTabs();
+  });
+  $('from-select').addEventListener('change', (e) => {
+    state.fromId = e.target.value;
+    renderPlan();
+  });
+  $('to-select').addEventListener('change', (e) => {
+    state.toId = e.target.value;
+    renderPlan();
+  });
+  $('plan-result').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-tunnel-id]');
+    if (!btn) return;
+    state.tunnelId = btn.dataset.tunnelId;
+    fillTunnelSelect();
     fillVehicleSelect();
     saveSelection();
     render();

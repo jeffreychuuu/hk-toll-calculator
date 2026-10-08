@@ -39,12 +39,16 @@ const STORAGE_KEY = 'hk-toll-calculator.selection';
 
 const mkButton = (ds) => ({
   dataset: ds, ariaPressed: null, textContent: '', disabled: false,
-  setAttribute(k, v) { if (k === 'aria-pressed') this.ariaPressed = v; },
+  setAttribute(k, v) {
+    if (k === 'aria-pressed') this.ariaPressed = v;
+    if (k === 'aria-selected') this.ariaSelected = v;
+  },
   addEventListener() {}, closest() { return this; },
 });
 const daytypeButtons = ['weekday', 'weekend'].map((dt) => mkButton({ daytype: dt }));
 const modeButtons = ['date', 'category'].map((m) => mkButton({ mode: m }));
-const buttonsFor = { 'daytype-toggle': daytypeButtons, 'mode-toggle': modeButtons };
+const viewButtons = ['fares', 'journey', 'schedule'].map((view) => mkButton({ view }));
+const buttonsFor = { 'daytype-toggle': daytypeButtons, 'mode-toggle': modeButtons, 'view-tabs': viewButtons };
 
 const elements = new Map();
 function mk(id) {
@@ -75,6 +79,8 @@ for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amou
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
   'chart-title', 'label-tunnel', 'label-vehicle', 'label-date', 'label-category', 'label-time', 'lang-picker',
   'compare-card', 'compare-title', 'compare-list', 'compare-note',
+  'plan-card', 'plan-title', 'label-from', 'label-to', 'from-select', 'to-select', 'plan-result',
+  'view-tabs', 'view-fares', 'view-journey', 'view-schedule', 'compare-empty',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
 globalThis.document = {
@@ -292,6 +298,7 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal($('lang-current').textContent, 'English');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
   assert.equal($('compare-title').textContent, 'Cheapest harbour crossing');
+  assert.equal($('plan-title').textContent, 'Journey suggestion');
   assert.equal($('label-tunnel').textContent, 'Tunnel');
   assert.equal($('label-vehicle').textContent, 'Vehicle class');
   assert.equal($('label-time').textContent, 'Crossing time');
@@ -505,6 +512,95 @@ test('the card is hidden when the selected tunnel is not a harbour crossing', ()
   $('tunnel-select').value = 'cht';
   fire('tunnel-select', 'change');
   assert.equal($('compare-card').hidden, false);
+});
+
+test('the journey card lists every district plus an unset option', async () => {
+  await import('../js/app.js?plan=1');
+  const { REGIONS } = await import('../js/regions.js');
+
+  assert.equal(($('from-select').innerHTML.match(/<option/g) || []).length, REGIONS.length + 1);
+  assert.equal(($('to-select').innerHTML.match(/<option/g) || []).length, REGIONS.length + 1);
+  assert.ok($('from-select').innerHTML.includes('未揀'));
+  assert.ok($('plan-result').innerHTML.includes('揀返起點同終點'));
+});
+
+test('a harbour trip ranks the crossings and explains why', () => {
+  $('from-select').value = 'nt-tuenmun';
+  fire('from-select', 'change');
+  $('to-select').value = 'hki-central';
+  fire('to-select', 'change');
+
+  const html = $('plan-result').innerHTML;
+  assert.ok(html.includes('較順路'));
+  assert.ok(html.includes('西區海底隧道（西隧）'), 'the western crossing leads');
+  assert.ok(html.includes('海底隧道（紅隧）'), 'the red tunnel shares the top tier');
+  assert.ok(html.includes('較繞'));
+  assert.ok(html.includes('東區海底隧道（東隧）'));
+  assert.ok(html.includes('位於西區'), 'the reason is shown');
+  assert.ok(html.includes('實際走法要睇實時交通'), 'the disclaimer is shown');
+});
+
+test('a same-side trip says no crossing is needed, and shows no prices', () => {
+  $('from-select').value = 'kln-mk';
+  fire('from-select', 'change');
+  $('to-select').value = 'kln-kwuntong';
+  fire('to-select', 'change');
+
+  const html = $('plan-result').innerHTML;
+  assert.ok(html.includes('唔需要過海'));
+  assert.ok(!html.includes('HK$'), 'the journey card must not duplicate prices');
+  assert.ok(!html.includes('較順路'));
+});
+
+test('the journey card never quotes a price on a harbour trip either', () => {
+  $('from-select').value = 'kln-tst';
+  fire('from-select', 'change');
+  $('to-select').value = 'hki-wanchai';
+  fire('to-select', 'change');
+  assert.ok(!$('plan-result').innerHTML.includes('HK$'));
+});
+
+test('clicking a ranked crossing switches the selected tunnel', () => {
+  fire('plan-result', 'click', { target: { closest: () => ({ dataset: { tunnelId: 'ehc' } }) } });
+  assert.equal($('tunnel-select').value, 'ehc');
+  assert.equal($('result-title').textContent, '東區海底隧道（東隧）');
+});
+
+test('the output is split into sections and only one is shown', async () => {
+  await import('../js/app.js?tabs=1');
+
+  assert.equal(viewButtons.length, 3);
+  assert.equal(viewButtons[0].ariaSelected, 'true', 'the fare comparison is the default section');
+  assert.equal($('view-fares').hidden, false);
+  assert.equal($('view-journey').hidden, true);
+  assert.equal($('view-schedule').hidden, true);
+});
+
+test('choosing a section reveals that section alone', () => {
+  fire('view-tabs', 'click', { target: viewButtons[1] }); // journey
+  assert.equal($('view-fares').hidden, true);
+  assert.equal($('view-journey').hidden, false);
+  assert.equal($('view-schedule').hidden, true);
+  assert.equal(viewButtons[1].ariaSelected, 'true');
+  assert.equal(viewButtons[0].ariaSelected, 'false');
+
+  fire('view-tabs', 'click', { target: viewButtons[2] }); // schedule
+  assert.equal($('view-journey').hidden, true);
+  assert.equal($('view-schedule').hidden, false);
+
+  fire('view-tabs', 'click', { target: viewButtons[0] }); // back to fares
+  assert.equal($('view-fares').hidden, false);
+  assert.equal($('view-schedule').hidden, true);
+});
+
+test('the fare section explains itself when no crossing can be compared', () => {
+  $('tunnel-select').value = 'tct'; // not a harbour crossing
+  fire('tunnel-select', 'change');
+  assert.equal($('compare-empty').hidden, false);
+
+  $('tunnel-select').value = 'cht';
+  fire('tunnel-select', 'change');
+  assert.equal($('compare-empty').hidden, true);
 });
 
 test('a stale, string-named data module can never render undefined', async () => {

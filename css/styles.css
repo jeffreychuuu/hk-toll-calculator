@@ -154,6 +154,44 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
   line-height: 1.5;
 }
 
+/* Section tabs — one output section at a time */
+.view-tabs { display: flex; gap: 4px; background: #fff; border-radius: 999px; padding: 3px; }
+.view-tabs button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 8px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+.view-tabs button[aria-selected="true"] { background: #e8f1ff; color: var(--focus); font-weight: 700; }
+
+/* Journey suggestion */
+.plan-result { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.plan-note { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.plan-best, .plan-rest { margin: 0; font-size: 0.95rem; }
+.plan-rest { color: var(--muted); }
+.plan-label { color: var(--muted); font-weight: 600; font-size: 0.85rem; margin-right: 4px; }
+.plan-tunnel {
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  padding: 2px 4px;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--focus);
+  cursor: pointer;
+}
+.plan-tunnel:hover { background: var(--form); }
+.plan-sep { color: var(--muted); margin: 0 2px; }
+.plan-reason { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.plan-disclaimer { margin: 0; color: var(--muted); font-size: 0.78rem; }
+.compare-empty { margin: 8px 0 0; color: var(--muted); font-size: 0.9rem; }
+
 /* Cheapest harbour crossing */
 .compare-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .compare-row {
@@ -343,7 +381,8 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
     grid-template-areas:
       "topbar topbar"
       "result form"
-      "chart  form"
+      "tabs   form"
+      "panel  form"
       "footer footer";
     align-items: start;
     gap: 14px;
@@ -351,7 +390,8 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
   }
   .topbar { grid-area: topbar; }
   #result-card { grid-area: result; }
-  #chart-card { grid-area: chart; }
+  #view-tabs { grid-area: tabs; }
+  .view-panel { grid-area: panel; }
   .form-card { grid-area: form; }
   .site-footer { grid-area: footer; }
 }
