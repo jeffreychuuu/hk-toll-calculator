@@ -332,15 +332,27 @@ function trafficChip(kind, id) {
   const report = source ? source[id] : null;
   if (!report) return '';
   const copy = t();
-  const label = copy[`traffic${report.state[0].toUpperCase()}${report.state.slice(1)}`];
+  const condition = (state) => copy[`traffic${state[0].toUpperCase()}${state.slice(1)}`];
+  const chip = (state, inner) => `<span class="traffic traffic-${state}">${inner}</span>`;
+
   const sides = Object.entries(report.byDirection || {})
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([direction, side]) => `${copy.trafficTowards.replace('{place}', copy[DIRECTION_LABEL[direction]] || direction)} `
-      + copy.trafficMinutes.replace('{minutes}', String(side.minutes)));
-  const detail = report.state === 'closed' || !sides.length
-    ? ''
-    : ` <span class="traffic-detail">${esc(sides.join(' · '))}</span>`;
-  return `<span class="traffic traffic-${report.state}">${esc(label)}</span>${detail}`;
+    .sort(([a], [b]) => a.localeCompare(b));
+
+  // Closed, or nothing directional to say: one chip for the tunnel as a whole.
+  if (report.state === 'closed' || !sides.length) {
+    return chip(report.state, esc(condition(report.state)));
+  }
+
+  // Each direction stands on its own — one way can be jammed while the other
+  // runs free, and a single colour for both would hide exactly that.
+  return sides.map(([direction, side]) => {
+    const place = copy[DIRECTION_LABEL[direction]] || direction;
+    const minutes = side.minutes > 0
+      ? ` ${esc(copy.trafficMinutes.replace('{minutes}', String(side.minutes)))}`
+      : '';
+    return chip(side.state, `${esc(copy.trafficTowards.replace('{place}', place))} `
+      + `${esc(condition(side.state))}${minutes}`);
+  }).join(' ');
 }
 
 const corridorIncidents = (group) =>
