@@ -281,28 +281,38 @@ function alternativeRows(group, canonical) {
   ]
     .map((option) => ({
       ...option,
-      amount: option.kind === 'tunnel' ? priceTunnelFor(option.id, canonical) : 0,
+      // A free corridor has no toll to quote, so it carries no amount at all.
+      amount: option.kind === 'tunnel' ? priceTunnelFor(option.id, canonical) : null,
     }))
-    .sort((a, b) => a.amount - b.amount);
+    .sort((a, b) => (a.amount ?? 0) - (b.amount ?? 0));
 
-  const cheapest = options.length ? options[0].amount : 0;
+  // 最平 is a claim about tolls, so it belongs to the cheapest tunnel — never to
+  // a free corridor, which simply reads 免費 and wears a colour of its own.
+  const tunnelAmounts = options.filter((option) => option.kind === 'tunnel')
+    .map((option) => option.amount);
+  const cheapest = tunnelAmounts.length ? Math.min(...tunnelAmounts) : null;
+
   const rows = options.map((option) => {
+    const free = option.kind === 'road';
+    const cheapestHere = !free && option.amount === cheapest;
     const tags = [];
     if (option.kind === 'tunnel' && option.id === state.tunnelId) tags.push(copy.compareCurrent);
-    if (option.amount === cheapest) tags.push(copy.planCheapest);
-    const best = tags.includes(copy.planCheapest);
+    if (cheapestHere) tags.push(copy.planCheapest);
+    const price = free ? esc(copy.compareFree) : `HK$ ${option.amount.toFixed(2)}`;
     const content = `<span class="compare-name">${esc(option.name)}</span>`
       + trafficChip(option.kind, option.id)
-      + `<span class="compare-price">HK$ ${option.amount.toFixed(2)}</span>`
+      + `<span class="compare-price">${price}</span>`
       + (tags.length ? `<span class="compare-tag">${esc(tags.join(' · '))}</span>` : '');
+    const cls = `compare-row${free ? ' free' : ''}${cheapestHere ? ' cheapest' : ''}`;
     // Roads are places, not choices: only tunnels switch the selector.
     return option.kind === 'tunnel'
-      ? `<li><button type="button" class="compare-row${best ? ' cheapest' : ''}"`
-        + ` data-tunnel-id="${option.id}"${best ? ' aria-current="true"' : ''}>${content}</button></li>`
-      : `<li><div class="compare-row${best ? ' cheapest' : ''}">${content}</div></li>`;
+      ? `<li><button type="button" class="${cls}"`
+        + ` data-tunnel-id="${option.id}"${cheapestHere ? ' aria-current="true"' : ''}>${content}</button></li>`
+      : `<li><div class="${cls}">${content}</div></li>`;
   }).join('');
 
-  const tied = options.length > 1 && options.every((option) => option.amount === cheapest);
+  const paid = options.filter((option) => option.kind === 'tunnel');
+  const tied = paid.length > 1 && paid.every((option) => option.amount === cheapest);
   return { rows, tied, cheapest };
 }
 

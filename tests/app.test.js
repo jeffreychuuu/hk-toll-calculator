@@ -493,7 +493,13 @@ test('the category selector follows the selected tunnel', () => {
   assert.ok(list.includes('大老山隧道'));
   assert.ok(list.includes('沙田嶺／尖山／大圍隧道'), 'the Sha Tin Heights corridor belongs here too');
   assert.ok(list.includes('大埔道'));
-  assert.ok(list.includes('最平'), 'the free corridor is the cheapest and marked');
+  // a free corridor reads 免費 and is never the one wearing 最平: that goes to
+  // the cheapest tunnel, in a colour of its own
+  const freeRow = list.slice(list.indexOf('compare-row free'), list.indexOf('龍翔道'));
+  assert.ok(freeRow.includes('免費'), 'a free corridor has no price');
+  assert.ok(!freeRow.includes('HK$'), 'and no dollar figure at all');
+  assert.ok(!freeRow.includes('最平'), 'a free corridor is not 最平');
+  assert.ok(list.includes('最平'), 'the cheapest tunnel is the one marked');
 });
 
 test('clicking an alternative switches the tunnel', () => {
@@ -529,6 +535,8 @@ test('the airport corridor is the two free roads to Chek Lap Kok', () => {
   assert.ok(list.includes('屯門赤鱲角隧道'), 'the Tuen Mun link is listed');
   assert.ok(list.includes('青嶼幹線／北大嶼山公路'), 'and the Lantau Link');
   assert.ok(!list.includes('現用'), 'no tunnel of ours serves it');
+  assert.ok(!list.includes('HK$'), 'free roads carry no price at all');
+  assert.equal((list.match(/免費/g) || []).length, 2, 'each one reads 免費');
 });
 
 test('the tunnel dropdown groups tunnels only, never an empty corridor', () => {

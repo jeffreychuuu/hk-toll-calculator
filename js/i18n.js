@@ -51,6 +51,7 @@ export const UI = {
     cmpCatKowloon: '九龍市內',
     cmpCatAirport: '新界西 ↔ 機場／北大嶼山',
     planCheapest: '最平',
+    compareFree: '免費',
 
     labelTunnel: '選擇隧道',
     labelVehicle: '車輛類別',
@@ -124,6 +125,7 @@ export const UI = {
     cmpCatKowloon: '九龙市内',
     cmpCatAirport: '新界西 ↔ 机场／北大屿山',
     planCheapest: '最平',
+    compareFree: '免费',
 
     labelTunnel: '选择隧道',
     labelVehicle: '车辆类别',
@@ -197,6 +199,7 @@ export const UI = {
     cmpCatKowloon: 'Kowloon',
     cmpCatAirport: 'New Territories West ↔ Airport / North Lantau',
     planCheapest: 'Cheapest',
+    compareFree: 'Free',
 
     labelTunnel: 'Tunnel',
     labelVehicle: 'Vehicle class',
