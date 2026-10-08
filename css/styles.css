@@ -277,6 +277,7 @@ div.compare-row:hover { background: transparent; }
 .traffic-detail { color: var(--muted); font-weight: 600; font-size: 0.75rem; }
 .live-traffic { margin: 8px 0 0; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .live-traffic:empty { display: none; }
+.traffic-hint { color: var(--muted); font-size: 0.78rem; }
 .incidents { margin-top: 10px; background: #fdf6e8; border-radius: 12px; padding: 10px 12px; }
 .incidents-title { margin: 0 0 4px; font-size: 0.85rem; font-weight: 700; color: #a2650f; }
 .incident { margin: 0; font-size: 0.85rem; line-height: 1.55; }

@@ -626,6 +626,12 @@ test('live conditions from the transport department sit beside the tunnels', asy
   assert.ok($('live-traffic').innerHTML.includes('往港島 18 分鐘'),
     'the chosen tunnel\'s directions show on the headline card too');
 
+  // a hypothetical time is not now, so live readings have no business showing
+  setTime('12', '00');
+  assert.ok(!$('alt-list').innerHTML.includes('往港島'), 'the reading goes when the hour is not now');
+  assert.ok(!$('alt-list').innerHTML.includes('交通消息'), 'and so does the incident news');
+  assert.ok($('live-traffic').innerHTML.includes('只喺'), 'with a word about why');
+
   delete globalThis.location;
   delete globalThis.fetch;
 });

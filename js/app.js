@@ -240,7 +240,9 @@ function applyLanguage() {
 function renderResult() {
   const copy = t();
   const { amount, periodType } = getToll(state);
-  $('live-traffic').innerHTML = trafficChip(state.tunnelId);
+  $('live-traffic').innerHTML = traffic && !isShowingNow()
+    ? `<span class="traffic-hint">${esc(t().trafficOnlyNow)}</span>`
+    : trafficChip(state.tunnelId);
   const badge = $('period-badge');
   badge.textContent = copy.period[periodType];
   badge.className = `badge ${periodType}`;
@@ -301,6 +303,10 @@ function alternativeRows(group, canonical) {
 // Live condition for one tunnel, per side of the harbour, when the feed has a
 // reading for it. The worst reading sets the colour; the sides are spelled out
 // because a journey time only means something for the direction you drive.
+// Live readings describe this moment, so they only belong on screen when the
+// view really is this moment: the clock is followed and the date is today.
+const isShowingNow = () => following && state.date === toDateKey(new Date());
+
 const DIRECTION_LABEL = {
   island: 'dirIsland',
   kowloon: 'dirKowloon',
@@ -313,6 +319,7 @@ const DIRECTION_LABEL = {
 };
 
 function trafficChip(tunnelId) {
+  if (!isShowingNow()) return '';
   const report = traffic && traffic.tunnels ? traffic.tunnels[tunnelId] : null;
   if (!report) return '';
   const copy = t();
@@ -328,7 +335,9 @@ function trafficChip(tunnelId) {
 }
 
 const corridorIncidents = (group) =>
-  (traffic && traffic.incidents ? incidentsForTunnels(traffic.incidents, group.tunnels) : []);
+  (isShowingNow() && traffic && traffic.incidents
+    ? incidentsForTunnels(traffic.incidents, group.tunnels)
+    : []);
 
 function incidentBlock(group) {
   const copy = t();
@@ -345,7 +354,7 @@ function incidentBlock(group) {
 }
 
 function trafficSourceLine() {
-  if (!traffic || !traffic.updatedAt) return '';
+  if (!traffic || !traffic.updatedAt || !isShowingNow()) return '';
   const at = traffic.updatedAt.slice(11, 16);
   return `<p class="traffic-source">${esc(t().trafficSource.replace('{time}', at))}</p>`;
 }
