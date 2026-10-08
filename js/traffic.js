@@ -111,6 +111,18 @@ export function roadsMentioned(text) {
   return [...hits];
 }
 
+// Where a journey-time reading begins, by the department's gantry id. Only the
+// gantries app.js names for a route, which is why the list is short.
+export const GANTRIES = {
+  SJ1: { tc: '沙田馬場', sc: '沙田马场', en: 'Sha Tin Racecourse' },
+  SJ2: { tc: '石門', sc: '石门', en: 'Shek Mun' },
+  SJ4: { tc: '米埔', sc: '米埔', en: 'Mai Po' },
+  SJ5: { tc: '曾咀街', sc: '曾咀街', en: 'Tseng Choi Street' },
+  N05: { tc: '大埔廣福邨', sc: '大埔广福邨', en: 'Kwong Fuk Estate' },
+  N06: { tc: '青沙公路', sc: '青沙公路', en: 'Tsing Sha Highway' },
+  H7: { tc: '黃竹坑道', sc: '黄竹坑道', en: 'Wong Chuk Hang Road' },
+};
+
 export function normaliseJourneyTimes(xml) {
   const tunnels = {};
   const roads = {};
@@ -147,9 +159,12 @@ export function normaliseJourneyTimes(xml) {
 
     const direction = road ? road.direction
       : directionFor(destination, tagValue(row, 'LOCATION_ID'));
-    const towards = entry.byDirection[direction] || { state: 'free', minutes: 0 };
+    const locationId = tagValue(row, 'LOCATION_ID');
+    // Where this direction is measured from: the gantry, or several of them.
+    const towards = entry.byDirection[direction] || { state: 'free', minutes: 0, origins: [] };
     towards.state = worse(towards.state, state);
     if (minutes !== null) towards.minutes = Math.max(towards.minutes, minutes);
+    if (locationId && !towards.origins.includes(locationId)) towards.origins.push(locationId);
     entry.byDirection[direction] = towards;
 
     if (tunnelId) tunnels[tunnelId] = entry;

@@ -4,9 +4,24 @@ import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison }
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 import { compareGroups, categoryForTunnel } from './regions.js';
-import { incidentsForCorridor } from './traffic.js';
+import { incidentsForCorridor, GANTRIES } from './traffic.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
+// The gantry we name for a route: the one on its own approach, so the reading
+// reads naturally ("由沙田馬場起"). A route timed from many points — the
+// harbour crossings — names none of them.
+const ORIGIN_GANTRY = {
+  'lrt:kowloon-c': 'SJ1', // Sha Tin Racecourse
+  'tct:kowloon-e': 'SJ2', // Shek Mun
+  'stg:kowloon-w': 'SJ1',
+  'smt:tsuenwan': 'SJ1',
+  'tlt:tingkau': 'SJ4', // Mai Po
+  'abt:wanchai': 'H7', // Wong Chuk Hang Road
+  'tmr:tsuenwan': 'SJ5', // Tseng Choi Street
+  'lamkam:tsuenwan': 'SJ5',
+  'tpr:kowloon': 'N06', // Tsing Sha Highway
+  'tpr:shatin': 'N05', // Kwong Fuk Estate
+};
 const FOOTER_LINKS = ['tvt', 'flat', 'taiLam'];
 
 const $ = (id) => document.getElementById(id);
@@ -346,14 +361,22 @@ function trafficChip(kind, id) {
 
   // Each direction stands on its own — one way can be jammed while the other
   // runs free, and a single colour for both would hide exactly that. They are
-  // stacked, one per line, so neither reads as the other.
+  // stacked, one per line, so neither reads as the other. The reading also says
+  // where it is measured from: the department times a route from a gantry, not
+  // from the tunnel mouth.
   const readings = sides.map(([direction, side]) => {
     const place = copy[DIRECTION_LABEL[direction]] || direction;
+    // Name the gantry we chose for this route, when the feed measured from it.
+    const origin = ORIGIN_GANTRY[`${id}:${direction}`];
+    const from = origin && GANTRIES[origin] && (side.origins || []).includes(origin)
+      ? copy.trafficFrom.replace('{places}', GANTRIES[origin][state.lang])
+      : '';
     const minutes = side.minutes > 0
       ? ` ${esc(copy.trafficMinutes.replace('{minutes}', String(side.minutes)))}`
       : '';
     return chip(side.state, `${esc(copy.trafficTowards.replace('{place}', place))} `
-      + `${esc(condition(side.state))}${minutes}`);
+      + `${esc(condition(side.state))}${minutes}`
+      + (from ? ` · ${esc(from)}` : ''));
   });
   return readings.length === 1
     ? readings[0]

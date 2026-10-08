@@ -46,15 +46,15 @@ test('the worst reading wins per tunnel', () => {
   assert.equal(tunnels.cht.minutes, 18, 'and the longest journey time is kept');
   assert.equal(tunnels.cht.reports, 2);
   // A gantry on the island feeds the crossing towards Kowloon, and vice versa.
-  assert.deepEqual(tunnels.cht.byDirection.kowloon, { state: 'free', minutes: 4 }, 'towards Kowloon');
-  assert.deepEqual(tunnels.cht.byDirection.island, { state: 'slow', minutes: 18 }, 'towards the island');
+  assert.deepEqual(tunnels.cht.byDirection.kowloon, { state: 'free', minutes: 4, origins: ['H1'] }, 'towards Kowloon');
+  assert.deepEqual(tunnels.cht.byDirection.island, { state: 'slow', minutes: 18, origins: ['K01'] }, 'towards the island');
   assert.equal(tunnels.abt.state, 'free');
   assert.equal(tunnels.stg.minutes, 12, 'Route 8 is the Sharp Island / Sha Tin Heights corridor');
   assert.equal(result.roads.tmr.minutes, 22, 'Tuen Mun Road is measured too');
   assert.equal(result.roads.tmr.state, 'slow');
   assert.equal(result.roads.tpr.minutes, 9, 'and Tai Po Road');
   assert.equal(result.roads.lamkam.minutes, 25, 'and the Castle Peak Road corridor');
-  assert.deepEqual(result.roads.tmr.byDirection.tsuenwan, { state: 'slow', minutes: 22 },
+  assert.deepEqual(result.roads.tmr.byDirection.tsuenwan, { state: 'slow', minutes: 22, origins: ['SJ5'] },
     'a free road keeps its direction too');
   assert.equal(tunnels.ehc, undefined, 'destinations we do not list are ignored');
 });
@@ -115,7 +115,18 @@ test('each reading keeps the direction it travels', () => {
   const { tunnels } = result;
   assert.deepEqual(Object.keys(tunnels.ehc.byDirection).sort(), ['island', 'kowloon']);
   // Tate's Cairn only points one way: towards east Kowloon.
-  assert.deepEqual(tunnels.tct.byDirection['kowloon-e'], { state: 'free', minutes: 6 });
+  assert.deepEqual(tunnels.tct.byDirection['kowloon-e'], { state: 'free', minutes: 6, origins: ['SJ2'] });
+});
+
+test('a reading remembers the gantry it starts from', () => {
+  const { tunnels } = normaliseJourneyTimes(journeyXml([
+    { location: 'SJ1', dest: 'LRT', type: 1, data: 8, colour: 3 },
+    { location: 'SJ2', dest: 'LRT', type: 1, data: 7, colour: 3 },
+    { location: 'SJ3', dest: 'LRT', type: 1, data: 11, colour: 3 },
+  ]));
+  const towards = tunnels.lrt.byDirection['kowloon-c'];
+  assert.deepEqual(towards.origins, ['SJ1', 'SJ2', 'SJ3'], 'all three gantries are kept');
+  assert.equal(towards.minutes, 11, 'and the worst of them is the reading');
 });
 
 test('the condition order runs from worst to best', () => {

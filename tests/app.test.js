@@ -672,7 +672,7 @@ test('live conditions from the transport department sit beside the tunnels', asy
           state: 'jam',
           minutes: 18,
           reports: 3,
-          byDirection: { kowloon: { state: 'free', minutes: 4 }, island: { state: 'jam', minutes: 18 } },
+          byDirection: { kowloon: { state: 'free', minutes: 4, origins: ['K01'] }, island: { state: 'jam', minutes: 18, origins: ['H1', 'H2', 'H3', 'H4', 'H5'] } },
         },
         ehc: { state: 'free', minutes: 9, reports: 2, byDirection: { kowloon: { state: 'free', minutes: 9 } } },
         tlt: { state: 'free', minutes: 10, reports: 1, byDirection: { tingkau: { state: 'free', minutes: 10 } } },
@@ -684,7 +684,7 @@ test('live conditions from the transport department sit beside the tunnels', asy
         },
       },
       roads: {
-        tmr: { state: 'slow', minutes: 22, reports: 2, byDirection: { tsuenwan: { state: 'slow', minutes: 22 } } },
+        tmr: { state: 'slow', minutes: 22, reports: 2, byDirection: { tsuenwan: { state: 'slow', minutes: 22, origins: ['SJ5'] } } },
         lamkam: { state: 'slow', minutes: 28, reports: 1, byDirection: { tsuenwan: { state: 'slow', minutes: 28 } } },
       },
       incidents: [{
@@ -712,6 +712,7 @@ test('live conditions from the transport department sit beside the tunnels', asy
   assert.ok(list.includes('擠塞'), 'the congested reading shows');
   assert.ok(list.includes('往港島 擠塞 18 分鐘'), 'the congested direction, towards the island');
   assert.ok(list.includes('往九龍 暢通 4 分鐘'), 'and the free one gets its own chip, not the worst shared');
+  assert.ok(!list.includes('起'), 'the harbour crossings, timed from many points, name no gantry');
   assert.ok(list.includes('暢通'), 'the free-flowing one');
   assert.ok(list.includes('交通消息'), 'the incident block appears');
   assert.ok(list.includes('東區海底隧道(往柴灣方向)部分行車線封閉'));
@@ -723,6 +724,7 @@ test('live conditions from the transport department sit beside the tunnels', asy
   // a free corridor is measured too, when its row is on screen
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-ntw' } }) } });
   assert.ok($('alt-list').innerHTML.includes('往荃灣 慢車 22 分鐘'), 'Tuen Mun Road carries a reading');
+  assert.ok($('alt-list').innerHTML.includes('由曾咀街起'), 'and says where it is measured from');
   assert.ok($('alt-list').innerHTML.includes('屯門公路(往九龍方向)'),
     'and its own road incident is shown with it');
 
