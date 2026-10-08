@@ -2,6 +2,8 @@
 
 **English** | [繁體中文](README.zh-Hant.md)
 
+**Live:** https://hk-toll-calculator.jeffreychuuu.com
+
 A static website that checks Hong Kong road tunnel tolls in real time — showing the current rate, the 24-hour time-varying toll schedule, and the next rate change for any vehicle class.
 
 ## Overview
@@ -72,6 +74,8 @@ npm test                      # run the engine, schedule and UI unit tests
 ```
 
 ## Deploy to Vercel
+
+Production: https://hk-toll-calculator.jeffreychuuu.com
 
 ```bash
 npm i -g vercel

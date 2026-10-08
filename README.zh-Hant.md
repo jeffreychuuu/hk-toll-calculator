@@ -2,6 +2,8 @@
 
 [English](README.md) | **繁體中文**
 
+**網址：** https://hk-toll-calculator.jeffreychuuu.com
+
 即時查詢香港行車隧道收費嘅靜態網站 — 顯示現時收費、24 小時分時段收費分佈，以及下一個時段嘅收費變動。
 
 ## 概覽
@@ -71,6 +73,8 @@ npm test                      # 跑 engine、收費表同 UI 單元測試
 ```
 
 ## 部署到 Vercel
+
+正式網址：https://hk-toll-calculator.jeffreychuuu.com
 
 ```bash
 npm i -g vercel
