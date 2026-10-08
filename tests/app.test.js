@@ -562,6 +562,17 @@ test('live conditions from the transport department sit beside the tunnels', asy
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-ntw' } }) } });
   assert.ok($('alt-list').innerHTML.includes('往荃灣 22 分鐘'), 'Tuen Mun Road carries a reading');
 
+  // the day type is a hypothetical of its own: override it and the readings go,
+  // even when the override happens to name today's schedule
+  $('daytype-select').value = $('daytype-select').value;
+  fire('daytype-select', 'change');
+  assert.ok(!$('alt-list').innerHTML.includes('往荃灣'), 'picking a day type stops the readings');
+  assert.ok($('live-traffic').innerHTML.includes('只喺'), 'and says why');
+
+  // back to now resumes them
+  fire('back-to-now', 'click');
+  assert.ok($('alt-list').innerHTML.includes('往荃灣'), 'and back-to-now brings them back');
+
   // a hypothetical time is not now, so live readings have no business showing
   setTime('12', '00');
   assert.ok(!$('alt-list').innerHTML.includes('往港島'), 'the reading goes when the hour is not now');
