@@ -597,9 +597,9 @@ test('live conditions from the transport department sit beside the tunnels', asy
           state: 'jam',
           minutes: 18,
           reports: 3,
-          byOrigin: { island: { state: 'free', minutes: 4 }, kowloon: { state: 'jam', minutes: 18 } },
+          byDirection: { kowloon: { state: 'free', minutes: 4 }, island: { state: 'jam', minutes: 18 } },
         },
-        ehc: { state: 'free', minutes: 9, reports: 2, byOrigin: { island: { state: 'free', minutes: 9 } } },
+        ehc: { state: 'free', minutes: 9, reports: 2, byDirection: { kowloon: { state: 'free', minutes: 9 } } },
       },
       incidents: [{
         id: '147614',
@@ -616,8 +616,8 @@ test('live conditions from the transport department sit beside the tunnels', asy
 
   const list = $('alt-list').innerHTML;
   assert.ok(list.includes('擠塞'), 'the congested reading shows');
-  assert.ok(list.includes('九龍 18 分鐘'), 'with the journey time for the Kowloon side');
-  assert.ok(list.includes('港島 4 分鐘'), 'and the Island side separately');
+  assert.ok(list.includes('往港島 18 分鐘'), 'the congested direction, towards the island');
+  assert.ok(list.includes('往九龍 4 分鐘'), 'and the other direction separately');
   assert.ok(list.includes('暢通'), 'and the free-flowing one');
   assert.ok(list.includes('交通消息'), 'the incident block appears');
   assert.ok(list.includes('東區海底隧道(往柴灣方向)部分行車線封閉'));

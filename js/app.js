@@ -300,16 +300,25 @@ function alternativeRows(group, canonical) {
 // Live condition for one tunnel, per side of the harbour, when the feed has a
 // reading for it. The worst reading sets the colour; the sides are spelled out
 // because a journey time only means something for the direction you drive.
-const ORIGIN_LABEL = { island: 'originIsland', kowloon: 'originKowloon', nt: 'originNt', shatin: 'originShatin' };
+const DIRECTION_LABEL = {
+  island: 'dirIsland',
+  kowloon: 'dirKowloon',
+  'kowloon-c': 'dirKowloonC',
+  'kowloon-e': 'dirKowloonE',
+  'kowloon-w': 'dirKowloonW',
+  tsuenwan: 'dirTsuenWan',
+  wanchai: 'dirWanChai',
+  tingkau: 'dirTingKau',
+};
 
 function trafficChip(tunnelId) {
   const report = traffic && traffic.tunnels ? traffic.tunnels[tunnelId] : null;
   if (!report) return '';
   const copy = t();
   const label = copy[`traffic${report.state[0].toUpperCase()}${report.state.slice(1)}`];
-  const sides = Object.entries(report.byOrigin || {})
+  const sides = Object.entries(report.byDirection || {})
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([region, side]) => `${copy[ORIGIN_LABEL[region]] || region} `
+    .map(([direction, side]) => `${copy.trafficTowards.replace('{place}', copy[DIRECTION_LABEL[direction]] || direction)} `
       + copy.trafficMinutes.replace('{minutes}', String(side.minutes)));
   const detail = report.state === 'closed' || !sides.length
     ? ''

@@ -41,8 +41,9 @@ test('the worst reading wins per tunnel', () => {
   assert.equal(tunnels.cht.state, 'slow', 'amber beats green overall');
   assert.equal(tunnels.cht.minutes, 18, 'and the longest journey time is kept');
   assert.equal(tunnels.cht.reports, 2);
-  assert.deepEqual(tunnels.cht.byOrigin.island, { state: 'free', minutes: 4 }, '香港島 side');
-  assert.deepEqual(tunnels.cht.byOrigin.kowloon, { state: 'slow', minutes: 18 }, '九龍 side');
+  // A gantry on the island feeds the crossing towards Kowloon, and vice versa.
+  assert.deepEqual(tunnels.cht.byDirection.kowloon, { state: 'free', minutes: 4 }, 'towards Kowloon');
+  assert.deepEqual(tunnels.cht.byDirection.island, { state: 'slow', minutes: 18 }, 'towards the island');
   assert.equal(tunnels.abt.state, 'free');
   assert.equal(tunnels.stg.minutes, 12, 'Route 8 is the Sharp Island / Sha Tin Heights corridor');
   assert.equal(tunnels.ehc, undefined, 'destinations we do not list are ignored');
@@ -86,14 +87,15 @@ test('an incident is tied to the tunnels it names', () => {
   assert.deepEqual(tunnelsMentioned('屯門公路往九龍方向交通繁忙'), []);
 });
 
-test('each reading keeps the side it comes from', () => {
+test('each reading keeps the direction it travels', () => {
   const { tunnels } = normaliseJourneyTimes(journeyXml([
     { location: 'H3', dest: 'EH', type: 1, data: 7, colour: 3 },   // Island side
     { location: 'K08', dest: 'EH', type: 1, data: 9, colour: 3 },  // Kowloon side
     { location: 'SJ2', dest: 'TCT', type: 1, data: 6, colour: 3 }, // Sha Tin side
   ]));
-  assert.deepEqual(Object.keys(tunnels.ehc.byOrigin).sort(), ['island', 'kowloon']);
-  assert.deepEqual(tunnels.tct.byOrigin.shatin, { state: 'free', minutes: 6 });
+  assert.deepEqual(Object.keys(tunnels.ehc.byDirection).sort(), ['island', 'kowloon']);
+  // Tate's Cairn only points one way: towards east Kowloon.
+  assert.deepEqual(tunnels.tct.byDirection['kowloon-e'], { state: 'free', minutes: 6 });
 });
 
 test('the condition order runs from worst to best', () => {

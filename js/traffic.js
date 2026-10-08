@@ -30,10 +30,28 @@ const BITMAP_CONDITION = { 1: 'jam', 3: 'closed' };
 
 const worse = (a, b) => (CONDITION_ORDER.indexOf(b) < CONDITION_ORDER.indexOf(a) ? b : a);
 
-// The first letter of a gantry id is the side of the harbour it sits on, so a
-// reading can be attributed to the traffic heading in from that side.
-const ORIGIN_REGIONS = { H: 'island', K: 'kowloon', N: 'nt', S: 'shatin' };
-export const originRegion = (locationId) => ORIGIN_REGIONS[String(locationId).charAt(0)] || 'other';
+// A reading is published per gantry and names where the traffic ends up, so
+// the direction of travel is what the label should say. For the harbour
+// crossings the gantry's side tells us which way the traffic is going (a
+// gantry on the island feeds the crossing towards Kowloon); every other
+// destination already names the way it points.
+const ORIGIN_SIDES = { H: 'island', K: 'kowloon', N: 'nt', S: 'shatin' };
+export const originSide = (locationId) => ORIGIN_SIDES[String(locationId).charAt(0)] || 'other';
+
+const DESTINATION_DIRECTIONS = {
+  ABT: 'wanchai', // Wan Chai via Aberdeen Tunnel
+  LRT: 'kowloon-c', // Kowloon (C) via Lion Rock Tunnel
+  SMT: 'tsuenwan', // Tsuen Wan via Shing Mun Tunnel
+  TCT: 'kowloon-e', // Kowloon (E) via Tate's Cairn Tunnel
+  TSCA: 'kowloon-w', // Kowloon (W) via Route 8 (Sharp Island)
+  TKTL: 'tingkau', // Ting Kau via Tai Lam Tunnel
+};
+
+export function directionFor(destination, locationId) {
+  if (DESTINATION_DIRECTIONS[destination]) return DESTINATION_DIRECTIONS[destination];
+  // Harbour crossings: island gantries feed the crossing towards Kowloon.
+  return originSide(locationId) === 'island' ? 'kowloon' : 'island';
+}
 
 const elements = (xml, tag) =>
   [...String(xml).matchAll(new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)</${tag}>`, 'g'))]
@@ -93,16 +111,16 @@ export function normaliseJourneyTimes(xml) {
     }
     if (!state) continue;
 
-    const entry = tunnels[tunnelId] || { state: 'free', minutes: 0, reports: 0, byOrigin: {} };
+    const entry = tunnels[tunnelId] || { state: 'free', minutes: 0, reports: 0, byDirection: {} };
     entry.state = worse(entry.state, state);
     if (minutes !== null) entry.minutes = Math.max(entry.minutes, minutes);
     entry.reports += 1;
 
-    const region = originRegion(tagValue(row, 'LOCATION_ID'));
-    const side = entry.byOrigin[region] || { state: 'free', minutes: 0 };
-    side.state = worse(side.state, state);
-    if (minutes !== null) side.minutes = Math.max(side.minutes, minutes);
-    entry.byOrigin[region] = side;
+    const direction = directionFor(tagValue(row, 'DESTINATION_ID'), tagValue(row, 'LOCATION_ID'));
+    const towards = entry.byDirection[direction] || { state: 'free', minutes: 0 };
+    towards.state = worse(towards.state, state);
+    if (minutes !== null) towards.minutes = Math.max(towards.minutes, minutes);
+    entry.byDirection[direction] = towards;
 
     tunnels[tunnelId] = entry;
   }
