@@ -39,6 +39,7 @@ test('the worst reading wins per tunnel', () => {
     { location: 'SJ5', dest: 'TWTM', type: 1, data: 22, colour: 2 }, // Tuen Mun Road
     { location: 'N05', dest: 'TPR', type: 1, data: 9, colour: 3 },   // Tai Po Road
     { location: 'SJ4', dest: 'TWCP', type: 1, data: 25, colour: 2 }, // Castle Peak Road
+    { location: 'SJ4', dest: 'TMCLK', type: 1, data: 20, colour: 3 }, // Tuen Mun–Chek Lap Kok Link
   ]));
   const { tunnels } = result;
 
@@ -56,6 +57,9 @@ test('the worst reading wins per tunnel', () => {
   assert.equal(result.roads.lamkam.minutes, 25, 'and the Castle Peak Road corridor');
   assert.deepEqual(result.roads.tmr.byDirection.tsuenwan, { state: 'slow', minutes: 22 },
     'a free road keeps its direction too');
+  assert.equal(result.roads.tmclk.minutes, 20, 'the airport link is measured as a road');
+  assert.deepEqual(result.roads.tmclk.byDirection.airport, { state: 'free', minutes: 20 },
+    'and points at the airport');
   assert.equal(tunnels.ehc, undefined, 'destinations we do not list are ignored');
 });
 
@@ -104,6 +108,8 @@ test('a road incident is tied to the road it names', () => {
   assert.deepEqual(roadsMentioned('大埔公路往九龍方向交通意外'), ['tpr']);
   assert.deepEqual(roadsMentioned('龍翔道往觀塘方向部分行車線封閉'), ['lungcheung']);
   assert.deepEqual(roadsMentioned('西九龍走廊往尖沙咀方向交通繁忙'), ['wkc']);
+  assert.deepEqual(roadsMentioned('北大嶼山公路往機場方向交通意外'), ['lantau']);
+  assert.deepEqual(roadsMentioned('屯門赤鱲角隧道往屯門方向快線封閉'), ['tmclk']);
   // West Kowloon Highway is a different road from West Kowloon Corridor
   assert.deepEqual(roadsMentioned('西九龍公路往尖沙咀方向'), []);
   // a tunnel name is not a road

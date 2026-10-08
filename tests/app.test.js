@@ -477,7 +477,7 @@ test('the result card lists the ways to make the same trip, current tunnel first
   assert.ok(current.includes('現用'), 'marked as the current choice');
   assert.ok(current.includes('最平'), 'and as cheapest, because it is');
   const chips = $('alt-categories').innerHTML;
-  assert.equal((chips.match(/data-group=/g) || []).length, 6, 'every corridor is one click away');
+  assert.equal((chips.match(/data-group=/g) || []).length, 7, 'every corridor is one click away');
   const harbourChip = chips.slice(chips.indexOf('data-group="harbour"'), chips.indexOf('data-group="kln-nte"'));
   assert.ok(harbourChip.includes('aria-pressed="true"'), 'its corridor is preselected');
 });
@@ -521,6 +521,20 @@ test('choosing another corridor swaps the list in one click', () => {
   // and back to the selected tunnel's corridor
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-nte' } }) } });
   assert.ok($('alt-list').innerHTML.includes('現用'));
+});
+
+test('the airport corridor is the two free roads to Chek Lap Kok', () => {
+  fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'ntw-airport' } }) } });
+  const list = $('alt-list').innerHTML;
+  assert.ok(list.includes('屯門赤鱲角隧道'), 'the Tuen Mun link is listed');
+  assert.ok(list.includes('青嶼幹線／北大嶼山公路'), 'and the Lantau Link');
+  assert.ok(!list.includes('現用'), 'no tunnel of ours serves it');
+});
+
+test('the tunnel dropdown groups tunnels only, never an empty corridor', () => {
+  const html = $('tunnel-select').innerHTML;
+  assert.ok(!html.includes('"></optgroup>'), 'a road-only corridor is left out of the picker');
+  assert.ok(html.includes('九龍 ↔ 新界東'), 'and every tunnel still has its group');
 });
 
 test('the result and the schedule sit on the same page', () => {
