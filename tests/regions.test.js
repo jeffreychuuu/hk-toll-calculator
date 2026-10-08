@@ -33,7 +33,7 @@ test('the free corridors are named in three languages and listed once each', () 
 test('the corridor categories cover every tolled tunnel', () => {
   const groups = compareGroups();
   assert.deepEqual(groups.map((g) => g.id),
-    ['harbour', 'kln-nte', 'kln-ntw', 'nte-ntw', 'island', 'kowloon', 'ntw-airport']);
+    ['harbour', 'kln-nte', 'kln-ntw', 'nte-ntw', 'island', 'kowloon', 'ntw-airport', 'other']);
 
   const covered = new Set(groups.flatMap((group) => group.tunnels));
   for (const edge of TUNNEL_EDGES) assert.ok(covered.has(edge.tunnel), `${edge.tunnel} is offered`);
@@ -61,6 +61,11 @@ test('each category lists only the alternatives for that kind of trip', () => {
   assert.deepEqual(byId['ntw-airport'].tunnels, []);
   assert.deepEqual(byId['ntw-airport'].roads.map((road) => road.name.tc),
     ['屯門赤鱲角隧道', '青嶼幹線／北大嶼山公路']);
+
+  // a tunnel off the macro map stands in a corridor of its own
+  assert.deepEqual(byId.other.tunnels, ['dbt']);
+  assert.deepEqual(byId.other.roads, []);
+  assert.equal(categoryForTunnel('dbt'), 'other');
 });
 
 test('every tunnel in the graph belongs to exactly one trip category', () => {
@@ -74,6 +79,6 @@ test('every tunnel in the graph belongs to exactly one trip category', () => {
   assert.equal(categoryForTunnel('stg'), 'kln-nte');
   assert.equal(categoryForTunnel('tlt'), 'kln-ntw');
   assert.equal(categoryForTunnel('cht'), 'harbour');
-  // Discovery Bay is not part of the macro map at all
-  assert.equal(categoryForTunnel('dbt'), undefined);
+  // Discovery Bay is off the macro map, so it stands in a corridor of its own
+  assert.equal(categoryForTunnel('dbt'), 'other');
 });

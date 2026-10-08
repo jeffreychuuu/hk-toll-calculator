@@ -80,6 +80,8 @@ const CORRIDOR_CATEGORIES = [
   { id: 'island', pairs: [['isw', 'isc'], ['isc', 'ise'], ['isc', 'iss']] },
   { id: 'kowloon', pairs: [['klw', 'klc'], ['klc', 'kle']] },
   { id: 'ntw-airport', pairs: [['ntw', 'ntl']] },
+  // Discovery Bay stands alone: off the macro map, so it names itself.
+  { id: 'other', tunnels: ['dbt'] },
 ];
 
 const pairKey = (a, b) => [a, b].sort().join('-');
@@ -93,10 +95,11 @@ export function categoryForTunnel(tunnelId) {
 
 export function compareGroups() {
   return CORRIDOR_CATEGORIES.map((category) => {
-    const pairs = new Set(category.pairs.map(([a, b]) => pairKey(a, b)));
-    const tunnels = TUNNEL_EDGES
-      .filter((edge) => pairs.has(pairKey(edge.a, edge.b)))
-      .map((edge) => edge.tunnel);
+    const pairs = new Set((category.pairs || []).map(([a, b]) => pairKey(a, b)));
+    // Most corridors are a pair of areas; a standalone tunnel names itself.
+    const tunnels = category.tunnels
+      ? [...category.tunnels]
+      : TUNNEL_EDGES.filter((edge) => pairs.has(pairKey(edge.a, edge.b))).map((edge) => edge.tunnel);
     const roads = [];
     for (const edge of FREE_EDGES) {
       if (!pairs.has(pairKey(edge.a, edge.b))) continue;

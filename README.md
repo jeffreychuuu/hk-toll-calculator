@@ -21,11 +21,10 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
 - **Live conditions, shown only while it is now** — the Transport Department's journey times sit beside each tunnel and free corridor, one chip per direction (往…) with its own condition and minutes, together with that corridor's traffic news, whether the news names a tunnel or the road itself
 - **24-hour distribution chart** — colour-coded periods, the date / day-type / clock controls, a marker labelled 現在 while the view is the present moment (or the time you picked), and one pill that reads 現在 at now and becomes the 回到現在 button once you leave — same box either way, so nothing jumps
 - **Flexible inputs**
-  - Tunnel selector
   - Vehicle class selector (private car, motorcycle, taxi, goods vehicles, buses, etc.)
   - A **date** and a **day type** (Mon–Sat non-holiday / Sunday and public holidays): the schedule follows the date, and picking a day type jumps to the next day (counted from today) that has it — or straight back to now when today already does
   - Hour and minute dropdowns for any time of day, a slider, plus a **back-to-now** button — the date, the day type and the clock all sit on the 24-hour chart card
-- **Everything choosable is in one menu** — the tunnel dropdown groups every tunnel by the corridor it serves and marks your current choice 現用. The trip comparison below lists the other ways to make the same trip, corridor by corridor: the rival tunnels with their tolls (the cheapest tunnel marked 最平, in blue) and the free corridors (Tuen Mun Road, Tai Po Road, Lung Cheung Road, West Kowloon Corridor, and the two roads to the airport), which read 免費 in green rather than a price
+- **One place to choose the tunnel** — the result card names the chosen tunnel; you choose it from the trip comparison, which lists every way to make the same trip corridor by corridor: the rival tunnels with their tolls (the cheapest tunnel marked 最平, in blue) and the free corridors (Tuen Mun Road, Tai Po Road, Lung Cheung Road, West Kowloon Corridor, and the two roads to the airport), which read 免費 in green rather than a price. Every tunnel is a chip away, including one off the macro map
 - **One page** — the result card and the chart sit together
 - **Remembers your choice** — the last tunnel and vehicle class are restored on the next visit (localStorage)
 - **Three languages** — 繁體中文 / 简体中文 / English, picked automatically from the browser language and remembered once chosen
