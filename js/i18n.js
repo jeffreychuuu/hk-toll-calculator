@@ -17,8 +17,8 @@ export const TD_PATHS = {
 
 export const UI = {
   tc: {
-    pageTitle: '香港隧道收費計算器｜紅隧 · 東隧 · 西隧 · 大欖 分時段收費',
-    siteName: '香港隧道收費計算器',
+    pageTitle: '香港隧道實時收費｜紅隧 · 東隧 · 西隧 · 大欖 分時段收費',
+    siteName: '香港隧道實時收費',
     github: 'GitHub 原始碼',
     langLabel: '語言',
     chartTitle: '24小時收費時段分佈圖',
@@ -93,8 +93,8 @@ export const UI = {
   },
 
   sc: {
-    pageTitle: '香港隧道收费计算器｜红隧 · 东隧 · 西隧 · 大榄 分时段收费',
-    siteName: '香港隧道收费计算器',
+    pageTitle: '香港隧道实时收费｜红隧 · 东隧 · 西隧 · 大榄 分时段收费',
+    siteName: '香港隧道实时收费',
     github: 'GitHub 源码',
     langLabel: '语言',
     chartTitle: '24小时收费时段分布图',
@@ -169,8 +169,8 @@ export const UI = {
   },
 
   en: {
-    pageTitle: 'HK Tunnel Toll Calculator — Hong Kong tolls by time of day',
-    siteName: 'HK Tunnel Toll Calculator',
+    pageTitle: 'HK Tunnel Tolls (Live) — Hong Kong tolls by time of day',
+    siteName: 'HK Tunnel Tolls (Live)',
     github: 'Source on GitHub',
     langLabel: 'Language',
     chartTitle: '24-hour toll period chart',

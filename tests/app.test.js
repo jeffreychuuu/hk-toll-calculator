@@ -294,8 +294,8 @@ test('choosing English re-renders every label and the data names', () => {
 
   assert.equal(isOpen(), false, 'the menu should close after choosing');
   assert.equal(document.documentElement.lang, 'en');
-  assert.equal(document.title, 'HK Tunnel Toll Calculator — Hong Kong tolls by time of day');
-  assert.equal($('site-name').textContent, 'HK Tunnel Toll Calculator');
+  assert.equal(document.title, 'HK Tunnel Tolls (Live) — Hong Kong tolls by time of day');
+  assert.equal($('site-name').textContent, 'HK Tunnel Tolls (Live)');
   assert.equal($('github-link').getAttribute('aria-label'), 'Source on GitHub');
   assert.equal($('lang-current').textContent, 'English');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
