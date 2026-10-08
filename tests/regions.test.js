@@ -1,7 +1,9 @@
 // tests/regions.test.js
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { REGIONS, NODES, TUNNEL_EDGES, FREE_EDGES, COMPARE_ROADS, regionById, planRoutes } from '../js/regions.js';
+import {
+  REGIONS, NODES, TUNNEL_EDGES, FREE_EDGES, COMPARE_ROADS, regionById, planRoutes, compareGroups,
+} from '../js/regions.js';
 
 const sets = (routes) => routes.map((route) => route.tunnels.slice().sort().join('+'));
 
@@ -135,4 +137,32 @@ test('an incomplete selection yields no routes', () => {
   for (const pair of [{ fromId: '', toId: 'hki-wc' }, { fromId: 'nope', toId: 'hki-wc' }, {}]) {
     assert.deepEqual(planRoutes(pair), { crossesHarbour: false, routes: [] });
   }
+});
+
+test('the corridor categories cover every tolled tunnel', () => {
+  const groups = compareGroups();
+  assert.deepEqual(groups.map((g) => g.id),
+    ['harbour', 'kln-nte', 'kln-ntw', 'nte-ntw', 'island', 'kowloon']);
+
+  const covered = new Set(groups.flatMap((group) => group.tunnels));
+  for (const edge of TUNNEL_EDGES) assert.ok(covered.has(edge.tunnel), `${edge.tunnel} is offered`);
+
+  for (const group of groups) {
+    assert.ok(group.tunnels.length + group.roads.length >= 1, `${group.id} has options`);
+  }
+});
+
+test('each category lists only the alternatives for that kind of trip', () => {
+  const byId = Object.fromEntries(compareGroups().map((group) => [group.id, group]));
+
+  assert.deepEqual(byId.harbour.tunnels.slice().sort(), ['cht', 'ehc', 'whc']);
+  assert.deepEqual(byId.harbour.roads, [], 'there is no free harbour crossing');
+
+  assert.deepEqual(byId['kln-ntw'].tunnels, ['tlt']);
+  assert.deepEqual(byId['kln-ntw'].roads.map((road) => road.tc), ['屯門公路']);
+
+  assert.deepEqual(byId['nte-ntw'].tunnels, ['smt']);
+
+  // Tai Po Road borders both east Kowloon areas, but is one corridor
+  assert.deepEqual(byId['kln-nte'].roads.map((road) => road.tc), ['大埔道', '龍翔道']);
 });

@@ -36,7 +36,6 @@ globalThis.localStorage = {
   removeItem(k) { storage.delete(k); },
 };
 const STORAGE_KEY = 'hk-toll-calculator.selection';
-let REGION_COUNT = 0;
 
 const mkButton = (ds) => ({
   dataset: ds, ariaPressed: null, textContent: '', disabled: false,
@@ -81,7 +80,7 @@ for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amou
   'chart-title', 'label-tunnel', 'label-vehicle', 'label-date', 'label-category', 'label-time', 'lang-picker',
   'compare-card', 'compare-title', 'compare-picks', 'compare-list', 'compare-note',
   'plan-card', 'plan-title', 'label-from', 'label-to', 'from-select', 'to-select', 'plan-result',
-  'view-tabs', 'view-fares', 'view-journey', 'view-schedule', 'compare-empty',
+  'view-tabs', 'view-fares', 'view-journey', 'view-schedule',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
 globalThis.document = {
@@ -468,86 +467,65 @@ test('a picked date is not overwritten by the clock tick', () => {
   assert.equal($('price-amount').textContent, '25.00'); // still the holiday schedule
 });
 
-test('the comparison starts with the three harbour crossings', async () => {
+test('the comparison is organised by the kind of trip', async () => {
   storage.delete('hk-toll-calculator.selection');
-  storage.delete('hk-toll-calculator.compare');
+  storage.delete('hk-toll-calculator.compareGroup');
   fakeNowMs = new RealDate(2026, 9, 8, 12, 0).getTime(); // midweek noon
   await import('../js/app.js?cmp=1');
 
-  const picks = $('compare-picks').innerHTML;
-  assert.equal((picks.match(/data-pick=/g) || []).length, 14, '10 tunnels + 4 free corridors');
-  assert.ok(picks.includes('過海隧道'));
-  assert.ok(picks.includes('其他隧道'));
-  assert.ok(picks.includes('免費走廊'));
+  const chips = $('compare-picks').innerHTML;
+  assert.equal((chips.match(/data-group=/g) || []).length, 6, 'six corridor categories');
+  for (const label of ['過海', '九龍 ↔ 新界東', '九龍 ↔ 新界西', '新界東 ↔ 新界西', '港島市內', '九龍市內']) {
+    assert.ok(chips.includes(label), `missing category ${label}`);
+  }
 
   const list = $('compare-list').innerHTML;
+  assert.equal((list.match(/compare-row/g) || []).length, 3, 'the harbour crossings by default');
   for (const name of ['海底隧道（紅隧）', '東區海底隧道（東隧）', '西區海底隧道（西隧）']) {
     assert.ok(list.includes(name), `missing ${name}`);
   }
-  assert.equal((list.match(/compare-row/g) || []).length, 3, 'only the ticked crossings are listed');
   assert.equal((list.match(/HK\$ 30\.00/g) || []).length, 3);
 });
 
-test('ticking another tunnel adds it to the comparison', () => {
-  fire('compare-picks', 'click', { target: { closest: () => ({ dataset: { pick: 'tlt' } }) } });
+test('choosing a corridor category shows its own alternatives, cheapest first', () => {
+  fire('compare-picks', 'click', { target: { closest: () => ({ dataset: { group: 'kln-ntw' } }) } });
 
   const list = $('compare-list').innerHTML;
-  assert.ok(list.includes('大欖隧道'), 'Tai Lam is now compared');
-  assert.ok(list.includes('HK$ 30.00'), 'weekday noon: Tai Lam is 30');
-  assert.equal((list.match(/compare-row/g) || []).length, 4);
-
-  // ...and un-ticking removes it again
-  fire('compare-picks', 'click', { target: { closest: () => ({ dataset: { pick: 'tlt' } }) } });
-  assert.ok(!$('compare-list').innerHTML.includes('大欖隧道'));
-});
-
-test('a ticked free corridor is compared at zero cost', () => {
-  fire('compare-picks', 'click', { target: { closest: () => ({ dataset: { pick: 'road:Tuen Mun Road' } }) } });
-
-  const list = $('compare-list').innerHTML;
-  assert.ok(list.includes('屯門公路'));
+  assert.ok(list.includes('屯門公路'), 'the free corridor is offered beside the tunnel');
+  assert.ok(list.includes('大欖隧道'));
   assert.ok(list.includes('HK$ 0.00'));
-  assert.ok(list.includes('最平') || list.includes('cheapest'), 'the free corridor is the cheapest');
+  assert.ok(list.indexOf('屯門公路') < list.indexOf('大欖隧道'), 'sorted cheapest first');
 });
 
-test('the comparison is remembered between visits', async () => {
-  const saved = JSON.parse(storage.get('hk-toll-calculator.compare'));
-  assert.ok(Array.isArray(saved));
-  assert.ok(saved.includes('road:Tuen Mun Road'));
-  assert.ok(!saved.includes('tlt'), 'the un-ticked tunnel stays off');
+test('the cheapest is marked inside the category, not across categories', () => {
+  const list = $('compare-list').innerHTML;
+  assert.equal((list.match(/cheapest/g) || []).length, 1, 'exactly one winner here');
+  assert.equal((list.match(/最平/g) || []).length, 1);
+  assert.ok(list.indexOf('最平') > list.indexOf('屯門公路'), 'the free corridor wins this one');
+});
+
+test('the chosen category is remembered', async () => {
+  assert.equal(storage.get('hk-toll-calculator.compareGroup'), 'kln-ntw');
 
   await import('../js/app.js?cmp=2');
-  const list = $('compare-list').innerHTML;
-  assert.ok(list.includes('屯門公路'), 'the ticked corridor came back');
-  assert.ok(!list.includes('大欖隧道'));
+  assert.ok($('compare-list').innerHTML.includes('大欖隧道'), 'still on the north-west corridor');
 });
 
-test('the card says so when nothing is ticked', () => {
-  for (const id of JSON.parse(storage.get('hk-toll-calculator.compare'))) {
-    fire('compare-picks', 'click', { target: { closest: () => ({ dataset: { pick: id } }) } });
-  }
-  assert.equal($('compare-empty').hidden, false);
-  assert.equal(($('compare-list').innerHTML.match(/compare-row/g) || []).length, 0);
+test('clicking a tunnel row switches the selected tunnel', () => {
+  fire('compare-list', 'click', { target: { closest: () => ({ dataset: { tunnelId: 'tlt' } }) } });
+  assert.equal($('tunnel-select').value, 'tlt');
+  assert.equal($('result-title').textContent, '大欖隧道');
 });
 
-test('a three-way tie says the crossings cost the same', async () => {
-  storage.delete('hk-toll-calculator.compare');
-  await import('../js/app.js?cmp=3'); // back to the default three crossings
+test('a tie inside a category says so', () => {
+  fire('compare-picks', 'click', { target: { closest: () => ({ dataset: { group: 'harbour' } }) } });
   setTime('12', '00');
   assert.equal($('compare-note').hidden, false);
   assert.ok($('compare-note').textContent.includes('30.00'));
 });
 
-test('clicking a tunnel row switches the selected tunnel', () => {
-  fire('compare-list', 'click', { target: { closest: () => ({ dataset: { tunnelId: 'whc' } }) } });
-  assert.equal($('tunnel-select').value, 'whc');
-  assert.equal($('result-title').textContent, '西區海底隧道（西隧）');
-});
-
-const { REGIONS: ALL_REGIONS } = await import('../js/regions.js');
-REGION_COUNT = ALL_REGIONS.length;
-
 test('the journey card groups districts by macro area', async () => {
+  const { REGIONS: ALL_DISTRICTS } = await import('../js/regions.js');
   storage.delete('hk-toll-calculator.selection');
   fakeNowMs = new RealDate(2026, 9, 8, 12, 0).getTime();
   await import('../js/app.js?plan=2');
@@ -555,7 +533,7 @@ test('the journey card groups districts by macro area', async () => {
   const from = $('from-select').innerHTML;
   assert.equal((from.match(/<optgroup/g) || []).length, 3, 'island / kowloon / new territories');
   for (const label of ['港島', '九龍', '新界']) assert.ok(from.includes(label), `missing group ${label}`);
-  assert.equal((from.match(/<option/g) || []).length, REGION_COUNT + 1, 'every district plus unset');
+  assert.equal((from.match(/<option/g) || []).length, ALL_DISTRICTS.length + 1, 'every district plus unset');
   assert.ok($('plan-result').innerHTML.includes('揀返起點同終點'));
 });
 
