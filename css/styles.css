@@ -286,12 +286,20 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 .compare-row:hover { background: var(--form); }
 .compare-row.cheapest { background: #e7f6ee; color: #157a4d; font-weight: 700; }
 .compare-name { flex: 1 1 auto; min-width: 0; }
-.compare-price { font-variant-numeric: tabular-nums; }
-.compare-tag { color: var(--muted); font-size: 0.78rem; font-weight: 700; }
+.compare-price { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.compare-tag { color: var(--muted); font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
 .compare-row.cheapest .compare-price,
 .compare-row.cheapest .compare-tag { color: #157a4d; }
 div.compare-row { cursor: default; }
 div.compare-row:hover { background: transparent; }
+
+/* Narrow screens: the name would be squeezed to one character per line beside
+   the readings, the price and the tags, so give it a line of its own. */
+@media (max-width: 640px) {
+  .compare-row { flex-wrap: wrap; row-gap: 2px; }
+  .compare-name { flex: 1 1 100%; }
+}
+
 /* Live conditions from the Transport Department */
 .traffic { font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
 .traffic-free { color: #157a4d; }
@@ -437,9 +445,6 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
   color: var(--ink);
 }
 /* Category control: auto / weekday / weekend (overrides the derived schedule) */
-@media (max-width: 560px) {
-      /* the mode switch stays a single row whatever the width */
-    }
 
 .notice { margin: 0; color: #a2650f; font-size: 0.85rem; }
 
