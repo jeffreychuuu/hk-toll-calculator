@@ -126,7 +126,6 @@ body {
   overflow-wrap: anywhere;
 }
 
-.subtitle { margin: 6px 0 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .inline-select {
   appearance: none;
   width: auto;
@@ -210,7 +209,6 @@ body {
 /* Result card */
 .result-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
-.subtitle { margin: 4px 0 0; color: var(--muted); font-size: 0.9rem; }
 .badge {
   flex: 0 0 auto;
   background: var(--badge-bg);
@@ -247,7 +245,10 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 }
 
 /* Same-trip alternatives: corridor chips over a priced list */
+.alt-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
 .alt-title { font-size: 1rem; margin: 0; }
+.alt-vehicle { display: inline-flex; align-items: center; gap: 6px; }
+.alt-vehicle-label { color: var(--muted); font-size: 0.85rem; font-weight: 600; }
 .pick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .chip {
   border: 1px solid var(--line);
@@ -311,9 +312,9 @@ div.compare-row { cursor: default; }
 .compare-note { margin: 8px 0 0; color: var(--muted); font-size: 0.88rem; font-weight: 600; }
 
 /* Chart card */
-.chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 10px; }
-.chart-head h2 { flex: 1 1 100%; }
-.chart-head h2 { font-size: 1rem; margin: 0; }
+.chart-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.chart-head h2 { flex: 1 1 auto; font-size: 1rem; margin: 0; }
+.chart-controls { flex: 1 1 100%; }
 
 .marker-label {
   position: absolute;
@@ -464,5 +465,14 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
   #result-card { grid-area: query; }
   #chart-card { grid-area: chart; }
   #alt-card { grid-area: alt; }
-  .site-footer { grid-area: footer; }
+  #site-footer, .site-footer { grid-area: footer; }
+  /* With no chart to show there is no second column: let the cards fill */
+  .wrap.no-chart {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "topbar"
+      "query"
+      "alt"
+      "footer";
+  }
 }
