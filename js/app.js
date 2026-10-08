@@ -1,7 +1,7 @@
 // js/app.js
 import { TUNNELS, vehiclesFor } from './data.js';
 import { getToll, getDaySegments, getNextTransition } from './engine.js';
-import { defaultDayType } from './holidays.js';
+import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
@@ -18,6 +18,18 @@ const STORAGE_KEY = 'hk-toll-calculator.selection';
 const LANG_KEY = 'hk-toll-calculator.lang';
 
 const t = () => UI[state.lang];
+
+// Browsers cache each module file separately, and these filenames are not
+// content-hashed, so a visitor can end up running a fresh app.js against a
+// cached pre-i18n data.js whose names are plain strings. Showing "undefined"
+// would be worse than falling back, so resolve names defensively.
+const nameOf = (entity) => {
+  const name = entity.name;
+  if (typeof name === 'string') return name;
+  return name?.[state.lang] ?? name?.tc ?? entity.id;
+};
+
+const groupOf = (group) => (typeof group === 'string' ? group : group?.[state.lang] ?? group?.tc ?? '');
 
 // Restore the last tunnel/vehicle pair, validated against the current data so a
 // stale or renamed id can never break the page. Day type is deliberately not
@@ -67,12 +79,22 @@ function saveLang() {
 const initialDayType = defaultDayType();
 const state = {
   lang: 'tc',
+  date: toDateKey(new Date()),
   tunnelId: 'cht',
   vehicleId: 'car',
   dayType: initialDayType.dayType,
   minutes: nowMinutes(),
   dataCurrent: initialDayType.dataCurrent,
 };
+
+// The weekday/weekend schedule follows the picked date, not a manual toggle:
+// Sundays and gazetted public holidays use the weekend schedule.
+function deriveDayType(dateKey) {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const weekend = date.getDay() === 0 || isPublicHoliday(date);
+  return { dayType: weekend ? 'weekend' : 'weekday', dataCurrent: inHolidayRange(date) };
+}
 
 // While true, the toll card follows the real clock. Any manual time selection
 // (slider or dropdowns) pins it; the back-to-now button releases it.
@@ -83,9 +105,9 @@ function fillTunnelSelect() {
   const groups = [...new Set(TUNNELS.map((x) => x.group))];
   $('tunnel-select').innerHTML = groups.map((group) => {
     const opts = TUNNELS.filter((x) => x.group === group)
-      .map((x) => `<option value="${x.id}">${esc(x.name[state.lang])}</option>`)
+      .map((x) => `<option value="${x.id}">${esc(nameOf(x))}</option>`)
       .join('');
-    return `<optgroup label="${esc(group[state.lang])}">${opts}</optgroup>`;
+    return `<optgroup label="${esc(groupOf(group))}">${opts}</optgroup>`;
   }).join('');
   $('tunnel-select').value = state.tunnelId;
 }
@@ -94,23 +116,33 @@ function fillVehicleSelect() {
   const options = vehiclesFor(state.tunnelId);
   if (!options.some((v) => v.id === state.vehicleId)) state.vehicleId = options[0].id;
   $('vehicle-select').innerHTML = options
-    .map((v) => `<option value="${v.id}">${esc(v.name[state.lang])}</option>`)
+    .map((v) => `<option value="${v.id}">${esc(nameOf(v))}</option>`)
     .join('');
   $('vehicle-select').value = state.vehicleId;
 }
 
-function fillDayTypeToggle() {
-  const labels = { weekday: t().dayWeekday, weekend: t().dayWeekend };
-  for (const btn of $('daytype-toggle').querySelectorAll('button')) {
-    btn.textContent = labels[btn.dataset.daytype];
-    btn.setAttribute('aria-pressed', String(btn.dataset.daytype === state.dayType));
-  }
+function renderDateType() {
+  $('date-input').value = state.date;
+  $('daytype-label').textContent = state.dayType === 'weekend' ? t().dayWeekend : t().dayWeekday;
+  $('holiday-notice').hidden = state.dataCurrent;
 }
 
-function fillLangSwitch() {
-  for (const btn of $('lang-switch').querySelectorAll('button')) {
-    btn.setAttribute('aria-pressed', String(btn.dataset.lang === state.lang));
-  }
+function fillLangMenu() {
+  const current = LANGS.find((l) => l.id === state.lang);
+  $('lang-current').textContent = current.label;
+  $('lang-trigger').setAttribute('aria-label', t().langLabel);
+  $('lang-menu').innerHTML = LANGS.map((l) => `
+    <li role="option" aria-selected="${l.id === state.lang}">
+      <button type="button" data-lang="${l.id}">
+        <span class="lang-check" aria-hidden="true">${l.id === state.lang ? '✓' : ''}</span>
+        <span>${esc(l.label)}</span>
+      </button>
+    </li>`).join('');
+}
+
+function setLangMenuOpen(open) {
+  $('lang-menu').hidden = !open;
+  $('lang-trigger').setAttribute('aria-expanded', String(open));
 }
 
 function renderFooter() {
@@ -128,21 +160,21 @@ function applyLanguage() {
   $('chart-title').textContent = copy.chartTitle;
   $('label-tunnel').textContent = copy.labelTunnel;
   $('label-vehicle').textContent = copy.labelVehicle;
-  $('label-daytype').textContent = copy.labelDayType;
+  $('label-date').textContent = copy.labelDate;
   $('label-time').textContent = copy.labelTime;
   $('back-to-now').textContent = copy.backToNow;
   $('holiday-notice').textContent = copy.notice;
   $('hour-select').setAttribute('aria-label', copy.timeHour);
   $('minute-select').setAttribute('aria-label', copy.timeMinute);
   $('time-slider').setAttribute('aria-label', copy.timeSlider);
-  fillLangSwitch();
+  fillLangMenu();
   renderFooter();
 }
 
 function renderResult(tunnel) {
   const copy = t();
   const { amount, periodType } = getToll(state);
-  $('result-title').textContent = tunnel.name[state.lang];
+  $('result-title').textContent = nameOf(tunnel);
   $('result-subtitle').textContent =
     `${$('vehicle-select').selectedOptions[0].textContent} • ${
       state.dayType === 'weekend' ? copy.dayWeekend : copy.dayWeekday}`;
@@ -208,10 +240,9 @@ function renderToll() {
 }
 
 function render() {
-  fillDayTypeToggle();
+  renderDateType();
   renderTime();
   renderToll();
-  $('holiday-notice').hidden = state.dataCurrent;
 }
 
 function selectTime(minutes) {
@@ -219,6 +250,17 @@ function selectTime(minutes) {
   state.minutes = minutes;
   renderTime();
   renderToll();
+}
+
+function chooseLang(lang) {
+  setLangMenuOpen(false);
+  if (lang === state.lang) return;
+  state.lang = lang;
+  saveLang();
+  applyLanguage();
+  fillTunnelSelect();
+  fillVehicleSelect();
+  render();
 }
 
 function init() {
@@ -232,18 +274,24 @@ function init() {
 
   fillTimeSelects();
   applyLanguage();
+  setLangMenuOpen(false);
   fillTunnelSelect();
   fillVehicleSelect();
 
-  $('lang-switch').addEventListener('click', (e) => {
+  $('lang-trigger').addEventListener('click', () => setLangMenuOpen($('lang-menu').hidden));
+  $('lang-menu').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-lang]');
-    if (!btn || btn.dataset.lang === state.lang) return;
-    state.lang = btn.dataset.lang;
-    saveLang();
-    applyLanguage();
-    fillTunnelSelect();
-    fillVehicleSelect();
-    render();
+    if (btn) chooseLang(btn.dataset.lang);
+  });
+  document.addEventListener('click', (e) => {
+    if ($('lang-menu').hidden) return;
+    if (e.target.closest('.lang-picker')) return;
+    setLangMenuOpen(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || $('lang-menu').hidden) return;
+    setLangMenuOpen(false);
+    $('lang-trigger').focus();
   });
 
   $('tunnel-select').addEventListener('change', (e) => {
@@ -257,10 +305,16 @@ function init() {
     saveSelection();
     render();
   });
-  $('daytype-toggle').addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-daytype]');
-    if (!btn) return;
-    state.dayType = btn.dataset.daytype;
+  $('date-input').addEventListener('change', (e) => {
+    const value = e.target.value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      renderDateType();
+      return;
+    }
+    state.date = value;
+    const derived = deriveDayType(value);
+    state.dayType = derived.dayType;
+    state.dataCurrent = derived.dataCurrent;
     render();
   });
   $('hour-select').addEventListener('change', () => {
@@ -273,8 +327,11 @@ function init() {
   $('back-to-now').addEventListener('click', () => {
     following = true;
     state.minutes = nowMinutes();
-    renderTime();
-    renderToll();
+    state.date = toDateKey(new Date());
+    const derived = deriveDayType(state.date);
+    state.dayType = derived.dayType;
+    state.dataCurrent = derived.dataCurrent;
+    render();
   });
 
   render();
@@ -282,7 +339,16 @@ function init() {
   setInterval(() => {
     renderClock();
     if (!following) return;
-    state.minutes = nowMinutes();
+    const now = new Date();
+    state.minutes = now.getHours() * 60 + now.getMinutes();
+    const today = toDateKey(now);
+    if (today !== state.date) {
+      state.date = today;
+      const derived = deriveDayType(today);
+      state.dayType = derived.dayType;
+      state.dataCurrent = derived.dataCurrent;
+    }
+    renderDateType();
     renderTime();
     renderToll();
   }, 30000);

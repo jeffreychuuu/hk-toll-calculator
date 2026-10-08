@@ -9,10 +9,20 @@
 <body>
   <main class="wrap">
     <nav class="topbar" aria-label="Language">
-      <div class="lang-switch" id="lang-switch">
-        <button type="button" data-lang="tc">繁體中文</button>
-        <button type="button" data-lang="sc">简体中文</button>
-        <button type="button" data-lang="en">English</button>
+      <div class="lang-picker" id="lang-picker">
+        <button type="button" class="lang-trigger" id="lang-trigger"
+                aria-haspopup="listbox" aria-expanded="false" aria-label="語言">
+          <svg class="lang-globe" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"></circle>
+            <path d="M3 12h18M12 3c2.6 2.7 2.6 15.3 0 18M12 3c-2.6 2.7-2.6 15.3 0 18"
+                  fill="none" stroke="currentColor" stroke-width="1.8"></path>
+          </svg>
+          <span id="lang-current">繁體中文</span>
+          <svg class="lang-chevron" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+            <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+          </svg>
+        </button>
+        <ul class="lang-menu" id="lang-menu" role="listbox" hidden></ul>
       </div>
     </nav>
 
@@ -56,17 +66,17 @@
       </div>
 
       <div class="field">
-        <span class="field-label" id="label-daytype">日期類型</span>
-        <div class="segmented" id="daytype-toggle">
-          <button type="button" data-daytype="weekday">星期一至六（非假期）</button>
-          <button type="button" data-daytype="weekend">星期日及公眾假期</button>
+        <span class="field-label" id="label-date">日期</span>
+        <div class="date-row">
+          <input id="date-input" class="date-input" type="date">
+          <span class="daytype-pill" id="daytype-label">—</span>
         </div>
       </div>
 
       <div class="field">
         <div class="time-row">
           <span class="field-label" id="label-time">過海／通行時間</span>
-          <button type="button" class="link-btn" id="back-to-now">回到現在時間</button>
+          <button type="button" class="link-btn" id="back-to-now">回到現在</button>
         </div>
         <div class="time-selects">
           <select id="hour-select" aria-label="小時"></select>

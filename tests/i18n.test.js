@@ -82,3 +82,9 @@ test('footer link labels line up with the paths', () => {
     assert.equal(UI[lang].footer.links.length, Object.keys(TD_PATHS).length);
   }
 });
+
+test('the language picker has an accessible label in every language', () => {
+  assert.ok(UI.tc.langLabel.trim().length > 0);
+  assert.ok(UI.sc.langLabel.trim().length > 0);
+  assert.equal(UI.en.langLabel, 'Language');
+});

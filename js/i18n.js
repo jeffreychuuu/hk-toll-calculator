@@ -18,17 +18,18 @@ export const TD_PATHS = {
 export const UI = {
   tc: {
     pageTitle: '香港隧道收費計算器',
+    langLabel: '語言',
     chartTitle: '24小時收費時段分佈圖',
     labelTunnel: '選擇隧道',
     labelVehicle: '車輛類別',
-    labelDayType: '日期類型',
+    labelDate: '日期',
     labelTime: '過海／通行時間',
     dayWeekday: '星期一至六（非假期）',
     dayWeekend: '星期日及公眾假期',
     timeHour: '小時',
     timeMinute: '分鐘',
     timeSlider: '時間滑桿',
-    backToNow: '回到現在時間',
+    backToNow: '回到現在',
     notice: '公眾假期資料只涵蓋 2025–2027 年，請手動確認日期類型。',
     period: {
       'non-peak': '非繁忙時段',
@@ -57,17 +58,18 @@ export const UI = {
 
   sc: {
     pageTitle: '香港隧道收费计算器',
+    langLabel: '语言',
     chartTitle: '24小时收费时段分布图',
     labelTunnel: '选择隧道',
     labelVehicle: '车辆类别',
-    labelDayType: '日期类型',
+    labelDate: '日期',
     labelTime: '过海／通行时间',
     dayWeekday: '星期一至六（非假期）',
     dayWeekend: '星期日及公众假期',
     timeHour: '小时',
     timeMinute: '分钟',
     timeSlider: '时间滑块',
-    backToNow: '回到现在时间',
+    backToNow: '回到现在',
     notice: '公众假期资料只涵盖 2025–2027 年，请手动确认日期类型。',
     period: {
       'non-peak': '非繁忙时段',
@@ -96,10 +98,11 @@ export const UI = {
 
   en: {
     pageTitle: 'HK Toll Calculator',
+    langLabel: 'Language',
     chartTitle: '24-hour toll period chart',
     labelTunnel: 'Tunnel',
     labelVehicle: 'Vehicle class',
-    labelDayType: 'Day type',
+    labelDate: 'Date',
     labelTime: 'Crossing time',
     dayWeekday: 'Mon–Sat (non-holiday)',
     dayWeekend: 'Sun & public holidays',
