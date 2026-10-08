@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   normaliseJourneyTimes, normaliseIncidents, tunnelsMentioned, CONDITION_ORDER,
-  mergeIncidentLanguages, incidentsForTunnels,
+  mergeIncidentLanguages, incidentsForCorridor, roadsMentioned,
 } from '../js/traffic.js';
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
@@ -84,6 +84,7 @@ test('special traffic news keeps both languages and the time', () => {
   assert.ok(first.locationCn.length > 0);
   assert.ok(first.textCn.length > 0);
   assert.ok(first.textEn.length > 0, 'the English text rides along in the same file');
+  assert.deepEqual(first.roads, ['iec'], 'the sample is on a free corridor, the Island Eastern Corridor');
 });
 
 test('an incident is tied to the tunnels it names', () => {
@@ -95,6 +96,18 @@ test('an incident is tied to the tunnels it names', () => {
   assert.deepEqual(tunnelsMentioned('尖山隧道往九龍方向部分行車線封閉'), ['stg']);
   assert.deepEqual(tunnelsMentioned('青沙公路往沙田方向交通意外'), ['stg']);
   assert.deepEqual(tunnelsMentioned('屯門公路往九龍方向交通繁忙'), []);
+});
+
+test('a road incident is tied to the road it names', () => {
+  assert.deepEqual(roadsMentioned('東區走廊(往柴灣方向)近鰂魚涌公園的快線封閉'), ['iec']);
+  assert.deepEqual(roadsMentioned('屯門公路往九龍方向交通繁忙'), ['tmr']);
+  assert.deepEqual(roadsMentioned('大埔公路往九龍方向交通意外'), ['tpr']);
+  assert.deepEqual(roadsMentioned('龍翔道往觀塘方向部分行車線封閉'), ['lungcheung']);
+  assert.deepEqual(roadsMentioned('西九龍走廊往尖沙咀方向交通繁忙'), ['wkc']);
+  // West Kowloon Highway is a different road from West Kowloon Corridor
+  assert.deepEqual(roadsMentioned('西九龍公路往尖沙咀方向'), []);
+  // a tunnel name is not a road
+  assert.deepEqual(roadsMentioned('獅子山隧道管道內有交通意外'), []);
 });
 
 test('each reading keeps the direction it travels', () => {
@@ -124,14 +137,22 @@ test('the simplified feed merges into the traditional one by id', () => {
   assert.equal(merged.tunnels[0], 'ehc');
 });
 
-test('an incident is offered to the corridor it affects', () => {
+test('an incident reaches the corridor it affects, tunnel or road', () => {
   const incidents = [
-    { id: 'a', tunnels: ['tct'] },
-    { id: 'b', tunnels: ['lrt', 'tct'] },
-    { id: 'c', tunnels: [] },
+    { id: 'a', tunnels: ['tct'], roads: [] },
+    { id: 'b', tunnels: ['lrt', 'tct'], roads: [] },
+    { id: 'c', tunnels: [], roads: [] },
+    { id: 'd', tunnels: [], roads: ['tmr'] },
   ];
-  assert.deepEqual(incidentsForTunnels(incidents, ['lrt', 'tct', 'stg']).map((i) => i.id), ['a', 'b']);
-  assert.deepEqual(incidentsForTunnels(incidents, ['cht', 'ehc', 'whc']), []);
+  const klnNte = { tunnels: ['lrt', 'tct', 'stg'], roads: ['tpr'] };
+  assert.deepEqual(incidentsForCorridor(incidents, klnNte).map((i) => i.id), ['a', 'b']);
+
+  // a road incident reaches the corridor that lists that road
+  const klnNtw = { tunnels: ['tlt'], roads: ['tmr'] };
+  assert.deepEqual(incidentsForCorridor(incidents, klnNtw).map((i) => i.id), ['d']);
+
+  assert.deepEqual(incidentsForCorridor(incidents, { tunnels: ['cht', 'ehc', 'whc'], roads: [] }), []);
+  assert.deepEqual(incidentsForCorridor(incidents, {}), []);
 });
 
 test('the proxy hands on the roads as well as the tunnels', async () => {
