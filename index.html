@@ -26,14 +26,17 @@
       </div>
     </nav>
 
-    <section class="card" id="result-card">
-      <div class="result-head">
-        <div class="result-titles">
-          <h2 class="result-name" id="result-name">海底隧道（紅隧）</h2>
-          <p class="live-traffic" id="live-traffic"></p>
-        </div>
+    <section class="card" id="alt-card" hidden>
+      <div class="alt-head">
+        <label class="alt-vehicle">
+          <span class="alt-vehicle-label" id="label-vehicle-class">車種</span>
+          <select id="vehicle-select" class="inline-select" aria-label="車輛類別"></select>
+        </label>
       </div>
-      <p class="price"><span class="currency">HK$</span><span id="price-amount">0.00</span></p>
+      <div class="pick-chips" id="alt-categories"></div>
+      <ul class="alt-list" id="alt-list"></ul>
+      <p class="compare-note" id="compare-note" hidden></p>
+      <div id="traffic-footnote"></div>
       <p class="notice" id="holiday-notice" hidden></p>
     </section>
 
@@ -53,8 +56,8 @@
         </div>
       </div>
       <div class="chart" id="chart">
+        <div class="chart-bands" id="chart-bands"></div>
         <span class="marker-label" id="marker-label"></span>
-        <div class="chart-bar" id="chart-bar"></div>
         <div class="chart-marker" id="chart-marker"></div>
         <input id="time-slider" type="range" min="0" max="1439" step="1" value="0" aria-label="通行時間">
       </div>
@@ -63,19 +66,6 @@
       </div>
       <ul class="legend" id="legend"></ul>
       <div class="hint" id="next-hint" hidden></div>
-    </section>
-
-    <section class="card" id="alt-card" hidden>
-      <div class="alt-head">
-        <h2 id="alt-title">行程比較</h2>
-        <label class="alt-vehicle">
-          <span class="alt-vehicle-label" id="label-vehicle-class">車種</span>
-          <select id="vehicle-select" class="inline-select" aria-label="車輛類別"></select>
-        </label>
-      </div>
-      <div class="pick-chips" id="alt-categories"></div>
-      <ul class="alt-list" id="alt-list"></ul>
-      <p class="compare-note" id="compare-note" hidden></p>
     </section>
 
     <footer class="site-footer" id="site-footer"></footer>
