@@ -18,6 +18,9 @@ export const DESTINATION_TUNNELS = {
   SMT: 'smt', // Shing Mun Tunnel
   TCT: 'tct', // Tate's Cairn Tunnel
   TKTL: 'tlt', // Tai Lam Tunnel
+  // TD has no per-tunnel code for Sha Tin Heights / Eagle's Nest / Tai Wai;
+  // its "Kowloon (W) via Route 8" reading is that corridor (Tsing Sha Highway).
+  TSCA: 'stg',
 };
 
 export const CONDITION_ORDER = ['closed', 'jam', 'slow', 'free'];
@@ -26,6 +29,11 @@ const COLOUR_CONDITION = { 1: 'jam', 2: 'slow', 3: 'free' };
 const BITMAP_CONDITION = { 1: 'jam', 3: 'closed' };
 
 const worse = (a, b) => (CONDITION_ORDER.indexOf(b) < CONDITION_ORDER.indexOf(a) ? b : a);
+
+// The first letter of a gantry id is the side of the harbour it sits on, so a
+// reading can be attributed to the traffic heading in from that side.
+const ORIGIN_REGIONS = { H: 'island', K: 'kowloon', N: 'nt', S: 'shatin' };
+export const originRegion = (locationId) => ORIGIN_REGIONS[String(locationId).charAt(0)] || 'other';
 
 const elements = (xml, tag) =>
   [...String(xml).matchAll(new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)</${tag}>`, 'g'))]
@@ -47,6 +55,7 @@ const TUNNEL_PATTERNS = [
   [/城門隧道/u, 'smt'],
   [/大欖隧道/u, 'tlt'],
   [/香港仔隧道/u, 'abt'],
+  [/尖山隧道|沙田嶺隧道|大圍隧道|青沙公路/u, 'stg'],
 ];
 
 export function tunnelsMentioned(text) {
@@ -84,10 +93,17 @@ export function normaliseJourneyTimes(xml) {
     }
     if (!state) continue;
 
-    const entry = tunnels[tunnelId] || { state: 'free', minutes: 0, reports: 0 };
+    const entry = tunnels[tunnelId] || { state: 'free', minutes: 0, reports: 0, byOrigin: {} };
     entry.state = worse(entry.state, state);
     if (minutes !== null) entry.minutes = Math.max(entry.minutes, minutes);
     entry.reports += 1;
+
+    const region = originRegion(tagValue(row, 'LOCATION_ID'));
+    const side = entry.byOrigin[region] || { state: 'free', minutes: 0 };
+    side.state = worse(side.state, state);
+    if (minutes !== null) side.minutes = Math.max(side.minutes, minutes);
+    entry.byOrigin[region] = side;
+
     tunnels[tunnelId] = entry;
   }
 

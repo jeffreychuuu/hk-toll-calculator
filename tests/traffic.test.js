@@ -35,12 +35,16 @@ test('the worst reading wins per tunnel', () => {
     { location: 'H1', dest: 'CH', type: 1, data: 4, colour: 3 },  // green, 4 min
     { location: 'K01', dest: 'CH', type: 1, data: 18, colour: 2 }, // amber, 18 min
     { location: 'H6', dest: 'ABT', type: 1, data: 3, colour: 3 },
+    { location: 'SJ1', dest: 'TSCA', type: 1, data: 12, colour: 3 }, // Route 8: Sharp Island corridor
   ]));
 
-  assert.equal(tunnels.cht.state, 'slow', 'amber beats green');
+  assert.equal(tunnels.cht.state, 'slow', 'amber beats green overall');
   assert.equal(tunnels.cht.minutes, 18, 'and the longest journey time is kept');
   assert.equal(tunnels.cht.reports, 2);
+  assert.deepEqual(tunnels.cht.byOrigin.island, { state: 'free', minutes: 4 }, '香港島 side');
+  assert.deepEqual(tunnels.cht.byOrigin.kowloon, { state: 'slow', minutes: 18 }, '九龍 side');
   assert.equal(tunnels.abt.state, 'free');
+  assert.equal(tunnels.stg.minutes, 12, 'Route 8 is the Sharp Island / Sha Tin Heights corridor');
   assert.equal(tunnels.ehc, undefined, 'destinations we do not list are ignored');
 });
 
@@ -77,7 +81,19 @@ test('an incident is tied to the tunnels it names', () => {
   assert.deepEqual(tunnelsMentioned('西區海底隧道往港島方向部分行車線封閉'), ['whc']);
   assert.deepEqual(tunnelsMentioned('大老山公路(往大埔方向)近碩門邨的部分行車線封閉'), ['tct']);
   assert.deepEqual(tunnelsMentioned('獅子山隧道管道內有交通意外'), ['lrt']);
+  assert.deepEqual(tunnelsMentioned('尖山隧道往九龍方向部分行車線封閉'), ['stg']);
+  assert.deepEqual(tunnelsMentioned('青沙公路往沙田方向交通意外'), ['stg']);
   assert.deepEqual(tunnelsMentioned('屯門公路往九龍方向交通繁忙'), []);
+});
+
+test('each reading keeps the side it comes from', () => {
+  const { tunnels } = normaliseJourneyTimes(journeyXml([
+    { location: 'H3', dest: 'EH', type: 1, data: 7, colour: 3 },   // Island side
+    { location: 'K08', dest: 'EH', type: 1, data: 9, colour: 3 },  // Kowloon side
+    { location: 'SJ2', dest: 'TCT', type: 1, data: 6, colour: 3 }, // Sha Tin side
+  ]));
+  assert.deepEqual(Object.keys(tunnels.ehc.byOrigin).sort(), ['island', 'kowloon']);
+  assert.deepEqual(tunnels.tct.byOrigin.shatin, { state: 'free', minutes: 6 });
 });
 
 test('the condition order runs from worst to best', () => {
