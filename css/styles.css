@@ -115,29 +115,8 @@ body {
   .lang-trigger { transition: none; }
 }
 
-/* The chosen tunnel, named at the top of the page, with its toll */
-.current-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-.current-titles { min-width: 0; }
-.result-name {
-  margin: 0;
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-.live-traffic { margin: 8px 0 0; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.live-traffic:empty { display: none; }
-.price {
-  flex: 0 0 auto;
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-  font-weight: 800;
-  font-size: clamp(1.8rem, 5vw, 2.6rem);
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-.price .currency { font-size: 0.42em; font-weight: 700; color: var(--muted); margin-right: 6px; }
+/* Which tunnel the chart is for, stated under its title */
+.chart-tunnel { flex: 1 1 100%; margin: 0; color: var(--ink); font-size: 0.9rem; font-weight: 700; }
 
 /* The tunnel is chosen where the vehicles and prices are compared */
 .inline-select {
@@ -445,14 +424,13 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .site-footer { color: var(--muted); font-size: 0.78rem; line-height: 1.65; padding: 0 4px; }
 .site-footer a { color: var(--focus); }
 
-/* Wide screens: the chosen tunnel on top, comparison left, chart right */
+/* Wide screens: the comparison left, the chart right */
 @media (min-width: 900px) {
   .wrap {
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
     grid-template-areas:
-      "topbar  topbar"
-      "current current"
+      "topbar topbar"
       "alt     chart"
       "footer  footer";
     align-items: start;
@@ -460,7 +438,6 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
     padding-top: 14px;
   }
   .topbar { grid-area: topbar; }
-  #current-card { grid-area: current; }
   #alt-card { grid-area: alt; }
   #chart-card { grid-area: chart; }
   .site-footer { grid-area: footer; }

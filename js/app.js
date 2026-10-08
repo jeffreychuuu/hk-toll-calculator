@@ -135,7 +135,6 @@ let following = true;
 // Set when the user picks their own date. Kept separate from `following` so a
 // pinned date is neither reported as "showing now" nor rolled over by the clock.
 let datePinned = false;
-let altCategory = null;   // which corridor the alternatives list is showing
 
 // Live road conditions from the Transpart Department, by way of our own
 // serverless proxy. Absent until it loads, and silently absent if it cannot:
@@ -226,11 +225,8 @@ function applyLanguage() {
 function renderResult() {
   const copy = t();
   const { amount, periodType } = getToll(state);
-  $('result-name').textContent = nameOf(tunnelById(state.tunnelId));
-  $('live-traffic').innerHTML = traffic && !isShowingNow()
-    ? `<span class="traffic-hint">${esc(copy.trafficOnlyNow)}</span>`
-    : trafficChip('tunnel', state.tunnelId);
-  $('price-amount').textContent = amount.toFixed(2);
+  // Which tunnel the chart is drawing, stated right on the chart card.
+  $('chart-tunnel').textContent = nameOf(tunnelById(state.tunnelId));
   const badge = $('period-badge');
   badge.textContent = copy.period[periodType];
   badge.className = `badge ${periodType}`;
@@ -391,9 +387,9 @@ function renderAlternatives() {
   section.hidden = false;
 
   const groups = compareGroups();
-  // The selector opens on the selected tunnel's own corridor; the visitor can
-  // switch to another corridor in one click without drilling down.
-  const activeId = groups.some((group) => group.id === altCategory) ? altCategory : tunnelCategory;
+  // The list shows the chosen tunnel's own corridor, so a chip that switches
+  // corridor also picks that corridor's first tunnel (see the click handler).
+  const activeId = tunnelCategory;
   const active = groups.find((group) => group.id === activeId);
   const vehicle = canonicalFor(state.tunnelId, state.vehicleId);
 
@@ -558,15 +554,20 @@ function init() {
 
   $('alt-categories').addEventListener('click', (e) => {
     const chip = e.target.closest('button[data-group]');
-    if (!chip || chip.dataset.group === altCategory) return;
-    altCategory = chip.dataset.group;
-    renderAlternatives();
+    if (!chip || chip.dataset.group === categoryForTunnel(state.tunnelId)) return;
+    const group = compareGroups().find((entry) => entry.id === chip.dataset.group);
+    // Switching corridor picks that corridor's first tunnel, and the chart
+    // follows the choice.
+    if (!group || !group.tunnels.length) return;
+    state.tunnelId = group.tunnels[0];
+    fillVehicleSelect();
+    saveSelection();
+    render();
   });
   $('alt-list').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-tunnel-id]');
     if (!btn) return;
     state.tunnelId = btn.dataset.tunnelId;
-    altCategory = null;
     fillVehicleSelect();
     saveSelection();
     render();
