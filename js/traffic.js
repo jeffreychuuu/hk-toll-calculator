@@ -112,20 +112,15 @@ export function roadsMentioned(text) {
 }
 
 // Where a journey-time reading begins, by the department's gantry id. Only the
-// gantries that measure one of the routes we list, and only where the names
-// stay short enough to show; a reading from many gantries says so instead.
+// gantries app.js names for a route, which is why the list is short.
 export const GANTRIES = {
   SJ1: { tc: '沙田馬場', sc: '沙田马场', en: 'Sha Tin Racecourse' },
   SJ2: { tc: '石門', sc: '石门', en: 'Shek Mun' },
-  SJ3: { tc: '科學園', sc: '科学园', en: 'Science Park' },
   SJ4: { tc: '米埔', sc: '米埔', en: 'Mai Po' },
   SJ5: { tc: '曾咀街', sc: '曾咀街', en: 'Tseng Choi Street' },
   N05: { tc: '大埔廣福邨', sc: '大埔广福邨', en: 'Kwong Fuk Estate' },
   N06: { tc: '青沙公路', sc: '青沙公路', en: 'Tsing Sha Highway' },
-  H6: { tc: '淺水灣道', sc: '浅水湾道', en: 'Repulse Bay Road' },
-  H7: { tc: '黃竹坑道（北）', sc: '黄竹坑道（北）', en: 'Wong Chuk Hang Road N' },
-  H8: { tc: '黃竹坑道（東）', sc: '黄竹坑道（东）', en: 'Wong Chuk Hang Road E' },
-  H9: { tc: '鴨脷洲大橋道', sc: '鸭脷洲大桥道', en: 'Ap Lei Chau Bridge Road' },
+  H7: { tc: '黃竹坑道', sc: '黄竹坑道', en: 'Wong Chuk Hang Road' },
 };
 
 export function normaliseJourneyTimes(xml) {
