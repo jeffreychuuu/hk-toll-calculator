@@ -72,7 +72,7 @@ function mk(id) {
   };
 }
 for (const id of ['period-badge', 'next-hint',
-  'chart-bar', 'chart-marker', 'legend', 'vehicle-select', 'result-name', 'live-traffic', 'price-amount', 'current-card',
+  'chart-bar', 'chart-marker', 'legend', 'vehicle-select', 'chart-tunnel',
   'wrap', 'chart-card',
   'date-input', 'daytype-select', 'traffic-footnote',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
@@ -114,13 +114,13 @@ const showsTunnel = (id, text) => {
   return [name.tc, name.sc, name.en].some((value) => text.includes(value));
 };
 
-// The chosen tunnel is the row flagged aria-current in the comparison list,
-// and it is named at the top of the page.
+// The chosen tunnel is the row flagged aria-current in the comparison list, and
+// it is named on the chart card.
 const selectedRow = () => {
   const rows = $('alt-list').innerHTML.split('<li>');
   return rows.find((row) => row.includes('aria-current="true"')) || '';
 };
-const selectedName = () => $('result-name').textContent;
+const selectedName = () => $('chart-tunnel').textContent;
 const selectedPrice = () => (selectedRow().match(/HK\$ ([\d.]+)/) || ['', ''])[1];
 const setTime = (hh, mm) => {
   $('hour-select').value = hh;
@@ -520,21 +520,19 @@ test('clicking an alternative switches the tunnel', () => {
   assert.ok(rows[0].includes('aria-current="true"'), 'and flags it as the chosen one');
 });
 
-test('choosing another corridor swaps the list in one click', () => {
+test('a corridor chip picks that corridor, and its first tunnel with it', () => {
+  selectTunnel('tct'); // kln-nte to start with
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'harbour' } }) } });
 
   const rows = $('alt-list').innerHTML;
   assert.ok(rows.includes('西區海底隧道（西隧）'));
   assert.ok(rows.includes('東區海底隧道（東隧）'));
   assert.ok(!rows.includes('大老山隧道'), 'nothing from other corridors');
-  assert.ok(!rows.includes('aria-current="true"'), 'the chosen tunnel belongs to another corridor');
+  assert.ok(showsTunnel('cht', selectedName()), 'the corridor leads with its first tunnel');
 
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'nte-ntw' } }) } });
   assert.ok($('alt-list').innerHTML.includes('城門隧道'), 'another corridor, one click');
-
-  // and back to the chosen tunnel's corridor
-  fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-nte' } }) } });
-  assert.ok($('alt-list').innerHTML.includes('aria-current="true"'));
+  assert.ok(showsTunnel('smt', selectedName()), 'and the chart follows it');
 });
 
 test('every corridor the visitor can pick is offered as a chip', () => {
@@ -561,10 +559,12 @@ test('a tunnel off the macro map still gets a corridor of its own', () => {
   assert.equal($('alt-card').hidden, false);
 });
 
-test('the toll sits beside the chosen tunnel at the top', () => {
+test('the chart names the tunnel it is drawing', () => {
   selectTunnel('cht');
-  assert.equal($('price-amount').textContent, selectedPrice(),
-    'the headline toll agrees with the chosen row');
+  assert.ok(showsTunnel('cht', selectedName()), 'the chart says which tunnel it belongs to');
+
+  selectTunnel('tlt');
+  assert.ok(showsTunnel('tlt', selectedName()), 'and follows the choice');
 });
 
 test('the chart always shows the chosen tunnel, flat all day or not', () => {

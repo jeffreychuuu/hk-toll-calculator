@@ -33,14 +33,9 @@ const section = (id) => {
 };
 
 test('every control lives with what it belongs to', () => {
-  const current = section('current-card');
-  for (const id of ['result-name', 'live-traffic', 'price-amount']) {
-    assert.ok(current.includes(`id="${id}"`), `#${id} names the chosen tunnel at the top`);
-  }
-
   const chart = section('chart-card');
   for (const id of ['date-input', 'daytype-select', 'hour-select', 'minute-select',
-    'time-slider', 'back-to-now', 'period-badge', 'next-hint', 'chart-bar']) {
+    'time-slider', 'back-to-now', 'period-badge', 'next-hint', 'chart-bar', 'chart-tunnel']) {
     assert.ok(chart.includes(`id="${id}"`), `#${id} should sit with the 24-hour chart`);
   }
 
