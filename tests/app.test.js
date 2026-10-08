@@ -352,22 +352,33 @@ test('a public holiday that lands on a weekday uses the weekend schedule', () =>
   assert.equal($('price-amount').textContent, '25.00');
 });
 
-test('choosing a day type overrides what the date implies', () => {
+test('choosing a day type jumps to the next date that has it', () => {
   $('tunnel-select').value = 'cht';
   fire('tunnel-select', 'change');
   setTime('12', '00');
   $('date-input').value = '2026-10-11'; // Sunday -> weekend
   fire('date-input', 'change');
+  assert.equal($('daytype-select').value, 'weekend');
+
   $('daytype-select').value = 'weekday';
   fire('daytype-select', 'change');
-  assert.equal($('price-amount').textContent, '30.00', 'the override wins');
+  assert.equal($('date-input').value, '2026-10-12', 'the Monday after the Sunday');
+  assert.equal($('daytype-select').value, 'weekday');
 
-  $('date-input').value = '2026-10-09'; // a new date clears the override
+  $('daytype-select').value = 'weekend';
+  fire('daytype-select', 'change');
+  assert.equal($('date-input').value, '2026-10-18', 'and the Sunday after that Monday');
+
+  // a run of public holidays is skipped whole
+  $('date-input').value = '2026-02-17'; // Lunar New Year day 1, a Tuesday
   fire('date-input', 'change');
-  assert.equal($('daytype-select').value, 'weekday', 'and the date decides again');
+  assert.equal($('daytype-select').value, 'weekend');
+  $('daytype-select').value = 'weekday';
+  fire('daytype-select', 'change');
+  assert.equal($('date-input').value, '2026-02-20', 'past the three New Year days');
 });
 
-test('back-to-now returns to today and clears the override', () => {
+test('back-to-now returns to today', () => {
   fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
   $('date-input').value = '2027-01-01'; // a Friday public holiday
   fire('date-input', 'change');
@@ -562,15 +573,23 @@ test('live conditions from the transport department sit beside the tunnels', asy
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-ntw' } }) } });
   assert.ok($('alt-list').innerHTML.includes('往荃灣 22 分鐘'), 'Tuen Mun Road carries a reading');
 
-  // the day type is a hypothetical of its own: override it and the readings go,
-  // even when the override happens to name today's schedule
-  $('daytype-select').value = $('daytype-select').value;
+  // picking the schedule already on screen keeps us at now
+  $('daytype-select').value = 'weekday';
   fire('daytype-select', 'change');
-  assert.ok(!$('alt-list').innerHTML.includes('往荃灣'), 'picking a day type stops the readings');
-  assert.ok($('live-traffic').innerHTML.includes('只喺'), 'and says why');
+  assert.equal($('date-input').value, '2026-10-08', 'today already has this schedule');
+  assert.ok($('alt-list').innerHTML.includes('往荃灣'), 'so the readings stay');
+
+  // the other schedule jumps to the next date that has it, and readings have
+  // no business on a hypothetical day
+  $('daytype-select').value = 'weekend';
+  fire('daytype-select', 'change');
+  assert.equal($('date-input').value, '2026-10-11', 'the coming Sunday');
+  assert.ok(!$('alt-list').innerHTML.includes('往荃灣'), 'the readings go');
+  assert.ok($('live-traffic').innerHTML.includes('只喺'), 'and say why');
 
   // back to now resumes them
   fire('back-to-now', 'click');
+  assert.equal($('date-input').value, '2026-10-08');
   assert.ok($('alt-list').innerHTML.includes('往荃灣'), 'and back-to-now brings them back');
 
   // a hypothetical time is not now, so live readings have no business showing
