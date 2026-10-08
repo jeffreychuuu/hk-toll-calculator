@@ -5,6 +5,7 @@ import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './ho
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 import { compareGroups, categoryForTunnel } from './regions.js';
 import { incidentsForCorridor, GANTRIES } from './traffic.js';
+import { tollTableBlocks } from './toll-tables.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
 // The gantry we name for a route: the one on its own approach, so the reading
@@ -229,6 +230,38 @@ function renderFooter() {
   $('footer-source').innerHTML = `${esc(copy.source)} ${links}。${esc(copy.disclaimer)}`;
 }
 
+// The folded reference block in the footer. index.html ships it in Traditional
+// Chinese so a crawler reads it without running any script; here we rebuild it
+// in whichever language the visitor is on. The tables come from the same
+// generator the page was built with, so the numbers cannot drift apart.
+function renderReference() {
+  const copy = t();
+  const ref = copy.reference;
+  const names = Object.fromEntries(TUNNELS.map((tunnel) => [tunnel.id, nameOf(tunnel)]));
+  const tables = tollTableBlocks({
+    period: copy.period,
+    colPeriod: ref.colPeriod,
+    colTime: ref.colTime,
+    colCar: ref.colCar,
+    colTunnel: ref.colTunnel,
+    dayWeekday: ref.dayWeekday,
+    dayWeekend: ref.dayWeekend,
+    flatTitle: ref.flatTitle,
+    titles: ref.titles,
+    names,
+  });
+  const faq = ref.faq.map(({ q, a }) => `<dt>${esc(q)}</dt><dd>${esc(a)}</dd>`).join('');
+  $('reference').innerHTML = [
+    `<summary>${esc(ref.summary)}</summary>`,
+    `<p>${esc(ref.intro)}</p>`,
+    `<p>${esc(ref.classes)}</p>`,
+    `<h3>${esc(ref.tablesTitle)}</h3>`,
+    tables,
+    `<h3>${esc(ref.faqTitle)}</h3>`,
+    `<dl class="faq">${faq}</dl>`,
+  ].join('\n');
+}
+
 function applyLanguage() {
   const copy = t();
   const lang = LANGS.find((l) => l.id === state.lang);
@@ -249,6 +282,7 @@ function applyLanguage() {
   $('time-slider').setAttribute('aria-label', copy.timeSlider);
   fillLangMenu();
   renderFooter();
+  renderReference();
 }
 
 function renderResult() {

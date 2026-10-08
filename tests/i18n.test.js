@@ -25,6 +25,10 @@ test('every string is non-empty and not just whitespace in every language', () =
       value.forEach((item, i) => check(item, `${path}[${i}]`));
       return;
     }
+    if (value && typeof value === 'object') {
+      for (const [k, v] of Object.entries(value)) check(v, `${path}.${k}`);
+      return;
+    }
     assert.equal(typeof value, 'string', `${path} should be a string`);
     assert.ok(value.trim().length > 0, `${path} should not be empty`);
   };

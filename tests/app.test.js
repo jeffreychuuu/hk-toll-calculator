@@ -79,7 +79,7 @@ for (const id of ['period-badge', 'next-hint',
   'chart-title', 'marker-label', 'site-name', 'github-link', 'lang-picker',
   'compare-note',
   'alt-card', 'alt-list', 'alt-categories', 'label-vehicle-class',
-  'lang-trigger', 'lang-current', 'lang-menu', 'footer-source', 'site-footer']) elements.set(id, mk(id));
+  'lang-trigger', 'lang-current', 'lang-menu', 'footer-source', 'site-footer', 'reference']) elements.set(id, mk(id));
 
 globalThis.document = {
   getElementById: (id) => elements.get(id),
@@ -308,6 +308,9 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal(selectedName(), 'Cross-Harbour Tunnel (Hung Hom)');
   assert.ok($('alt-list').innerHTML.includes('Eastern Harbour Crossing'), 'the comparison is in English too');
   assert.equal($('period-badge').textContent, 'Peak'); // 17:30 on a weekday is the red tunnel's peak
+  assert.ok($('reference').innerHTML.includes('Toll periods (private car)'), 'the footer reference is in English');
+  assert.ok($('reference').innerHTML.includes('Common questions'));
+  assert.ok($('reference').innerHTML.includes('Cross-Harbour Tunnel'), 'the tables name the tunnels in English');
 });
 
 test('choosing Simplified Chinese re-renders the labels', () => {
@@ -315,6 +318,8 @@ test('choosing Simplified Chinese re-renders the labels', () => {
   assert.equal(document.documentElement.lang, 'zh-Hans');
   assert.equal($('chart-title').textContent, '24小时收费时段分布图');
   assert.equal(selectedName(), '海底隧道（红隧）');
+  assert.ok($('reference').innerHTML.includes('收费时段表（私家车）'), 'the footer reference is in Simplified Chinese');
+  assert.ok($('reference').innerHTML.includes('常见问题'));
 });
 
 test('the chosen language is stored', () => {
