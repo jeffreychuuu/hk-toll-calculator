@@ -579,6 +579,14 @@ test('live conditions from the transport department sit beside the tunnels', asy
         textCn: '東區海底隧道(往柴灣方向)部分行車線封閉',
         textEn: 'Part of the Eastern Harbour Crossing (Chai Wan bound) is closed',
         tunnels: ['ehc'],
+        roads: [],
+      }, {
+        id: '147700',
+        at: '2026-10-08T22:10:00',
+        textCn: '屯門公路(往九龍方向)近深井的部分行車線封閉',
+        textEn: 'Part of Tuen Mun Road (Kowloon bound) near Sham Tseng is closed',
+        tunnels: [],
+        roads: ['tmr'],
       }],
     }),
   });
@@ -601,6 +609,8 @@ test('live conditions from the transport department sit beside the tunnels', asy
   // a free corridor is measured too, when its row is on screen
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-ntw' } }) } });
   assert.ok($('alt-list').innerHTML.includes('往荃灣 22 分鐘'), 'Tuen Mun Road carries a reading');
+  assert.ok($('alt-list').innerHTML.includes('屯門公路(往九龍方向)'),
+    'and its own road incident is shown with it');
 
   // picking the schedule already on screen keeps us at now
   $('daytype-select').value = 'weekday';

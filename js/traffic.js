@@ -94,6 +94,29 @@ export function tunnelsMentioned(text) {
   return [...hits];
 }
 
+// Free corridors we list beside the tunnels, so news about the road itself can
+// be shown too. The department uses the long names and some English ones, and
+// West Kowloon Corridor is kept distinct from West Kowloon Highway.
+const ROAD_PATTERNS = [
+  [/屯門公路|Tuen Mun Road/u, 'tmr'],
+  [/大埔道|大埔公路|Tai Po Road/u, 'tpr'],
+  [/林錦公路|青山公路|Lam Kam Road|Castle Peak Road/u, 'lamkam'],
+  [/龍翔道|Lung Cheung Road/u, 'lungcheung'],
+  [/西九龍走廊|West Kowloon Corridor/u, 'wkc'],
+  [/太子道東|Prince Edward Road East/u, 'ped'],
+  [/干諾道|Connaught Road/u, 'connaught'],
+  [/東區走廊|Island Eastern Corridor/u, 'iec'],
+];
+
+export function roadsMentioned(text) {
+  const source = String(text || '');
+  const hits = new Set();
+  for (const [pattern, roadId] of ROAD_PATTERNS) {
+    if (pattern.test(source)) hits.add(roadId);
+  }
+  return [...hits];
+}
+
 export function normaliseJourneyTimes(xml) {
   const tunnels = {};
   const roads = {};
@@ -156,6 +179,7 @@ export function normaliseIncidents(xml) {
       textCn,
       textEn,
       tunnels: tunnelsMentioned(`${locationCn} ${locationEn} ${textCn} ${textEn}`),
+      roads: roadsMentioned(`${locationCn} ${locationEn} ${textCn} ${textEn}`),
     };
   }).filter((item) => item.id || item.textCn || item.textEn);
 
@@ -183,8 +207,12 @@ export function mergeIncidentLanguages(primary, secondary) {
   }));
 }
 
-// Does an incident touch this corridor? (The corridors come from the graph.)
-export function incidentsForTunnels(incidents, tunnelIds) {
-  const wanted = new Set(tunnelIds);
-  return incidents.filter((incident) => incident.tunnels.some((id) => wanted.has(id)));
+// Does an incident touch this corridor? A corridor is the tunnels it uses plus
+// the free roads listed beside them.
+export function incidentsForCorridor(incidents, { tunnels = [], roads = [] } = {}) {
+  const wantedTunnels = new Set(tunnels);
+  const wantedRoads = new Set(roads);
+  return incidents.filter((incident) =>
+    (incident.tunnels || []).some((id) => wantedTunnels.has(id))
+    || (incident.roads || []).some((id) => wantedRoads.has(id)));
 }

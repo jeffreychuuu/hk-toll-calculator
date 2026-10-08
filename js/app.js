@@ -4,7 +4,7 @@ import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison }
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 import { compareGroups, categoryForTunnel } from './regions.js';
-import { incidentsForTunnels } from './traffic.js';
+import { incidentsForCorridor } from './traffic.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
 const FOOTER_LINKS = ['tvt', 'flat', 'taiLam'];
@@ -342,7 +342,10 @@ function trafficChip(kind, id) {
 
 const corridorIncidents = (group) =>
   (isShowingNow() && traffic && traffic.incidents
-    ? incidentsForTunnels(traffic.incidents, group.tunnels)
+    ? incidentsForCorridor(traffic.incidents, {
+      tunnels: group.tunnels,
+      roads: (group.roads || []).map((road) => road.id),
+    })
     : []);
 
 function incidentBlock(group) {
