@@ -43,7 +43,9 @@ function loadSelection() {
     if (!tunnel) return null;
     const options = vehiclesFor(tunnel.id);
     const vehicleId = options.some((v) => v.id === parsed.vehicleId) ? parsed.vehicleId : options[0].id;
-    return { tunnelId: tunnel.id, vehicleId };
+    const mode = ['date', 'category'].includes(parsed.mode) ? parsed.mode : undefined;
+    const category = ['weekday', 'weekend'].includes(parsed.category) ? parsed.category : undefined;
+    return { tunnelId: tunnel.id, vehicleId, mode, category };
   } catch {
     return null;
   }
@@ -51,7 +53,12 @@ function loadSelection() {
 
 function saveSelection() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ tunnelId: state.tunnelId, vehicleId: state.vehicleId }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      tunnelId: state.tunnelId,
+      vehicleId: state.vehicleId,
+      mode: state.mode,
+      category: state.category,
+    }));
   } catch {
     // storage disabled or full — persistence is a convenience, never a failure
   }
@@ -79,7 +86,9 @@ function saveLang() {
 const initialDayType = defaultDayType();
 const state = {
   lang: 'tc',
+  mode: 'date',            // 'date' picks a calendar day; 'category' picks a schedule
   date: toDateKey(new Date()),
+  category: 'weekday',
   tunnelId: 'cht',
   vehicleId: 'car',
   dayType: initialDayType.dayType,
@@ -125,10 +134,21 @@ function fillVehicleSelect() {
 }
 
 function renderDateType() {
+  const derived = deriveDayType(state.date);
+  state.dayType = state.mode === 'date' ? derived.dayType : state.category;
+  state.dataCurrent = derived.dataCurrent;
+
   $('date-input').value = state.date;
-  $('holiday-notice').hidden = state.dataCurrent;
+  $('date-field').hidden = state.mode !== 'date';
+  $('category-field').hidden = state.mode !== 'category';
+  // the holiday-data caveat only matters when a concrete date is in play
+  $('holiday-notice').hidden = state.mode !== 'date' || state.dataCurrent;
+
+  for (const btn of $('mode-toggle').querySelectorAll('button')) {
+    btn.setAttribute('aria-pressed', String(btn.dataset.mode === state.mode));
+  }
   for (const btn of $('daytype-toggle').querySelectorAll('button')) {
-    btn.setAttribute('aria-pressed', String(btn.dataset.daytype === state.dayType));
+    btn.setAttribute('aria-pressed', String(btn.dataset.daytype === state.category));
   }
 }
 
@@ -173,6 +193,10 @@ function applyLanguage() {
   $('label-tunnel').textContent = copy.labelTunnel;
   $('label-vehicle').textContent = copy.labelVehicle;
   $('label-date').textContent = copy.labelDate;
+  $('label-category').textContent = copy.labelCategory;
+  for (const btn of $('mode-toggle').querySelectorAll('button')) {
+    btn.textContent = btn.dataset.mode === 'date' ? copy.modeDate : copy.modeCategory;
+  }
   $('label-time').textContent = copy.labelTime;
   $('back-to-now').textContent = copy.backToNow;
   $('holiday-notice').textContent = copy.notice;
@@ -232,7 +256,7 @@ function renderTime() {
   $('hour-select').value = String(Math.floor(state.minutes / 60)).padStart(2, '0');
   $('minute-select').value = String(state.minutes % 60).padStart(2, '0');
   $('time-slider').value = String(state.minutes);
-  $('back-to-now').disabled = following && !datePinned;
+  $('back-to-now').disabled = following && !(state.mode === 'date' && datePinned);
 }
 
 function fillTimeSelects() {
@@ -283,6 +307,8 @@ function init() {
   if (saved) {
     state.tunnelId = saved.tunnelId;
     state.vehicleId = saved.vehicleId;
+    if (saved.mode) state.mode = saved.mode;
+    if (saved.category) state.category = saved.category;
   }
 
   fillTimeSelects();
@@ -318,10 +344,18 @@ function init() {
     saveSelection();
     render();
   });
+  $('mode-toggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-mode]');
+    if (!btn || btn.dataset.mode === state.mode) return;
+    state.mode = btn.dataset.mode;
+    saveSelection();
+    render();
+  });
   $('daytype-toggle').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-daytype]');
     if (!btn) return;
-    state.dayType = btn.dataset.daytype;
+    state.category = btn.dataset.daytype;
+    saveSelection();
     render();
   });
   $('date-input').addEventListener('change', (e) => {
@@ -332,9 +366,6 @@ function init() {
     }
     state.date = value;
     datePinned = true;
-    const derived = deriveDayType(value);
-    state.dayType = derived.dayType;
-    state.dataCurrent = derived.dataCurrent;
     render();
   });
   $('hour-select').addEventListener('change', () => {
@@ -348,10 +379,7 @@ function init() {
     following = true;
     datePinned = false;
     state.minutes = nowMinutes();
-    state.date = toDateKey(new Date());
-    const derived = deriveDayType(state.date);
-    state.dayType = derived.dayType;
-    state.dataCurrent = derived.dataCurrent;
+    if (state.mode === 'date') state.date = toDateKey(new Date());
     render();
   });
 
@@ -363,12 +391,7 @@ function init() {
     const now = new Date();
     state.minutes = now.getHours() * 60 + now.getMinutes();
     const today = toDateKey(now);
-    if (!datePinned && today !== state.date) {
-      state.date = today;
-      const derived = deriveDayType(today);
-      state.dayType = derived.dayType;
-      state.dataCurrent = derived.dataCurrent;
-    }
+    if (state.mode === 'date' && !datePinned && today !== state.date) state.date = today;
     renderDateType();
     renderTime();
     renderToll();
