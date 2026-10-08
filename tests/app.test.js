@@ -71,14 +71,14 @@ function mk(id) {
     },
   };
 }
-for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amount', 'next-hint',
-  'now-date', 'now-time', 'chart-bar', 'chart-marker', 'legend', 'result-name', 'vehicle-select',
+for (const id of ['period-badge', 'next-hint',
+  'chart-bands', 'chart-marker', 'legend', 'vehicle-select',
   'wrap', 'chart-card',
-  'date-input', 'daytype-select', 'live-traffic',
+  'date-input', 'daytype-select', 'traffic-footnote',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
   'chart-title', 'marker-label', 'lang-picker',
   'compare-note',
-  'alt-card', 'alt-title', 'alt-list', 'alt-categories', 'label-vehicle-class',
+  'alt-card', 'alt-list', 'alt-categories', 'label-vehicle-class',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
 globalThis.document = {
@@ -113,6 +113,15 @@ const showsTunnel = (id, text) => {
   const name = tunnelName(id);
   return [name.tc, name.sc, name.en].some((value) => text.includes(value));
 };
+
+// The chosen tunnel is the row marked 現用 in the comparison list.
+const SELECTED_TAGS = ['現用', '现用', 'Current'];
+const selectedRow = () => {
+  const rows = $('alt-list').innerHTML.split('<li>');
+  return rows.find((row) => SELECTED_TAGS.some((tag) => row.includes(tag))) || '';
+};
+const selectedName = () => (selectedRow().match(/compare-name">([^<]*)</) || ['', ''])[1];
+const selectedPrice = () => (selectedRow().match(/HK\$ ([\d.]+)/) || ['', ''])[1];
 const setTime = (hh, mm) => {
   $('hour-select').value = hh;
   $('minute-select').value = mm;
@@ -124,13 +133,13 @@ await import('../js/app.js');
 
 test('the toll follows the clock while the page sits open', () => {
   assert.equal(shownTime(), '07:29');
-  assert.equal($('price-amount').textContent, '20.00');
+  assert.equal(selectedPrice(), '20.00');
 
   fakeNowMs = new RealDate(2026, 9, 8, 7, 30).getTime(); // one minute later, transition starts
   intervalCb();
 
   assert.equal(shownTime(), '07:30');
-  assert.equal($('price-amount').textContent, '22.00');
+  assert.equal(selectedPrice(), '22.00');
   assert.equal($('period-badge').textContent, '過渡期');
 });
 
@@ -141,33 +150,33 @@ test('the time dropdowns offer every hour and minute', () => {
 
 test('choosing a time from the dropdowns prices it exactly', () => {
   setTime('07', '48'); // peak starts on this minute
-  assert.equal($('price-amount').textContent, '40.00');
+  assert.equal(selectedPrice(), '40.00');
   assert.equal($('period-badge').textContent, '繁忙時段');
 
   setTime('19', '16'); // red tunnel car, down-transition ramp
-  assert.equal($('price-amount').textContent, '22.00');
+  assert.equal(selectedPrice(), '22.00');
 });
 
 test('following stops once the user picks a time themselves', () => {
   setTime('10', '30');
-  assert.equal($('price-amount').textContent, '30.00');
+  assert.equal(selectedPrice(), '30.00');
 
   fakeNowMs = new RealDate(2026, 9, 8, 16, 30).getTime();
   intervalCb();
 
   assert.equal(shownTime(), '10:30');
-  assert.equal($('price-amount').textContent, '30.00');
+  assert.equal(selectedPrice(), '30.00');
 });
 
 test('the slider and the hour/minute dropdowns stay in sync', () => {
   $('time-slider').value = '450'; // 07:30
   fire('time-slider', 'input');
   assert.equal(shownTime(), '07:30');
-  assert.equal($('price-amount').textContent, '22.00');
+  assert.equal(selectedPrice(), '22.00');
 
   setTime('19', '16');
   assert.equal($('time-slider').value, '1156');
-  assert.equal($('price-amount').textContent, '22.00');
+  assert.equal(selectedPrice(), '22.00');
 });
 
 test('the back-to-now button resets the slider too', () => {
@@ -188,12 +197,12 @@ test('the back-to-now button returns to the current time and resumes following',
   fire('back-to-now', 'click');
 
   assert.equal(shownTime(), '16:30');
-  assert.equal($('price-amount').textContent, '32.00'); // red tunnel car, up-transition first step
+  assert.equal(selectedPrice(), '32.00'); // red tunnel car, up-transition first step
 
   fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
   intervalCb();
   assert.equal(shownTime(), '16:38');
-  assert.equal($('price-amount').textContent, '40.00'); // peak
+  assert.equal(selectedPrice(), '40.00'); // peak
 });
 
 test('the selection is saved to localStorage when it changes', () => {
@@ -208,28 +217,28 @@ test('the selection is saved to localStorage when it changes', () => {
 test('a saved selection is restored on load', async () => {
   storage.set(STORAGE_KEY, JSON.stringify({ tunnelId: 'whc', vehicleId: 'moto' }));
   await import('../js/app.js?restore=1');
-  assert.ok(showsTunnel('whc', $('result-name').textContent), 'the saved tunnel is the one shown');
+  assert.ok(showsTunnel('whc', selectedName()), 'the saved tunnel is the one shown');
   assert.equal($('vehicle-select').value, 'moto');
 });
 
 test('an invalid saved selection falls back to the defaults', async () => {
   storage.set(STORAGE_KEY, JSON.stringify({ tunnelId: 'nope', vehicleId: 'bogus' }));
   await import('../js/app.js?bogus=1');
-  assert.ok(showsTunnel('cht', $('result-name').textContent), 'falls back to the default tunnel');
+  assert.ok(showsTunnel('cht', selectedName()), 'falls back to the default tunnel');
   assert.equal($('vehicle-select').value, 'car');
 });
 
 test('a saved vehicle that does not exist for the saved tunnel falls back to the first option', async () => {
   storage.set(STORAGE_KEY, JSON.stringify({ tunnelId: 'abt', vehicleId: 'car' }));
   await import('../js/app.js?mismatch=1');
-  assert.ok(showsTunnel('abt', $('result-name').textContent));
+  assert.ok(showsTunnel('abt', selectedName()));
   assert.equal($('vehicle-select').value, 'car');
 });
 
 test('storage failures do not break rendering', async () => {
   storageFails = true;
   await import('../js/app.js?broken=1');
-  assert.ok(showsTunnel('cht', $('result-name').textContent));
+  assert.ok(showsTunnel('cht', selectedName()));
   assert.equal($('vehicle-select').value, 'car');
   storageFails = false;
 });
@@ -288,14 +297,13 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal(document.title, 'HK Toll Calculator');
   assert.equal($('lang-current').textContent, 'English');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
-  assert.equal($('alt-title').textContent, 'Trip comparison');
   assert.equal($('label-vehicle-class').textContent, 'Vehicle class');
   assert.equal($('vehicle-select').getAttribute('aria-label'), 'Vehicle class');
   assert.equal($('daytype-select').getAttribute('aria-label'), 'Day type');
   assert.equal($('date-input').getAttribute('aria-label'), 'Date');
   assert.ok(/Now|Back to now/.test($('back-to-now').innerHTML), 'the way back speaks English');
   assert.ok($('daytype-select').innerHTML.includes('Mon–Sat (non-holiday)'));
-  assert.equal($('result-name').textContent, 'Cross-Harbour Tunnel (Hung Hom)');
+  assert.equal(selectedName(), 'Cross-Harbour Tunnel (Hung Hom)');
   assert.ok($('alt-list').innerHTML.includes('Eastern Harbour Crossing'), 'the comparison is in English too');
   assert.equal($('period-badge').textContent, 'Peak'); // 17:30 on a weekday is the red tunnel's peak
 });
@@ -304,7 +312,7 @@ test('choosing Simplified Chinese re-renders the labels', () => {
   fire('lang-menu', 'click', { target: langOption('sc') });
   assert.equal(document.documentElement.lang, 'zh-Hans');
   assert.equal($('chart-title').textContent, '24小时收费时段分布图');
-  assert.equal($('result-name').textContent, '海底隧道（红隧）');
+  assert.equal(selectedName(), '海底隧道（红隧）');
 });
 
 test('the chosen language is stored', () => {
@@ -341,12 +349,12 @@ test('the day-type dropdown shows what the picked date implies', () => {
   $('date-input').value = '2026-10-08';
   fire('date-input', 'change');
   assert.equal($('daytype-select').value, 'weekday');
-  assert.equal($('price-amount').textContent, '30.00'); // weekday normal window
+  assert.equal(selectedPrice(), '30.00'); // weekday normal window
 
   $('date-input').value = '2026-10-11'; // Sunday
   fire('date-input', 'change');
   assert.equal($('daytype-select').value, 'weekend', 'a Sunday flips the dropdown');
-  assert.equal($('price-amount').textContent, '25.00');
+  assert.equal(selectedPrice(), '25.00');
 });
 
 test('a public holiday that lands on a weekday uses the weekend schedule', () => {
@@ -355,7 +363,7 @@ test('a public holiday that lands on a weekday uses the weekend schedule', () =>
   $('date-input').value = '2026-10-19'; // the day following Chung Yeung, a Monday
   fire('date-input', 'change');
   assert.equal($('daytype-select').value, 'weekend');
-  assert.equal($('price-amount').textContent, '25.00');
+  assert.equal(selectedPrice(), '25.00');
 });
 
 test('a day type jumps to the next date with that schedule, counted from today', () => {
@@ -453,13 +461,13 @@ test('a picked date is not overwritten by the clock tick', () => {
   fire('date-input', 'change');
   setTime('10', '30'); // weekend normal window, so the schedule is visible in the price
   assert.equal($('back-to-now').disabled, false, 'a picked date must be releasable');
-  assert.equal($('price-amount').textContent, '25.00');
+  assert.equal(selectedPrice(), '25.00');
 
   fakeNowMs = new RealDate(2026, 9, 20, 0, 5).getTime();
   intervalCb();
 
   assert.equal($('date-input').value, '2026-10-19', 'the tick must not overwrite a picked date');
-  assert.equal($('price-amount').textContent, '25.00'); // still the holiday schedule
+  assert.equal(selectedPrice(), '25.00'); // still the holiday schedule
 });
 
 test('the result card lists the ways to make the same trip, current tunnel first', async () => {
@@ -468,7 +476,7 @@ test('the result card lists the ways to make the same trip, current tunnel first
   await import('../js/app.js?alt=1');
 
   assert.equal($('alt-card').hidden, false);
-  assert.equal($('alt-title').textContent, '行程比較');
+  assert.equal($('label-vehicle-class').textContent, '車種');
 
   const list = $('alt-list').innerHTML;
   assert.ok(list.includes('東區海底隧道（東隧）'));
@@ -507,7 +515,7 @@ test('the category selector follows the selected tunnel', () => {
 
 test('clicking an alternative switches the tunnel', () => {
   fire('alt-list', 'click', { target: { closest: () => ({ dataset: { tunnelId: 'tct' } }) } });
-  assert.ok(showsTunnel('tct', $('result-name').textContent), 'the result follows the click');
+  assert.ok(showsTunnel('tct', selectedName()), 'the result follows the click');
   const rows = $('alt-list').innerHTML.split('<li>').filter((row) => row.includes('大老山隧道'));
   assert.equal(rows.length, 1, 'the list follows the new selection');
   assert.ok(rows[0].includes('現用'), 'and marks it as the current choice');
@@ -564,12 +572,18 @@ test('a tunnel off the macro map still gets a corridor of its own', () => {
   assert.equal($('alt-card').hidden, false);
 });
 
-test('a tunnel with one flat rate all day shows no chart card', () => {
-  selectTunnel('lrt'); // Lion Rock is flat all day: nothing to chart
+test('the chart draws one band per tunnel, and steps aside when none vary', () => {
+  selectTunnel('cht'); // the harbour corridor: red, eastern and western crossings
+  const bands = $('chart-bands').innerHTML;
+  assert.equal((bands.match(/band-row/g) || []).length, 3, 'one band per tunnel in the corridor');
+  assert.ok(bands.includes('band-row active'), 'the chosen tunnel is the highlighted band');
+  assert.ok(showsTunnel('whc', bands), 'the western crossing has a band of its own');
+
+  selectTunnel('lrt'); // Lion Rock's corridor is flat all day: nothing to chart
   assert.equal($('chart-card').hidden, true);
   assert.equal($('wrap').className, 'wrap no-chart', 'and the empty column drops away');
 
-  selectTunnel('cht'); // the red tunnel varies by time
+  selectTunnel('cht');
   assert.equal($('chart-card').hidden, false);
   assert.equal($('wrap').className, 'wrap');
 });
@@ -637,10 +651,10 @@ test('live conditions from the transport department sit beside the tunnels', asy
   assert.ok(list.includes('暢通'), 'the free-flowing one');
   assert.ok(list.includes('交通消息'), 'the incident block appears');
   assert.ok(list.includes('東區海底隧道(往柴灣方向)部分行車線封閉'));
-  assert.ok(list.includes('更新於 22:57'), 'and the source is dated');
+  assert.ok($('traffic-footnote').innerHTML.includes('更新於 22:57'), 'and the source is dated');
   assert.ok($('alt-categories').innerHTML.includes('⚠️'), 'the affected corridor is flagged');
-  assert.ok($('live-traffic').innerHTML.includes('往港島 擠塞 18 分鐘'),
-    'the chosen tunnel\'s directions show on the headline card too');
+  assert.ok($('alt-list').innerHTML.includes('往港島 擠塞 18 分鐘'),
+    'the chosen tunnel\'s directions show in its comparison row');
 
   // a free corridor is measured too, when its row is on screen
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-ntw' } }) } });
@@ -660,7 +674,7 @@ test('live conditions from the transport department sit beside the tunnels', asy
   fire('daytype-select', 'change');
   assert.equal($('date-input').value, '2026-10-11', 'the coming Sunday');
   assert.ok(!$('alt-list').innerHTML.includes('往荃灣'), 'the readings go');
-  assert.ok($('live-traffic').innerHTML.includes('只喺'), 'and say why');
+  assert.ok($('traffic-footnote').innerHTML.includes('只喺'), 'and say why');
 
   // back to now resumes them
   fire('back-to-now', 'click');
@@ -671,7 +685,7 @@ test('live conditions from the transport department sit beside the tunnels', asy
   setTime('12', '00');
   assert.ok(!$('alt-list').innerHTML.includes('往港島'), 'the reading goes when the hour is not now');
   assert.ok(!$('alt-list').innerHTML.includes('交通消息'), 'and so does the incident news');
-  assert.ok($('live-traffic').innerHTML.includes('只喺'), 'with a word about why');
+  assert.ok($('traffic-footnote').innerHTML.includes('只喺'), 'with a word about why');
 
   delete globalThis.location;
   delete globalThis.fetch;
@@ -692,7 +706,7 @@ test('a stale, string-named data module can never render undefined', async () =>
   navigator.language = 'zh-TW';
   await import('../js/app.js?stale-data=1');
 
-  assert.ok(!$('result-name').textContent.includes('undefined'), 'the tunnel name showed undefined');
+  assert.ok(!selectedName().includes('undefined'), 'the tunnel name showed undefined');
   assert.ok(!$('alt-list').innerHTML.includes('undefined'), 'no undefined in the comparison');
   assert.ok(!$('vehicle-select').innerHTML.includes('undefined'), 'vehicle list showed undefined');
 

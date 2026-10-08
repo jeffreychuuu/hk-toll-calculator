@@ -115,17 +115,7 @@ body {
   .lang-trigger { transition: none; }
 }
 
-/* The tunnel and vehicle are chosen where they are shown */
-.result-titles { min-width: 0; flex: 1 1 auto; }
-.result-name {
-  margin: 0;
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
+/* The tunnel is chosen where the vehicles and prices are compared */
 .inline-select {
   appearance: none;
   width: auto;
@@ -194,21 +184,22 @@ body {
   .now-dot { animation: none; }
 }
 
-/* The bar is the slider: an invisible range sits on top of it */
-.chart { position: relative; height: 34px; margin: 22px 0 0; }
+/* The bands are the timeline: an invisible range sits on top of them */
+.chart { position: relative; margin: 22px 0 0; }
 #time-slider {
   position: absolute;
-  inset: 0;
-  width: 100%;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--band-label) + var(--band-gap));
+  right: 0;
+  width: auto;
   height: 100%;
   margin: 0;
   opacity: 0;
   cursor: pointer;
 }
 
-/* Result card */
-.result-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
+/* Comparison card */
 .badge {
   flex: 0 0 auto;
   background: var(--badge-bg);
@@ -224,16 +215,6 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 .badge.non-peak { background: #e7f6ee; color: #157a4d; }
 .badge.transition { background: #fdf1df; color: #a2650f; }
 
-.price {
-  margin: 10px 0 0;
-  font-variant-numeric: tabular-nums;
-  font-weight: 800;
-  font-size: clamp(2.1rem, 5vw, 2.9rem);
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-.price .currency { font-size: 0.4em; font-weight: 700; color: var(--muted); margin-right: 6px; }
-
 .hint {
   margin-top: 12px;
   background: var(--form);
@@ -245,8 +226,7 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 }
 
 /* Same-trip alternatives: corridor chips over a priced list */
-.alt-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
-.alt-title { font-size: 1rem; margin: 0; }
+.alt-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; }
 .alt-vehicle { display: inline-flex; align-items: center; gap: 6px; }
 .alt-vehicle-label { color: var(--muted); font-size: 0.85rem; font-weight: 600; }
 .pick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
@@ -301,8 +281,6 @@ div.compare-row { cursor: default; }
 .traffic-jam { color: #b91c1c; }
 .traffic-closed { color: #6b7280; }
 .traffic-sides { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 1px; }
-.live-traffic { margin: 8px 0 0; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.live-traffic:empty { display: none; }
 .traffic-hint { color: var(--muted); font-size: 0.78rem; }
 .incidents { margin-top: 10px; background: #fdf6e8; border-radius: 12px; padding: 10px 12px; }
 .incidents-title { margin: 0 0 4px; font-size: 0.85rem; font-weight: 700; color: #a2650f; }
@@ -316,6 +294,9 @@ div.compare-row { cursor: default; }
 .chart-head h2 { flex: 1 1 auto; font-size: 1rem; margin: 0; }
 .chart-controls { flex: 1 1 100%; }
 
+/* Every band is one tunnel's day, sharing the same clock */
+#chart-card { --band-label: 4.25rem; --band-gap: 6px; }
+
 .marker-label {
   position: absolute;
   bottom: calc(100% + 4px);
@@ -328,8 +309,27 @@ div.compare-row { cursor: default; }
 }
 .marker-label.now { color: #157a4d; }
 
-.chart-bar { display: flex; height: 100%; border-radius: 8px; overflow: hidden; }
-.chart-bar .seg { height: 100%; }
+.chart-bands { display: flex; flex-direction: column; gap: 3px; }
+.band-row { display: flex; align-items: center; gap: var(--band-gap); }
+.band-name {
+  flex: 0 0 auto;
+  width: var(--band-label);
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.band-track {
+  flex: 1 1 auto;
+  display: flex;
+  height: 16px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--form);
+}
+.band-track .seg { height: 100%; }
+.band-row.active .band-track { outline: 2px solid var(--focus); outline-offset: 1px; }
 .seg.non-peak { background: var(--green); }
 .seg.normal { background: var(--blue); }
 .seg.peak { background: var(--red); }
@@ -359,6 +359,7 @@ div.compare-row { cursor: default; }
   display: flex;
   justify-content: space-between;
   margin-top: 10px;
+  padding-left: calc(var(--band-label) + var(--band-gap));
   color: var(--muted);
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
@@ -446,15 +447,13 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .site-footer { color: var(--muted); font-size: 0.78rem; line-height: 1.65; padding: 0 4px; }
 .site-footer a { color: var(--focus); }
 
-/* Wide screens: result + chart on the left, form on the right, so the whole
-   tool fits one viewport without scrolling. */
+/* Wide screens: the comparison on the left, the chart on the right */
 @media (min-width: 900px) {
   .wrap {
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
     grid-template-areas:
       "topbar topbar"
-      "query  chart"
       "alt    chart"
       "footer footer";
     align-items: start;
@@ -462,16 +461,14 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
     padding-top: 14px;
   }
   .topbar { grid-area: topbar; }
-  #result-card { grid-area: query; }
-  #chart-card { grid-area: chart; }
   #alt-card { grid-area: alt; }
-  #site-footer, .site-footer { grid-area: footer; }
+  #chart-card { grid-area: chart; }
+  .site-footer { grid-area: footer; }
   /* With no chart to show there is no second column: let the cards fill */
   .wrap.no-chart {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "topbar"
-      "query"
       "alt"
       "footer";
   }

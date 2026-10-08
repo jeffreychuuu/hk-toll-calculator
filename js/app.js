@@ -213,7 +213,6 @@ function applyLanguage() {
   document.documentElement.lang = lang.htmlLang;
   document.title = copy.pageTitle;
   $('chart-title').textContent = copy.chartTitle;
-  $('alt-title').textContent = copy.compareTitle;
   $('label-vehicle-class').textContent = copy.compareVehicle;
   $('vehicle-select').setAttribute('aria-label', copy.labelVehicle);
   $('date-input').setAttribute('aria-label', copy.labelDate);
@@ -229,13 +228,9 @@ function applyLanguage() {
 function renderResult() {
   const copy = t();
   const { amount, periodType } = getToll(state);
-  $('live-traffic').innerHTML = traffic && !isShowingNow()
-    ? `<span class="traffic-hint">${esc(t().trafficOnlyNow)}</span>`
-    : trafficChip('tunnel', state.tunnelId);
   const badge = $('period-badge');
   badge.textContent = copy.period[periodType];
   badge.className = `badge ${periodType}`;
-  $('price-amount').textContent = amount.toFixed(2);
 
   const hint = $('next-hint');
   const next = getNextTransition(state);
@@ -374,8 +369,11 @@ function incidentBlock(group) {
   return `<div class="incidents"><p class="incidents-title">⚠️ ${esc(copy.trafficIncidents)}</p>${lines}</div>`;
 }
 
-function trafficSourceLine() {
-  if (!traffic || !traffic.updatedAt || !isShowingNow()) return '';
+// The live readings only mean something at the present moment, so when the view
+// has moved on the footnote says why instead of dating the feed.
+function trafficFootnote() {
+  if (!traffic || !traffic.updatedAt) return '';
+  if (!isShowingNow()) return `<p class="traffic-hint">${esc(t().trafficOnlyNow)}</p>`;
   const at = traffic.updatedAt.slice(11, 16);
   return `<p class="traffic-source">${esc(t().trafficSource.replace('{time}', at))}</p>`;
 }
@@ -406,7 +404,8 @@ function renderAlternatives() {
   }).join('');
 
   const rows = alternativeRows(active, vehicle);
-  $('alt-list').innerHTML = rows.rows + incidentBlock(active) + trafficSourceLine();
+  $('alt-list').innerHTML = rows.rows + incidentBlock(active);
+  $('traffic-footnote').innerHTML = trafficFootnote();
   $('compare-note').hidden = !rows.tied;
   $('compare-note').textContent = rows.tied
     ? copy.compareTie.replace('{amount}', rows.cheapest.toFixed(2))
@@ -446,35 +445,69 @@ function renderMoment() {
       + 'stroke-linecap="round" stroke-linejoin="round"/></svg>'
       + esc(copy.backToNow);
 
+  // The timeline starts after the band names, so the marker and its label both
+  // measure from there.
+  const frac = state.minutes / 1440;
+  const track = 'var(--band-label) + var(--band-gap)';
+  const at = `calc((${track}) + (100% - (${track})) * ${frac})`;
+  $('chart-marker').style.left = at;
+
   const label = $('marker-label');
-  const position = (state.minutes / 1440) * 100;
   const hh = String(Math.floor(state.minutes / 60)).padStart(2, '0');
   const mm = String(state.minutes % 60).padStart(2, '0');
   label.textContent = now ? copy.nowLabel : `${hh}:${mm}`;
   label.className = `marker-label${now ? ' now' : ''}`;
-  label.style.left = `${position}%`;
+  label.style.left = at;
   // keep the label inside the card at the ends of the day
-  label.style.transform = position < 8 ? 'translateX(0)'
-    : (position > 92 ? 'translateX(-100%)' : 'translateX(-50%)');
+  const pct = frac * 100;
+  label.style.transform = pct < 8 ? 'translateX(0)'
+    : (pct > 92 ? 'translateX(-100%)' : 'translateX(-50%)');
 }
 
 function renderChart() {
   const copy = t();
-  const segs = getDaySegments(state);
-  // A tunnel with one flat rate all day has no periods to chart, so the whole
-  // card — controls and all — steps aside instead of drawing a single band.
-  const flat = segs.every((seg) => seg.periodType === 'flat');
-  $('chart-card').hidden = flat;
-  $('wrap').className = `wrap${flat ? ' no-chart' : ''}`;
-  if (flat) return;
+  const groups = compareGroups();
+  const tunnelCategory = categoryForTunnel(state.tunnelId);
+  const activeId = groups.some((group) => group.id === altCategory) ? altCategory : tunnelCategory;
+  const group = groups.find((entry) => entry.id === activeId);
+  const canonical = canonicalFor(state.tunnelId, state.vehicleId);
 
-  $('chart-bar').innerHTML = segs.map((seg) => {
-    const width = ((seg.endMin - seg.startMin + 1) / 1440) * 100;
-    return `<div class="seg ${seg.periodType}" style="width:${width.toFixed(4)}%"></div>`;
+  // One band per tunnel in this corridor that varies with the clock. A corridor
+  // with none — every tunnel flat, or free roads only — has nothing to chart,
+  // so the whole card steps aside and the layout drops the empty column.
+  const bands = (group ? group.tunnels : [])
+    .map((id) => ({
+      id,
+      segs: getDaySegments({
+        tunnelId: id,
+        vehicleId: classForTunnel(id, canonical),
+        dayType: state.dayType,
+      }),
+    }))
+    .filter((band) => band.segs.some((seg) => seg.periodType !== 'flat'));
+
+  $('chart-card').hidden = bands.length === 0;
+  $('wrap').className = `wrap${bands.length ? '' : ' no-chart'}`;
+  if (!bands.length) {
+    $('chart-bands').innerHTML = '';
+    $('legend').innerHTML = '';
+    return;
+  }
+
+  $('chart-bands').innerHTML = bands.map((band) => {
+    const segs = band.segs.map((seg) => {
+      const width = ((seg.endMin - seg.startMin + 1) / 1440) * 100;
+      return `<span class="seg ${seg.periodType}" style="width:${width.toFixed(4)}%"></span>`;
+    }).join('');
+    const active = band.id === state.tunnelId ? ' active' : '';
+    return `<div class="band-row${active}">`
+      + `<span class="band-name">${esc(nameOf(tunnelById(band.id)))}</span>`
+      + `<span class="band-track">${segs}</span>`
+      + '</div>';
   }).join('');
-  $('chart-marker').style.left = `${(state.minutes / 1440) * 100}%`;
 
-  const present = LEGEND_ORDER.filter((p) => segs.some((s) => s.periodType === p));
+  const present = LEGEND_ORDER.filter((p) =>
+    bands.some((band) => band.segs.some((seg) => seg.periodType === p)));
   $('legend').innerHTML = present
     .map((p) => `<li><span class="dot ${p}"></span>${esc(copy.periodShort[p])}</li>`)
     .join('');
@@ -504,8 +537,6 @@ function render() {
   fillDayTypeSelect();
   renderDateType();
   renderTime();
-  // The name is a label now: the tunnel is chosen from the comparison list.
-  $('result-name').textContent = nameOf(tunnelById(state.tunnelId));
   renderToll();
 }
 
