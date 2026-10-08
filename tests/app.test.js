@@ -76,7 +76,6 @@ for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amou
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
   'chart-title', 'lang-picker',
   'compare-note',
-  'plan-card', 'plan-title', 'label-from', 'label-to', 'from-select', 'to-select', 'plan-result',
   'alt-card', 'alt-title', 'alt-list', 'alt-categories',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
@@ -281,7 +280,6 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal($('lang-current').textContent, 'English');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
   assert.equal($('alt-title').textContent, 'Trip comparison');
-  assert.equal($('plan-title').textContent, 'Journey suggestion');
   assert.equal($('tunnel-select').getAttribute('aria-label'), 'Tunnel');
   assert.equal($('vehicle-select').getAttribute('aria-label'), 'Vehicle class');
   assert.equal($('daytype-select').getAttribute('aria-label'), 'Day type');
@@ -485,10 +483,9 @@ test('choosing another corridor swaps the list in one click', () => {
   assert.ok($('alt-list').innerHTML.includes('現用'));
 });
 
-test('the result and the schedule sit on the same page, with the journey last', () => {
+test('the result and the schedule sit on the same page', () => {
   assert.equal($('alt-card').hidden, false, 'the alternatives card is shown');
   assert.equal($('chart-marker') !== undefined, true, 'the chart is on screen too');
-  assert.ok($('plan-result').innerHTML.length > 0, 'the journey section is rendered at the bottom');
 });
 
 test('a tunnel outside the macro map shows no alternatives', () => {
@@ -507,82 +504,6 @@ test('the alternatives follow the chosen vehicle', () => {
   const list = $('alt-list').innerHTML;
   assert.ok(list.includes('HK$ 50.00'), 'the harbour crossings cost 50 for a commercial vehicle');
   assert.ok(!list.includes('HK$ 30.00'));
-});
-
-test('the journey card groups districts by macro area', async () => {
-  const { REGIONS: ALL_DISTRICTS } = await import('../js/regions.js');
-  storage.delete('hk-toll-calculator.selection');
-  fakeNowMs = new RealDate(2026, 9, 8, 12, 0).getTime();
-  await import('../js/app.js?plan=2');
-
-  const from = $('from-select').innerHTML;
-  assert.equal((from.match(/<optgroup/g) || []).length, 3, 'island / kowloon / new territories');
-  for (const label of ['港島', '九龍', '新界']) assert.ok(from.includes(label), `missing group ${label}`);
-  assert.equal((from.match(/<option/g) || []).length, ALL_DISTRICTS.length + 1, 'every district plus unset');
-  assert.ok($('plan-result').innerHTML.includes('揀返起點同終點'));
-});
-
-test('a harbour trip lists routes with their tunnels and total toll', () => {
-  $('from-select').value = 'nt-st';
-  fire('from-select', 'change');
-  $('to-select').value = 'hki-wc';
-  fire('to-select', 'change');
-
-  const html = $('plan-result').innerHTML;
-  assert.ok(html.includes('獅子山隧道'), 'the approach tunnel is named');
-  assert.ok(html.includes('海底隧道（紅隧）'));
-  assert.ok(html.includes('東區海底隧道（東隧）'));
-  assert.ok(html.includes('HK$ 38.00'), 'Lion Rock + red tunnel at noon');
-  assert.ok(html.includes('大埔道'), 'the free corridor is named');
-  assert.ok(html.indexOf('大埔道') < html.indexOf('海底隧道（紅隧）'), 'road then crossing, in order');
-  assert.ok(html.includes('最平'), 'the cheapest route is labelled');
-});
-
-test('a route with no tunnel is labelled as free roads', () => {
-  $('from-select').value = 'nt-st';
-  fire('from-select', 'change');
-  $('to-select').value = 'nt-tw';
-  fire('to-select', 'change');
-
-  const html = $('plan-result').innerHTML;
-  assert.ok(html.includes('林錦公路／青山公路'), 'the free corridor is named');
-  assert.ok(html.includes('HK$ 0.00'));
-  assert.ok(html.includes('城門隧道'));
-  assert.ok(html.includes('HK$ 8.00'));
-});
-
-test('a trip that needs no tunnel at all still gets a suggestion', () => {
-  $('from-select').value = 'kln-ytm';
-  fire('from-select', 'change');
-  $('to-select').value = 'kln-kt';
-  fire('to-select', 'change');
-
-  const html = $('plan-result').innerHTML;
-  assert.ok(html.includes('太子道東'), 'the free road is named');
-  assert.ok(html.includes('HK$ 0.00'));
-  assert.ok(html.includes('最平'));
-});
-
-test('the route list is capped so the card stays readable', () => {
-  $('from-select').value = 'nt-tm'; // Tuen Mun: the widest choice of options
-  fire('from-select', 'change');
-  $('to-select').value = 'hki-cw';
-  fire('to-select', 'change');
-
-  const rows = ($('plan-result').innerHTML.match(/plan-route-name/g) || []).length;
-  assert.ok(rows >= 1 && rows <= 6, `expected 1-6 routes, got ${rows}`);
-});
-
-test('the route totals follow the chosen vehicle', () => {
-  $('from-select').value = 'nt-st';
-  fire('from-select', 'change');
-  $('to-select').value = 'hki-wc';
-  fire('to-select', 'change');
-  assert.ok($('plan-result').innerHTML.includes('HK$ 38.00'));
-
-  $('vehicle-select').value = 'moto';
-  fire('vehicle-select', 'change');
-  assert.ok($('plan-result').innerHTML.includes('HK$ 20.00'), 'motorcycle: Lion Rock $8 + red tunnel $12');
 });
 
 test('live conditions from the transport department sit beside the tunnels', async () => {
@@ -641,21 +562,11 @@ test('live conditions from the transport department sit beside the tunnels', asy
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-ntw' } }) } });
   assert.ok($('alt-list').innerHTML.includes('往荃灣 22 分鐘'), 'Tuen Mun Road carries a reading');
 
-  // a journey route adds up the readings of the directions it travels
-  $('from-select').value = 'nt-tm';
-  fire('from-select', 'change');
-  $('to-select').value = 'hki-cw';
-  fire('to-select', 'change');
-  const plan = $('plan-result').innerHTML;
-  assert.ok(plan.includes('沿路實測 23 分鐘'), 'Big Lam + the western crossing: 10 + 13');
-  assert.ok(plan.includes('現時最快'), 'and the quickest route is named');
-
   // a hypothetical time is not now, so live readings have no business showing
   setTime('12', '00');
   assert.ok(!$('alt-list').innerHTML.includes('往港島'), 'the reading goes when the hour is not now');
   assert.ok(!$('alt-list').innerHTML.includes('交通消息'), 'and so does the incident news');
   assert.ok($('live-traffic').innerHTML.includes('只喺'), 'with a word about why');
-  assert.ok(!$('plan-result').innerHTML.includes('沿路實測'), 'and the journey times go too');
 
   delete globalThis.location;
   delete globalThis.fetch;

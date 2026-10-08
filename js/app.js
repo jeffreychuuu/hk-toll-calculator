@@ -3,8 +3,8 @@ import { TUNNELS, vehiclesFor, CROSS_HARBOUR_IDS, canonicalFor, classIdFor } fro
 import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison } from './engine.js';
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
-import { REGIONS, regionById, planRoutes, compareGroups, categoryForTunnel } from './regions.js';
-import { incidentsForTunnels, publishedDirection } from './traffic.js';
+import { compareGroups, categoryForTunnel } from './regions.js';
+import { incidentsForTunnels } from './traffic.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
 const FOOTER_LINKS = ['tvt', 'flat', 'taiLam'];
@@ -98,8 +98,6 @@ function saveLang() {
 const initialDayType = defaultDayType();
 const state = {
   lang: 'tc',
-  fromId: '',              // journey suggestion — deliberately not persisted
-  toId: '',
   date: toDateKey(new Date()),
   category: 'weekday',
   tunnelId: 'cht',
@@ -219,11 +217,6 @@ function applyLanguage() {
   document.title = copy.pageTitle;
   $('chart-title').textContent = copy.chartTitle;
   $('alt-title').textContent = copy.compareTitle;
-  $('plan-title').textContent = copy.planTitle;
-  $('label-from').textContent = copy.planFrom;
-  $('label-to').textContent = copy.planTo;
-  fillPlanSelects();
-  renderPlan();
   $('tunnel-select').setAttribute('aria-label', copy.labelTunnel);
   $('vehicle-select').setAttribute('aria-label', copy.labelVehicle);
   $('date-input').setAttribute('aria-label', copy.labelDate);
@@ -409,94 +402,6 @@ const priceTunnelFor = (tunnelId, canonical) => getToll({
   minutes: state.minutes,
 }).amount;
 
-function fillPlanSelects() {
-  const copy = t();
-  const areaLabel = { island: copy.areaIsland, kowloon: copy.areaKowloon, nt: copy.areaNt };
-  const groups = ['island', 'kowloon', 'nt']
-    .map((area) => {
-      const options = REGIONS.filter((region) => region.area === area)
-        .map((region) => `<option value="${region.id}">${esc(region.name[state.lang])}</option>`)
-        .join('');
-      return `<optgroup label="${esc(areaLabel[area])}">${options}</optgroup>`;
-    })
-    .join('');
-  const blank = `<option value="">${esc(copy.planUnset)}</option>`;
-
-  $('from-select').innerHTML = blank + groups;
-  $('to-select').innerHTML = blank + groups;
-  $('from-select').value = state.fromId;
-  $('to-select').value = state.toId;
-}
-
-const ROUTES_SHOWN = 6;
-
-// A route's measured time: the sum of the published readings for the
-// directions it actually travels, and only when every leg has one — a partial
-// sum would read as a total it is not.
-function measuredMinutes(route) {
-  if (!isShowingNow() || !traffic) return null;
-  let total = 0;
-  for (const leg of route.legs) {
-    const direction = publishedDirection(leg);
-    if (!direction) return null;
-    const id = leg.tunnel || leg.roadId;
-    const report = (leg.tunnel ? traffic.tunnels : traffic.roads)?.[id];
-    const towards = report && report.byDirection ? report.byDirection[direction] : null;
-    if (!towards || typeof towards.minutes !== 'number') return null;
-    total += towards.minutes;
-  }
-  return total;
-}
-
-function renderPlan() {
-  const copy = t();
-  const result = $('plan-result');
-
-  if (!regionById(state.fromId) || !regionById(state.toId)) {
-    result.innerHTML = `<p class="plan-note">${esc(copy.planPick)}</p>`;
-    return;
-  }
-
-  const { routes } = planRoutes({ fromId: state.fromId, toId: state.toId });
-  const vehicle = canonicalFor(state.tunnelId, state.vehicleId);
-  const priced = routes
-    .map((route) => ({
-      legs: route.legs,
-      tunnels: route.tunnels,
-      amount: route.tunnels.reduce((sum, id) => sum + priceTunnelFor(id, vehicle), 0),
-    }))
-    .sort((a, b) => a.amount - b.amount)
-    .slice(0, ROUTES_SHOWN);
-
-  const cheapest = priced.length ? priced[0].amount : 0;
-  const withTimes = priced
-    .map((route, index) => ({ index, minutes: measuredMinutes(route) }))
-    .filter((entry) => entry.minutes !== null);
-  const fastest = withTimes.filter((entry) => entry.minutes === Math.min(...withTimes.map((e) => e.minutes)));
-  const fastestLine = fastest.length
-    ? `<p class="journey-fastest">${esc(copy.journeyFastest.replace('{routes}',
-        fastest.map((entry) => priced[entry.index].legs.map((leg) => (leg.tunnel
-          ? nameOf(tunnelById(leg.tunnel)) : leg.road[state.lang])).join(' · ')).join('｜')))}</p>`
-    : '';
-
-  result.innerHTML = fastestLine + priced.map((route) => {
-    const name = route.legs
-      .map((leg) => esc(leg.tunnel ? nameOf(tunnelById(leg.tunnel)) : leg.road[state.lang]))
-      .join('<span class="plan-sep">·</span>');
-    const tag = route.amount === cheapest
-      ? copy.planCheapest
-      : (route.tunnels.length ? copy.planPricier : '');
-    const measured = measuredMinutes(route);
-    return `<div class="plan-route${route.amount === cheapest ? ' cheapest' : ''}">`
-      + `<span class="plan-route-name">${name}</span>`
-      + (measured === null ? '' : `<span class="plan-route-time">${esc(copy.trafficMeasured
-          .replace('{minutes}', String(measured)))}</span>`)
-      + `<span class="plan-route-price">HK$ ${route.amount.toFixed(2)}</span>`
-      + (tag ? `<span class="plan-route-tag">${esc(tag)}</span>` : '')
-      + '</div>';
-  }).join('') + `<p class="plan-disclaimer">${esc(copy.planDisclaimer)}</p>`;
-}
-
 function renderChart() {
   const copy = t();
   const segs = getDaySegments(state);
@@ -529,7 +434,6 @@ function renderToll() {
   renderResult();
   renderAlternatives();
   renderChart();
-  renderPlan(); // its measured times depend on the moment being now
 }
 
 function render() {
@@ -539,7 +443,6 @@ function render() {
   renderDateType();
   renderTime();
   renderToll();
-  renderPlan();
 }
 
 function selectTime(minutes) {
@@ -589,14 +492,6 @@ function init() {
     $('lang-trigger').focus();
   });
 
-  $('from-select').addEventListener('change', (e) => {
-    state.fromId = e.target.value;
-    renderPlan();
-  });
-  $('to-select').addEventListener('change', (e) => {
-    state.toId = e.target.value;
-    renderPlan();
-  });
   $('tunnel-select').addEventListener('change', (e) => {
     state.tunnelId = e.target.value;
     altCategory = null; // re-anchor the alternatives on the new corridor
