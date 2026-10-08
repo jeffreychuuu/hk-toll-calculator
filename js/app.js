@@ -297,8 +297,10 @@ function alternativeRows(group, canonical) {
 // reading for it. The worst reading sets the colour; the sides are spelled out
 // because a journey time only means something for the direction you drive.
 // Live readings describe this moment, so they only belong on screen when the
-// view really is this moment: the clock is followed and the date is today.
-const isShowingNow = () => following && state.date === toDateKey(new Date());
+// view really is this moment: the clock is still following, the date is today,
+// and the day type has not been pinned to something else by hand.
+const isShowingNow = () =>
+  following && !dayTypePinned && state.date === toDateKey(new Date());
 
 const DIRECTION_LABEL = {
   island: 'dirIsland',
