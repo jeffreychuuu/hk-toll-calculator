@@ -12,6 +12,16 @@ const FOOTER_LINKS = ['tvt', 'flat', 'taiLam'];
 const $ = (id) => document.getElementById(id);
 const nowMinutes = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
 const fmtTime = (min) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+// "427 min" reads badly, so past an hour say "7 小時 7 分鐘".
+const fmtDuration = (minutes) => {
+  const copy = t();
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  const parts = [];
+  if (hours) parts.push(`${hours}${copy.hourUnit}`);
+  if (mins || !hours) parts.push(`${mins}${copy.minuteUnit}`);
+  return parts.join('').trim();
+};
 const WEEKDAY = ['日', '一', '二', '三', '四', '五', '六'];
 const fmtDate = (d) => `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${WEEKDAY[d.getDay()]}）`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -247,7 +257,7 @@ function renderResult() {
   const change = next.amount > amount ? copy.changeUp : next.amount < amount ? copy.changeDown : copy.changeKeep;
   hint.hidden = false;
   hint.textContent = copy.hint
-    .replace('{min}', String(diff))
+    .replace('{duration}', fmtDuration(diff))
     .replace('{time}', fmtTime(next.atMin))
     .replace('{period}', copy.period[next.periodType])
     .replace('{change}', change)
