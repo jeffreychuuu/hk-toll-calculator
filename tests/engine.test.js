@@ -76,3 +76,42 @@ test('unknown tunnels and vehicles are rejected', () => {
   assert.throws(() => getToll({ tunnelId: 'nope', vehicleId: 'car', dayType: 'weekday', minutes: 0 }));
   assert.throws(() => getToll({ tunnelId: 'tct', vehicleId: 'bogus', dayType: 'weekday', minutes: 0 }));
 });
+
+// --- Task 5: day segments and next transition ---
+import { getDaySegments, getNextTransition } from '../js/engine.js';
+
+test('day segments tile the whole day', () => {
+  const segs = getDaySegments({ tunnelId: 'whc', vehicleId: 'car', dayType: 'weekday' });
+  assert.equal(segs[0].startMin, 0);
+  assert.equal(segs[segs.length - 1].endMin, 1439);
+  for (let i = 1; i < segs.length; i += 1) {
+    assert.equal(segs[i].startMin, segs[i - 1].endMin + 1);
+  }
+});
+
+test('transition segment exposes first and last step amounts', () => {
+  const segs = getDaySegments({ tunnelId: 'whc', vehicleId: 'car', dayType: 'weekday' });
+  const ramp = segs.find((s) => s.startMin === 450);
+  assert.equal(ramp.periodType, 'transition');
+  assert.equal(ramp.firstAmount, 22);
+  assert.equal(ramp.lastAmount, 58);
+});
+
+test('flat combinations collapse to a single all-day segment', () => {
+  assert.deepEqual(getDaySegments({ tunnelId: 'cht', vehicleId: 'taxi', dayType: 'weekday' }), [
+    { startMin: 0, endMin: 1439, periodType: 'flat', firstAmount: 25, lastAmount: 25 },
+  ]);
+  assert.deepEqual(getDaySegments({ tunnelId: 'abt', vehicleId: 'all', dayType: 'weekday' }), [
+    { startMin: 0, endMin: 1439, periodType: 'flat', firstAmount: 8, lastAmount: 8 },
+  ]);
+});
+
+test('next transition reports time, period and the amount after the change', () => {
+  const next = getNextTransition({ tunnelId: 'whc', vehicleId: 'car', dayType: 'weekday', minutes: 1050 });
+  assert.deepEqual(next, { atMin: 1140, periodType: 'transition', amount: 58 });
+});
+
+test('next transition is null when the rest of the day is flat', () => {
+  assert.equal(getNextTransition({ tunnelId: 'cht', vehicleId: 'taxi', dayType: 'weekday', minutes: 600 }), null);
+  assert.equal(getNextTransition({ tunnelId: 'whc', vehicleId: 'car', dayType: 'weekday', minutes: 1439 }), null);
+});
