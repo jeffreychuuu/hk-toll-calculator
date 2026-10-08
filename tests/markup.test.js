@@ -35,13 +35,16 @@ const section = (id) => {
 test('the day type and the clock live on the chart card', () => {
   const chart = section('chart-card');
   for (const id of ['date-input', 'daytype-select', 'hour-select', 'minute-select',
-    'time-slider', 'back-to-now']) {
+    'time-slider', 'back-to-now', 'period-badge', 'next-hint']) {
     assert.ok(chart.includes(`id="${id}"`), `#${id} should sit with the 24-hour chart`);
   }
 
   const result = section('result-card');
-  for (const id of ['daytype-select', 'hour-select', 'minute-select']) {
+  for (const id of ['daytype-select', 'hour-select', 'minute-select', 'vehicle-select', 'period-badge']) {
     assert.ok(!result.includes(`id="${id}"`), `#${id} should have left the result card`);
   }
-  assert.ok(result.includes('id="vehicle-select"'), 'the vehicle class stays with the price');
+
+  const alt = section('alt-card');
+  assert.ok(alt.includes('id="vehicle-select"'), 'the vehicle class sits with the comparison');
+  assert.ok(alt.includes('id="label-vehicle-class"'), 'under its own 車種 label');
 });

@@ -214,6 +214,7 @@ function applyLanguage() {
   document.title = copy.pageTitle;
   $('chart-title').textContent = copy.chartTitle;
   $('alt-title').textContent = copy.compareTitle;
+  $('label-vehicle-class').textContent = copy.compareVehicle;
   $('vehicle-select').setAttribute('aria-label', copy.labelVehicle);
   $('date-input').setAttribute('aria-label', copy.labelDate);
   $('daytype-select').setAttribute('aria-label', copy.labelCategory);
@@ -401,7 +402,7 @@ function renderAlternatives() {
     const on = group.id === activeId;
     const warn = corridorIncidents(group).length ? ' ⚠️' : '';
     return `<button type="button" class="chip${on ? ' on' : ''}" data-group="${group.id}"`
-      + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]])}${warn}</button>`;
+      + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]] ?? group.id)}${warn}</button>`;
   }).join('');
 
   const rows = alternativeRows(active, vehicle);
@@ -460,6 +461,13 @@ function renderMoment() {
 function renderChart() {
   const copy = t();
   const segs = getDaySegments(state);
+  // A tunnel with one flat rate all day has no periods to chart, so the whole
+  // card — controls and all — steps aside instead of drawing a single band.
+  const flat = segs.every((seg) => seg.periodType === 'flat');
+  $('chart-card').hidden = flat;
+  $('wrap').className = `wrap${flat ? ' no-chart' : ''}`;
+  if (flat) return;
+
   $('chart-bar').innerHTML = segs.map((seg) => {
     const width = ((seg.endMin - seg.startMin + 1) / 1440) * 100;
     return `<div class="seg ${seg.periodType}" style="width:${width.toFixed(4)}%"></div>`;

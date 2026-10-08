@@ -73,11 +73,12 @@ function mk(id) {
 }
 for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amount', 'next-hint',
   'now-date', 'now-time', 'chart-bar', 'chart-marker', 'legend', 'result-name', 'vehicle-select',
+  'wrap', 'chart-card',
   'date-input', 'daytype-select', 'live-traffic',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
   'chart-title', 'marker-label', 'lang-picker',
   'compare-note',
-  'alt-card', 'alt-title', 'alt-list', 'alt-categories',
+  'alt-card', 'alt-title', 'alt-list', 'alt-categories', 'label-vehicle-class',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
 globalThis.document = {
@@ -288,6 +289,7 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal($('lang-current').textContent, 'English');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
   assert.equal($('alt-title').textContent, 'Trip comparison');
+  assert.equal($('label-vehicle-class').textContent, 'Vehicle class');
   assert.equal($('vehicle-select').getAttribute('aria-label'), 'Vehicle class');
   assert.equal($('daytype-select').getAttribute('aria-label'), 'Day type');
   assert.equal($('date-input').getAttribute('aria-label'), 'Date');
@@ -560,6 +562,16 @@ test('a tunnel off the macro map still gets a corridor of its own', () => {
 
   selectTunnel('cht');
   assert.equal($('alt-card').hidden, false);
+});
+
+test('a tunnel with one flat rate all day shows no chart card', () => {
+  selectTunnel('lrt'); // Lion Rock is flat all day: nothing to chart
+  assert.equal($('chart-card').hidden, true);
+  assert.equal($('wrap').className, 'wrap no-chart', 'and the empty column drops away');
+
+  selectTunnel('cht'); // the red tunnel varies by time
+  assert.equal($('chart-card').hidden, false);
+  assert.equal($('wrap').className, 'wrap');
 });
 
 test('the alternatives follow the chosen vehicle', () => {
