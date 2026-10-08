@@ -40,6 +40,7 @@ export const UI = {
     dirShatin: '沙田',
     dirWanChai: '灣仔',
     dirTingKau: '汀九',
+    dirAirport: '機場',
     compareTitle: '行程比較',
     compareTie: '呢幾個選擇同價 HK$ {amount}',
     cmpCatHarbour: '過海（九龍 ↔ 港島）',
@@ -48,6 +49,7 @@ export const UI = {
     cmpCatNteNtw: '新界東 ↔ 新界西',
     cmpCatIsland: '港島市內',
     cmpCatKowloon: '九龍市內',
+    cmpCatAirport: '新界西 ↔ 機場／北大嶼山',
     planCheapest: '最平',
 
     labelTunnel: '選擇隧道',
@@ -111,6 +113,7 @@ export const UI = {
     dirShatin: '沙田',
     dirWanChai: '湾仔',
     dirTingKau: '汀九',
+    dirAirport: '机场',
     compareTitle: '行程比较',
     compareTie: '这几个选择同价 HK$ {amount}',
     cmpCatHarbour: '过海（九龙 ↔ 港岛）',
@@ -119,6 +122,7 @@ export const UI = {
     cmpCatNteNtw: '新界东 ↔ 新界西',
     cmpCatIsland: '港岛市内',
     cmpCatKowloon: '九龙市内',
+    cmpCatAirport: '新界西 ↔ 机场／北大屿山',
     planCheapest: '最平',
 
     labelTunnel: '选择隧道',
@@ -182,6 +186,7 @@ export const UI = {
     dirShatin: 'Sha Tin',
     dirWanChai: 'Wan Chai',
     dirTingKau: 'Ting Kau',
+    dirAirport: 'Airport',
     compareTitle: 'Trip comparison',
     compareTie: 'These options all cost the same — HK$ {amount}',
     cmpCatHarbour: 'Harbour (Kowloon ↔ Island)',
@@ -190,6 +195,7 @@ export const UI = {
     cmpCatNteNtw: 'East NT ↔ West NT',
     cmpCatIsland: 'Hong Kong Island',
     cmpCatKowloon: 'Kowloon',
+    cmpCatAirport: 'New Territories West ↔ Airport / North Lantau',
     planCheapest: 'Cheapest',
 
     labelTunnel: 'Tunnel',

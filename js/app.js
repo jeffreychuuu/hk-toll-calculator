@@ -73,6 +73,7 @@ const CATEGORY_LABEL = {
   'nte-ntw': 'cmpCatNteNtw',
   island: 'cmpCatIsland',
   kowloon: 'cmpCatKowloon',
+  'ntw-airport': 'cmpCatAirport',
 };
 
 
@@ -162,6 +163,7 @@ function fillTunnelSelect() {
   const option = (tunnel) => `<option value="${tunnel.id}">${esc(nameOf(tunnel))}</option>`;
 
   $('tunnel-select').innerHTML = groups
+    .filter((group) => group.tunnels.length) // a corridor of free roads only has nothing to pick here
     .map((group) => `<optgroup label="${esc(copy[CATEGORY_LABEL[group.id]])}">`
       + group.tunnels.map((id) => option(tunnelById(id))).join('') + '</optgroup>')
     .join('')
@@ -319,6 +321,7 @@ const DIRECTION_LABEL = {
   'kowloon-w': 'dirKowloonW',
   tsuenwan: 'dirTsuenWan',
   shatin: 'dirShatin',
+  airport: 'dirAirport',
   wanchai: 'dirWanChai',
   tingkau: 'dirTingKau',
 };

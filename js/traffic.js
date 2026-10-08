@@ -45,6 +45,7 @@ export const ROAD_DESTINATIONS = {
   TPR: { road: 'tpr', direction: 'shatin' }, // Shatin via Tai Po Road
   KTPR: { road: 'tpr', direction: 'kowloon' }, // Kowloon via Tai Po Road
   TWCP: { road: 'lamkam', direction: 'tsuenwan' }, // Tsuen Wan (W) via Castle Peak
+  TMCLK: { road: 'tmclk', direction: 'airport' }, // to Chek Lap Kok via the TM-CLK Link
 };
 
 const DESTINATION_DIRECTIONS = {
@@ -106,6 +107,8 @@ const ROAD_PATTERNS = [
   [/太子道東|Prince Edward Road East/u, 'ped'],
   [/干諾道|Connaught Road/u, 'connaught'],
   [/東區走廊|Island Eastern Corridor/u, 'iec'],
+  [/屯門赤鱲角隧道|屯門至赤鱲角|順朗路|Tuen Mun.?Chek Lap Kok/u, 'tmclk'],
+  [/青嶼幹線|北大嶼山公路|青馬大橋|汲水門大橋|Lantau Link|North Lantau Highway/u, 'lantau'],
 ];
 
 export function roadsMentioned(text) {
