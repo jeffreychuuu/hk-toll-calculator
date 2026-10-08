@@ -104,8 +104,8 @@ export const TVT_VEHICLES = [
 export const FLAT8_VEHICLES = TVT_VEHICLES;
 
 export const TCT_VEHICLES = [
-  { id: 'mc', name: { tc: '電單車、機動三輪車', sc: '电单车、机动三轮车', en: 'Motorcycle, motor tricycle' } },
   { id: 'pc', name: { tc: '私家車', sc: '私家车', en: 'Private car' } },
+  { id: 'mc', name: { tc: '電單車、機動三輪車', sc: '电单车、机动三轮车', en: 'Motorcycle, motor tricycle' } },
   { id: 'taxi', name: { tc: '的士', sc: '的士', en: 'Taxi' } },
   { id: 'pmb', name: { tc: '公共小型巴士', sc: '公共小型巴士', en: 'Public minibus' } },
   { id: 'pvmb', name: { tc: '私家小型巴士', sc: '私家小型巴士', en: 'Private minibus' } },

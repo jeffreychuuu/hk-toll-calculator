@@ -628,6 +628,17 @@ test('a flat-rate tunnel drops the schedule controls and returns to now', () => 
   assert.equal($('chart-controls').hidden, false);
 });
 
+test('a next change more than an hour away is told in hours and minutes', () => {
+  fakeNowMs = new RealDate(2026, 9, 8, 1, 0).getTime(); // 01:00
+  selectTunnel('cht');
+  fire('back-to-now', 'click');
+
+  const hint = $('next-hint');
+  assert.equal(hint.hidden, false);
+  assert.ok(hint.textContent.includes('6小時30分鐘'), '6 hours 30 minutes, not 390 minutes');
+  assert.ok(hint.textContent.includes('07:30'), 'and the clock time as usual');
+});
+
 test('the chart always shows the chosen tunnel, flat all day or not', () => {
   selectTunnel('cht');
   assert.equal($('chart-card').hidden, false);

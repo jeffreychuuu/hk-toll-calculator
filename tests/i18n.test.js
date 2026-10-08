@@ -37,9 +37,10 @@ test('every string is non-empty and not just whitespace in every language', () =
 
 test('the hint template keeps all five placeholders in every language', () => {
   for (const lang of ['tc', 'sc', 'en']) {
-    for (const token of ['{min}', '{time}', '{period}', '{change}', '{amount}']) {
+    for (const token of ['{duration}', '{time}', '{period}', '{change}', '{amount}']) {
       assert.ok(UI[lang].hint.includes(token), `${lang}.hint missing ${token}`);
     }
+    assert.ok(UI[lang].hourUnit && UI[lang].minuteUnit, `${lang} names its time units`);
   }
 });
 
