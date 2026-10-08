@@ -36,21 +36,22 @@
       </div>
       <p class="price"><span class="currency">HK$</span><span id="price-amount">0.00</span></p>
       <div class="hint" id="next-hint" hidden></div>
+
+      <div class="alt" id="alternatives" hidden>
+        <div class="alt-head">
+          <span class="alt-title" id="alt-title">同類行程嘅其他選擇</span>
+          <span class="alt-caption" id="alt-caption"></span>
+        </div>
+        <ul class="compare-list" id="alt-list"></ul>
+        <p class="compare-note" id="compare-note" hidden></p>
+        <button type="button" class="link-btn" id="alt-toggle" aria-expanded="false">睇其他類別</button>
+        <div class="alt-others" id="alt-others" hidden></div>
+      </div>
     </section>
 
     <div class="view-tabs" id="view-tabs" role="tablist">
-      <button type="button" role="tab" data-view="fares" aria-selected="true">收費比較</button>
-      <button type="button" role="tab" data-view="journey" aria-selected="false">行程建議</button>
+      <button type="button" role="tab" data-view="journey" aria-selected="true">行程建議</button>
       <button type="button" role="tab" data-view="schedule" aria-selected="false">時間表</button>
-    </div>
-
-    <div class="view-panel" id="view-fares">
-    <section class="card" id="compare-card">
-      <h2 id="compare-title">隧道收費比較</h2>
-      <div class="compare-picks" id="compare-picks"></div>
-      <ul class="compare-list" id="compare-list"></ul>
-      <p class="compare-note" id="compare-note" hidden></p>
-    </section>
     </div>
 
     <div class="view-panel" id="view-journey" hidden>
