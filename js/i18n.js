@@ -50,6 +50,7 @@ export const UI = {
     planCheapest: '最平',
     compareFree: '免費',
 
+    labelTunnel: '選擇隧道',
     labelVehicle: '車輛類別',
     labelDate: '日期',
     labelCategory: '日期類型',
@@ -120,6 +121,7 @@ export const UI = {
     planCheapest: '最平',
     compareFree: '免费',
 
+    labelTunnel: '选择隧道',
     labelVehicle: '车辆类别',
     labelDate: '日期',
     labelCategory: '日期类型',
@@ -190,6 +192,7 @@ export const UI = {
     planCheapest: 'Cheapest',
     compareFree: 'Free',
 
+    labelTunnel: 'Tunnel',
     labelVehicle: 'Vehicle class',
     labelDate: 'Date',
     labelCategory: 'Day type',
