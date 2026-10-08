@@ -99,6 +99,9 @@ function deriveDayType(dateKey) {
 // While true, the toll card follows the real clock. Any manual time selection
 // (slider or dropdowns) pins it; the back-to-now button releases it.
 let following = true;
+// Set when the user picks their own date. Kept separate from `following` so a
+// pinned date is neither reported as "showing now" nor rolled over by the clock.
+let datePinned = false;
 const currentTunnel = () => TUNNELS.find((x) => x.id === state.tunnelId);
 
 function fillTunnelSelect() {
@@ -219,7 +222,7 @@ function renderTime() {
   $('hour-select').value = String(Math.floor(state.minutes / 60)).padStart(2, '0');
   $('minute-select').value = String(state.minutes % 60).padStart(2, '0');
   $('time-slider').value = String(state.minutes);
-  $('back-to-now').disabled = following;
+  $('back-to-now').disabled = following && !datePinned;
 }
 
 function fillTimeSelects() {
@@ -312,6 +315,7 @@ function init() {
       return;
     }
     state.date = value;
+    datePinned = true;
     const derived = deriveDayType(value);
     state.dayType = derived.dayType;
     state.dataCurrent = derived.dataCurrent;
@@ -326,6 +330,7 @@ function init() {
   $('time-slider').addEventListener('input', (e) => selectTime(Number(e.target.value)));
   $('back-to-now').addEventListener('click', () => {
     following = true;
+    datePinned = false;
     state.minutes = nowMinutes();
     state.date = toDateKey(new Date());
     const derived = deriveDayType(state.date);
@@ -342,7 +347,7 @@ function init() {
     const now = new Date();
     state.minutes = now.getHours() * 60 + now.getMinutes();
     const today = toDateKey(now);
-    if (today !== state.date) {
+    if (!datePinned && today !== state.date) {
       state.date = today;
       const derived = deriveDayType(today);
       state.dayType = derived.dayType;

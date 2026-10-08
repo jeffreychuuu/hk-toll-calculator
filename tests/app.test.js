@@ -387,6 +387,49 @@ test('back-to-now resets the date to today as well as the time', () => {
   assert.equal($('price-amount').textContent, '40.00'); // 16:38 weekday peak
 });
 
+test('picking a date enables back-to-now', () => {
+  $('date-input').value = '2026-10-19';
+  fire('date-input', 'change');
+  assert.equal($('back-to-now').disabled, false, 'back-to-now must be clickable after a date is picked');
+});
+
+test('a picked date survives the clock tick', () => {
+  $('date-input').value = '2026-10-19';
+  fire('date-input', 'change');
+  assert.equal($('date-input').value, '2026-10-19');
+
+  fakeNowMs = new RealDate(2026, 9, 20, 0, 5).getTime(); // past midnight, next day
+  intervalCb();
+
+  assert.equal($('date-input').value, '2026-10-19', 'the tick must not overwrite a picked date');
+  assert.equal($('daytype-label').textContent, '星期日及公眾假期');
+});
+
+test('the clock tick still rolls the date over when no date was picked', () => {
+  fire('back-to-now', 'click'); // clear both pins
+  fakeNowMs = new RealDate(2026, 9, 8, 23, 59).getTime();
+  intervalCb();
+  assert.equal($('date-input').value, '2026-10-08');
+
+  fakeNowMs = new RealDate(2026, 9, 9, 0, 1).getTime();
+  intervalCb();
+  assert.equal($('date-input').value, '2026-10-09');
+  assert.equal($('daytype-label').textContent, '星期一至六（非假期）');
+});
+
+test('back-to-now clears a manually picked date', () => {
+  $('date-input').value = '2027-01-01'; // a public holiday
+  fire('date-input', 'change');
+  assert.equal($('back-to-now').disabled, false);
+
+  fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
+  fire('back-to-now', 'click');
+
+  assert.equal($('date-input').value, '2026-10-08');
+  assert.equal($('daytype-label').textContent, '星期一至六（非假期）');
+  assert.equal($('back-to-now').disabled, true);
+});
+
 test('a stale, string-named data module can never render undefined', async () => {
   const data = await import('../js/data.js');
   const tunnelName = data.TUNNELS[0].name;      // { tc, sc, en }
