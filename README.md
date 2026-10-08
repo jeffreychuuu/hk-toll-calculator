@@ -26,7 +26,7 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
   - A **date** and a **day type** (Mon–Sat non-holiday / Sunday and public holidays): the schedule follows the date, and picking a day type jumps to the next day (counted from today) that has it — or straight back to now when today already does
   - Hour and minute dropdowns for any time of day, a slider, plus a **back-to-now** button
 - **One page** — the comparison and the chart sit together
-- **A reference you can open, not read past** — the toll-period table for every tunnel, the FAQ and the vehicle-class notes sit in collapsible sections at the foot of the page, so the tool stays first while search engines and curious readers still get the detail
+- **A reference you can open, not read past** — the toll-period table for every tunnel, the FAQ and the vehicle-class notes sit folded into the footer behind one line, so the tool stays first while search engines and curious readers still get the detail
 - **An icon of its own** — a tunnel mouth, as an SVG favicon and a 180px touch icon
 - **Remembers your choice** — the last tunnel and vehicle class are restored on the next visit (localStorage)
 - **Three languages** — 繁體中文 / 简体中文 / English, picked automatically from the browser language and remembered once chosen
