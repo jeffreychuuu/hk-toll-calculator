@@ -280,7 +280,7 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal(document.title, 'HK Toll Calculator');
   assert.equal($('lang-current').textContent, 'English');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
-  assert.equal($('alt-title').textContent, 'Options for the same trip');
+  assert.equal($('alt-title').textContent, 'Trip comparison');
   assert.equal($('plan-title').textContent, 'Journey suggestion');
   assert.equal($('tunnel-select').getAttribute('aria-label'), 'Tunnel');
   assert.equal($('vehicle-select').getAttribute('aria-label'), 'Vehicle class');
@@ -426,6 +426,7 @@ test('the result card lists the ways to make the same trip, current tunnel first
   await import('../js/app.js?alt=1');
 
   assert.equal($('alt-card').hidden, false);
+  assert.equal($('alt-title').textContent, '行程比較');
 
   const list = $('alt-list').innerHTML;
   assert.ok(list.includes('東區海底隧道（東隧）'));
