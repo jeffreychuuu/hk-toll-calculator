@@ -50,6 +50,8 @@ hk-toll-calculator/
 │   ├── holidays.js     # HK public holiday dates
 │   ├── engine.js       # pure toll calculation functions
 │   └── app.js          # UI wiring & rendering
+├── tests/              # Node test runner suites
+├── package.json        # test script (type: module)
 └── README.md
 ```
 
@@ -59,6 +61,7 @@ hk-toll-calculator/
 git clone https://github.com/jeffreychuuu/hk-toll-calculator.git
 cd hk-toll-calculator
 open index.html          # or: python3 -m http.server 8000
+npm test                 # run the engine/holiday unit tests
 ```
 
 ## Deploy to Vercel

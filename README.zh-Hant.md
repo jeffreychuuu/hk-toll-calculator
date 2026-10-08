@@ -50,6 +50,8 @@ hk-toll-calculator/
 │   ├── holidays.js     # 香港公眾假期日期
 │   ├── engine.js       # 純收費計算函數
 │   └── app.js          # UI 綁定同渲染
+├── tests/              # Node 測試套件
+├── package.json        # test script（type: module）
 └── README.zh-Hant.md
 ```
 
@@ -59,6 +61,7 @@ hk-toll-calculator/
 git clone https://github.com/jeffreychuuu/hk-toll-calculator.git
 cd hk-toll-calculator
 open index.html          # 或：python3 -m http.server 8000
+npm test                 # 跑 engine／假期單元測試
 ```
 
 ## 部署到 Vercel
