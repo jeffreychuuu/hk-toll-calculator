@@ -414,6 +414,28 @@ const priceTunnelFor = (tunnelId, canonical) => getToll({
   minutes: state.minutes,
 }).amount;
 
+// The moment the page is describing: a live chip only while it is the present,
+// and a label on the chart marker that names it — or the chosen time when not.
+function renderMoment() {
+  const copy = t();
+  const now = isShowingNow();
+
+  const chip = $('now-chip');
+  chip.hidden = !now;
+  chip.innerHTML = `<span class="now-dot" aria-hidden="true"></span>${esc(copy.nowLabel)}`;
+
+  const label = $('marker-label');
+  const position = (state.minutes / 1440) * 100;
+  const hh = String(Math.floor(state.minutes / 60)).padStart(2, '0');
+  const mm = String(state.minutes % 60).padStart(2, '0');
+  label.textContent = now ? copy.nowLabel : `${hh}:${mm}`;
+  label.className = `marker-label${now ? ' now' : ''}`;
+  label.style.left = `${position}%`;
+  // keep the label inside the card at the ends of the day
+  label.style.transform = position < 8 ? 'translateX(0)'
+    : (position > 92 ? 'translateX(-100%)' : 'translateX(-50%)');
+}
+
 function renderChart() {
   const copy = t();
   const segs = getDaySegments(state);
@@ -446,6 +468,7 @@ function renderToll() {
   renderResult();
   renderAlternatives();
   renderChart();
+  renderMoment();
 }
 
 function render() {

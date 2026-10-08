@@ -60,6 +60,7 @@ export const UI = {
     timeMinute: '分鐘',
     timeSlider: '時間滑桿',
     backToNow: '回到現在',
+    nowLabel: '現在',
     notice: '公眾假期資料只涵蓋 2025–2027 年，請手動確認日期類型。',
     period: {
       'non-peak': '非繁忙時段',
@@ -130,6 +131,7 @@ export const UI = {
     timeMinute: '分钟',
     timeSlider: '时间滑块',
     backToNow: '回到现在',
+    nowLabel: '现在',
     notice: '公众假期资料只涵盖 2025–2027 年，请手动确认日期类型。',
     period: {
       'non-peak': '非繁忙时段',
@@ -200,6 +202,7 @@ export const UI = {
     timeMinute: 'Minute',
     timeSlider: 'Time slider',
     backToNow: 'Back to now',
+    nowLabel: 'Now',
     notice: 'Public holiday data covers 2025–2027 only — please set the day type manually.',
     period: {
       'non-peak': 'Non-peak',

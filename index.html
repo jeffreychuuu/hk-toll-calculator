@@ -48,6 +48,7 @@
       <div class="chart-head">
         <h2 id="chart-title">24小時收費時段分佈圖</h2>
         <div class="chart-controls">
+          <span class="now-chip" id="now-chip" hidden></span>
           <input id="date-input" class="date-input" type="date" aria-label="日期">
           <select id="daytype-select" class="inline-select" aria-label="日期類型"></select>
           <span class="time-selects">
@@ -59,6 +60,7 @@
         </div>
       </div>
       <div class="chart" id="chart">
+        <span class="marker-label" id="marker-label"></span>
         <div class="chart-bar" id="chart-bar"></div>
         <div class="chart-marker" id="chart-marker"></div>
         <input id="time-slider" type="range" min="0" max="1439" step="1" value="0" aria-label="通行時間">

@@ -74,7 +74,7 @@ for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amou
   'now-date', 'now-time', 'chart-bar', 'chart-marker', 'legend', 'tunnel-select', 'vehicle-select',
   'date-input', 'daytype-select', 'live-traffic',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
-  'chart-title', 'lang-picker',
+  'chart-title', 'now-chip', 'marker-label', 'lang-picker',
   'compare-note',
   'alt-card', 'alt-title', 'alt-list', 'alt-categories',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
@@ -381,6 +381,26 @@ test('a run of public holidays is skipped whole', () => {
   $('daytype-select').value = 'weekday';
   fire('daytype-select', 'change');
   assert.equal($('date-input').value, '2026-02-20', 'past the three New Year days');
+});
+
+test('the page says out loud when it is describing the present', () => {
+  fakeNowMs = new RealDate(2026, 9, 8, 12, 0).getTime(); // Thursday noon
+  fire('back-to-now', 'click');
+
+  const words = ['現在', '现在', 'Now'];
+  assert.equal($('now-chip').hidden, false, 'the chip shows at now');
+  assert.ok($('now-chip').innerHTML.includes('now-dot'), 'with a live dot');
+  assert.ok(words.some((word) => $('now-chip').innerHTML.includes(word)), 'and a word for it');
+  assert.equal($('marker-label').className, 'marker-label now', 'the marker reads as now too');
+
+  setTime('09', '30');
+  assert.equal($('now-chip').hidden, true, 'a chosen time hides the chip');
+  assert.equal($('marker-label').textContent, '09:30', 'and the marker names that time');
+  assert.equal($('marker-label').className, 'marker-label', 'no longer dressed as now');
+
+  fire('back-to-now', 'click');
+  assert.equal($('now-chip').hidden, false, 'back to now brings the chip back');
+  assert.equal($('marker-label').className, 'marker-label now');
 });
 
 test('back-to-now returns to today', () => {
