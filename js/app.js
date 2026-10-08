@@ -74,6 +74,7 @@ const CATEGORY_LABEL = {
   island: 'cmpCatIsland',
   kowloon: 'cmpCatKowloon',
   'ntw-airport': 'cmpCatAirport',
+  other: 'cmpCatOther',
 };
 
 
@@ -155,24 +156,6 @@ async function loadTraffic() {
   }
 }
 
-function fillTunnelSelect() {
-  const copy = t();
-  const groups = compareGroups();
-  const mapped = new Set(groups.flatMap((group) => group.tunnels));
-  const orphans = TUNNELS.filter((tunnel) => !mapped.has(tunnel.id));
-  const option = (tunnel) => `<option value="${tunnel.id}">${esc(nameOf(tunnel))}</option>`;
-
-  $('tunnel-select').innerHTML = groups
-    .filter((group) => group.tunnels.length) // a corridor of free roads only has nothing to pick here
-    .map((group) => `<optgroup label="${esc(copy[CATEGORY_LABEL[group.id]])}">`
-      + group.tunnels.map((id) => option(tunnelById(id))).join('') + '</optgroup>')
-    .join('')
-    + (orphans.length
-      ? `<optgroup label="${esc(copy.groupOther)}">${orphans.map(option).join('')}</optgroup>`
-      : '');
-  $('tunnel-select').value = state.tunnelId;
-}
-
 function fillDayTypeSelect() {
   const copy = t();
   $('daytype-select').innerHTML = `<option value="weekday">${esc(copy.dayWeekday)}</option>`
@@ -231,7 +214,6 @@ function applyLanguage() {
   document.title = copy.pageTitle;
   $('chart-title').textContent = copy.chartTitle;
   $('alt-title').textContent = copy.compareTitle;
-  $('tunnel-select').setAttribute('aria-label', copy.labelTunnel);
   $('vehicle-select').setAttribute('aria-label', copy.labelVehicle);
   $('date-input').setAttribute('aria-label', copy.labelDate);
   $('daytype-select').setAttribute('aria-label', copy.labelCategory);
@@ -511,10 +493,11 @@ function renderToll() {
 
 function render() {
   fillVehicleSelect();
-  fillTunnelSelect();
   fillDayTypeSelect();
   renderDateType();
   renderTime();
+  // The name is a label now: the tunnel is chosen from the comparison list.
+  $('result-name').textContent = nameOf(tunnelById(state.tunnelId));
   renderToll();
 }
 
@@ -573,12 +556,6 @@ function init() {
     $('lang-trigger').focus();
   });
 
-  $('tunnel-select').addEventListener('change', (e) => {
-    state.tunnelId = e.target.value;
-    altCategory = null; // re-anchor the alternatives on the new corridor
-    saveSelection();
-    render();
-  });
   $('alt-categories').addEventListener('click', (e) => {
     const chip = e.target.closest('button[data-group]');
     if (!chip || chip.dataset.group === altCategory) return;
@@ -590,7 +567,6 @@ function init() {
     if (!btn) return;
     state.tunnelId = btn.dataset.tunnelId;
     altCategory = null;
-    fillTunnelSelect();
     fillVehicleSelect();
     saveSelection();
     render();
