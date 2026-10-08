@@ -98,7 +98,10 @@ export const TVT_VEHICLES = [
   },
 ];
 
-export const FLAT8_VEHICLES = [{ id: 'all', name: { tc: '所有車輛', sc: '所有车辆', en: 'All vehicles' } }];
+// The flat-rate tunnels charge every class the same, but the class still
+// matters: it decides what the other tunnels in a comparison cost for this
+// trip, so the four classes are named rather than hidden behind "all vehicles".
+export const FLAT8_VEHICLES = TVT_VEHICLES;
 
 export const TCT_VEHICLES = [
   { id: 'mc', name: { tc: '電單車、機動三輪車', sc: '电单车、机动三轮车', en: 'Motorcycle, motor tricycle' } },
@@ -149,6 +152,9 @@ export const CANONICAL_FOR_TUNNEL = {
 export const classIdFor = (tunnelId, canonical) => CANONICAL_FOR_TUNNEL[tunnelId]?.[canonical];
 
 export function canonicalFor(tunnelId, classId) {
+  // A class that is already canonical is its own answer (a car on a flat-rate
+  // tunnel is a car, even though that tunnel calls it "all").
+  if (Object.prototype.hasOwnProperty.call(CANONICAL, classId)) return classId;
   const map = CANONICAL_FOR_TUNNEL[tunnelId];
   if (!map) return 'car';
   const hit = Object.entries(map).find(([, id]) => id === classId);
