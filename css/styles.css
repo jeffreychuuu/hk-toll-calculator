@@ -115,6 +115,18 @@ body {
   .lang-trigger { transition: none; }
 }
 
+/* The chosen tunnel, named at the top of the page */
+.result-name {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.live-traffic { margin: 8px 0 0; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.live-traffic:empty { display: none; }
+
 /* The tunnel is chosen where the vehicles and prices are compared */
 .inline-select {
   appearance: none;
@@ -184,15 +196,12 @@ body {
   .now-dot { animation: none; }
 }
 
-/* The bands are the timeline: an invisible range sits on top of them */
-.chart { position: relative; margin: 22px 0 0; }
+/* The bar is the slider: an invisible range sits on top of it */
+.chart { position: relative; height: 34px; margin: 22px 0 0; }
 #time-slider {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: calc(var(--band-label) + var(--band-gap));
-  right: 0;
-  width: auto;
+  inset: 0;
+  width: 100%;
   height: 100%;
   margin: 0;
   opacity: 0;
@@ -294,9 +303,6 @@ div.compare-row { cursor: default; }
 .chart-head h2 { flex: 1 1 auto; font-size: 1rem; margin: 0; }
 .chart-controls { flex: 1 1 100%; }
 
-/* Every band is one tunnel's day, sharing the same clock */
-#chart-card { --band-label: 4.25rem; --band-gap: 6px; }
-
 .marker-label {
   position: absolute;
   bottom: calc(100% + 4px);
@@ -309,27 +315,8 @@ div.compare-row { cursor: default; }
 }
 .marker-label.now { color: #157a4d; }
 
-.chart-bands { display: flex; flex-direction: column; gap: 3px; }
-.band-row { display: flex; align-items: center; gap: var(--band-gap); }
-.band-name {
-  flex: 0 0 auto;
-  width: var(--band-label);
-  font-size: 0.72rem;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.band-track {
-  flex: 1 1 auto;
-  display: flex;
-  height: 16px;
-  border-radius: 5px;
-  overflow: hidden;
-  background: var(--form);
-}
-.band-track .seg { height: 100%; }
-.band-row.active .band-track { outline: 2px solid var(--focus); outline-offset: 1px; }
+.chart-bar { display: flex; height: 100%; border-radius: 8px; overflow: hidden; }
+.chart-bar .seg { height: 100%; }
 .seg.non-peak { background: var(--green); }
 .seg.normal { background: var(--blue); }
 .seg.peak { background: var(--red); }
@@ -359,7 +346,6 @@ div.compare-row { cursor: default; }
   display: flex;
   justify-content: space-between;
   margin-top: 10px;
-  padding-left: calc(var(--band-label) + var(--band-gap));
   color: var(--muted);
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
@@ -447,29 +433,23 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .site-footer { color: var(--muted); font-size: 0.78rem; line-height: 1.65; padding: 0 4px; }
 .site-footer a { color: var(--focus); }
 
-/* Wide screens: the comparison on the left, the chart on the right */
+/* Wide screens: the chosen tunnel on top, comparison left, chart right */
 @media (min-width: 900px) {
   .wrap {
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
     grid-template-areas:
-      "topbar topbar"
-      "alt    chart"
-      "footer footer";
+      "topbar  topbar"
+      "current current"
+      "alt     chart"
+      "footer  footer";
     align-items: start;
     gap: 14px;
     padding-top: 14px;
   }
   .topbar { grid-area: topbar; }
+  #current-card { grid-area: current; }
   #alt-card { grid-area: alt; }
   #chart-card { grid-area: chart; }
   .site-footer { grid-area: footer; }
-  /* With no chart to show there is no second column: let the cards fill */
-  .wrap.no-chart {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "topbar"
-      "alt"
-      "footer";
-  }
 }

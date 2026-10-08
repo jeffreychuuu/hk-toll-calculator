@@ -72,8 +72,6 @@ const CATEGORY_LABEL = {
   'kln-ntw': 'cmpCatKlnNtw',
   'nte-ntw': 'cmpCatNteNtw',
   island: 'cmpCatIsland',
-  kowloon: 'cmpCatKowloon',
-  'ntw-airport': 'cmpCatAirport',
   other: 'cmpCatOther',
 };
 
@@ -228,6 +226,10 @@ function applyLanguage() {
 function renderResult() {
   const copy = t();
   const { amount, periodType } = getToll(state);
+  $('result-name').textContent = nameOf(tunnelById(state.tunnelId));
+  $('live-traffic').innerHTML = traffic && !isShowingNow()
+    ? `<span class="traffic-hint">${esc(copy.trafficOnlyNow)}</span>`
+    : trafficChip('tunnel', state.tunnelId);
   const badge = $('period-badge');
   badge.textContent = copy.period[periodType];
   badge.className = `badge ${periodType}`;
@@ -273,9 +275,8 @@ function alternativeRows(group, canonical) {
   const rows = options.map((option) => {
     const free = option.kind === 'road';
     const cheapestHere = !free && option.amount === cheapest;
-    const tags = [];
-    if (option.kind === 'tunnel' && option.id === state.tunnelId) tags.push(copy.compareCurrent);
-    if (cheapestHere) tags.push(copy.planCheapest);
+    const current = option.kind === 'tunnel' && option.id === state.tunnelId;
+    const tags = cheapestHere ? [copy.planCheapest] : [];
     const price = free ? esc(copy.compareFree) : `HK$ ${option.amount.toFixed(2)}`;
     const content = `<span class="compare-name">${esc(option.name)}</span>`
       + trafficChip(option.kind, option.id)
@@ -285,7 +286,7 @@ function alternativeRows(group, canonical) {
     // Roads are places, not choices: only tunnels switch the selector.
     return option.kind === 'tunnel'
       ? `<li><button type="button" class="${cls}"`
-        + ` data-tunnel-id="${option.id}"${cheapestHere ? ' aria-current="true"' : ''}>${content}</button></li>`
+        + ` data-tunnel-id="${option.id}"${current ? ' aria-current="true"' : ''}>${content}</button></li>`
       : `<li><div class="${cls}">${content}</div></li>`;
   }).join('');
 
@@ -309,7 +310,6 @@ const DIRECTION_LABEL = {
   'kowloon-w': 'dirKowloonW',
   tsuenwan: 'dirTsuenWan',
   shatin: 'dirShatin',
-  airport: 'dirAirport',
   wanchai: 'dirWanChai',
   tingkau: 'dirTingKau',
 };
@@ -445,69 +445,29 @@ function renderMoment() {
       + 'stroke-linecap="round" stroke-linejoin="round"/></svg>'
       + esc(copy.backToNow);
 
-  // The timeline starts after the band names, so the marker and its label both
-  // measure from there.
-  const frac = state.minutes / 1440;
-  const track = 'var(--band-label) + var(--band-gap)';
-  const at = `calc((${track}) + (100% - (${track})) * ${frac})`;
-  $('chart-marker').style.left = at;
+  const position = (state.minutes / 1440) * 100;
+  $('chart-marker').style.left = `${position}%`;
 
   const label = $('marker-label');
   const hh = String(Math.floor(state.minutes / 60)).padStart(2, '0');
   const mm = String(state.minutes % 60).padStart(2, '0');
   label.textContent = now ? copy.nowLabel : `${hh}:${mm}`;
   label.className = `marker-label${now ? ' now' : ''}`;
-  label.style.left = at;
+  label.style.left = `${position}%`;
   // keep the label inside the card at the ends of the day
-  const pct = frac * 100;
-  label.style.transform = pct < 8 ? 'translateX(0)'
-    : (pct > 92 ? 'translateX(-100%)' : 'translateX(-50%)');
+  label.style.transform = position < 8 ? 'translateX(0)'
+    : (position > 92 ? 'translateX(-100%)' : 'translateX(-50%)');
 }
 
 function renderChart() {
   const copy = t();
-  const groups = compareGroups();
-  const tunnelCategory = categoryForTunnel(state.tunnelId);
-  const activeId = groups.some((group) => group.id === altCategory) ? altCategory : tunnelCategory;
-  const group = groups.find((entry) => entry.id === activeId);
-  const canonical = canonicalFor(state.tunnelId, state.vehicleId);
-
-  // One band per tunnel in this corridor that varies with the clock. A corridor
-  // with none — every tunnel flat, or free roads only — has nothing to chart,
-  // so the whole card steps aside and the layout drops the empty column.
-  const bands = (group ? group.tunnels : [])
-    .map((id) => ({
-      id,
-      segs: getDaySegments({
-        tunnelId: id,
-        vehicleId: classForTunnel(id, canonical),
-        dayType: state.dayType,
-      }),
-    }))
-    .filter((band) => band.segs.some((seg) => seg.periodType !== 'flat'));
-
-  $('chart-card').hidden = bands.length === 0;
-  $('wrap').className = `wrap${bands.length ? '' : ' no-chart'}`;
-  if (!bands.length) {
-    $('chart-bands').innerHTML = '';
-    $('legend').innerHTML = '';
-    return;
-  }
-
-  $('chart-bands').innerHTML = bands.map((band) => {
-    const segs = band.segs.map((seg) => {
-      const width = ((seg.endMin - seg.startMin + 1) / 1440) * 100;
-      return `<span class="seg ${seg.periodType}" style="width:${width.toFixed(4)}%"></span>`;
-    }).join('');
-    const active = band.id === state.tunnelId ? ' active' : '';
-    return `<div class="band-row${active}">`
-      + `<span class="band-name">${esc(nameOf(tunnelById(band.id)))}</span>`
-      + `<span class="band-track">${segs}</span>`
-      + '</div>';
+  const segs = getDaySegments(state);
+  $('chart-bar').innerHTML = segs.map((seg) => {
+    const width = ((seg.endMin - seg.startMin + 1) / 1440) * 100;
+    return `<span class="seg ${seg.periodType}" style="width:${width.toFixed(4)}%"></span>`;
   }).join('');
 
-  const present = LEGEND_ORDER.filter((p) =>
-    bands.some((band) => band.segs.some((seg) => seg.periodType === p)));
+  const present = LEGEND_ORDER.filter((p) => segs.some((s) => s.periodType === p));
   $('legend').innerHTML = present
     .map((p) => `<li><span class="dot ${p}"></span>${esc(copy.periodShort[p])}</li>`)
     .join('');
