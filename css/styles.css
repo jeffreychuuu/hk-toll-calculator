@@ -430,23 +430,21 @@ select:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible
 .site-footer { color: var(--muted); font-size: 0.78rem; line-height: 1.65; padding: 0 4px; }
 .site-footer a { color: var(--focus); }
 
-/* The static introduction, FAQ and toll tables — real text for search engines,
-   folded away so the tool itself stays the first thing you see */
-.about { color: var(--muted); font-size: 0.9rem; }
-.about details { border-top: 1px solid var(--line); }
-.about details:first-of-type { border-top: 0; }
-.about summary { padding: 11px 0; color: var(--ink); font-weight: 700; cursor: pointer; }
-.about summary::marker { color: var(--muted); }
-.about details[open] > summary { color: var(--focus); }
-.about p { margin: 0 0 10px; line-height: 1.7; }
-.faq { margin: 0 0 12px; }
-.faq dt { margin-top: 12px; color: var(--ink); font-weight: 700; }
-.faq dd { margin: 4px 0 0; line-height: 1.7; }
-.about h4 { margin: 12px 0 4px; font-size: 0.9rem; color: var(--ink); }
-.about table { width: 100%; border-collapse: collapse; margin: 4px 0 12px; font-size: 0.85rem; }
-.about th, .about td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; }
-.about th { color: var(--muted); font-weight: 600; }
-.about th:last-child, .about td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+/* The reference copy at the foot of the page — fine print, not a section */
+.site-more { color: var(--muted); font-size: 0.78rem; line-height: 1.7; padding: 0 4px; }
+.site-more summary { cursor: pointer; }
+.site-more details[open] > summary { color: var(--focus); }
+.site-more h3 { margin: 14px 0 4px; font-size: 0.84rem; color: var(--ink); }
+.site-more h4 { margin: 10px 0 2px; font-size: 0.8rem; color: var(--ink); }
+.site-more p { margin: 0 0 8px; }
+.site-more .tbl-day { margin: 6px 0 2px; font-weight: 600; color: var(--ink); }
+.faq { margin: 0; }
+.faq dt { margin-top: 10px; color: var(--ink); font-weight: 600; }
+.faq dd { margin: 3px 0 0; }
+.site-more table { width: 100%; border-collapse: collapse; margin: 3px 0 10px; font-size: 0.76rem; }
+.site-more th, .site-more td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+.site-more th { color: var(--muted); font-weight: 600; }
+.site-more th:last-child, .site-more td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Wide screens: the comparison left, the chart right */
 @media (min-width: 900px) {

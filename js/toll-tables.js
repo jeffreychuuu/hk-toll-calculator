@@ -1,15 +1,14 @@
 // js/toll-tables.js
-// The toll tables shown in the collapsed "收費時段表" blocks at the foot of the
-// page. They are rendered into index.html as static text (so search engines read
-// them without running any script) and this same function is what a test uses to
-// keep that copy honest — change the rates and the test fails until the page is
+// The toll tables shown in the folded "更多資料" block at the foot of the page.
+// They are rendered into index.html as static text (so search engines read them
+// without running any script) and this same function is what a test uses to keep
+// that copy honest — change the rates and the test fails until the page is
 // regenerated:
 //
 //   node scripts/print-toll-tables.mjs
 //
-import { TUNNELS } from './data.js';
+import { TUNNELS, classIdFor } from './data.js';
 import { getDaySegments, getToll } from './engine.js';
-import { classIdFor } from './data.js';
 
 const PERIOD = {
   'non-peak': '非繁忙時段',
@@ -44,8 +43,7 @@ const rows = (segments) => segments
     + `<td>${range(seg)}</td></tr>`)
   .join('\n');
 
-const table = (segments, day) => `      <h4>${DAY[day]}</h4>
-      <table>
+const table = (segments) => `      <table>
         <thead><tr><th>時段</th><th>時間</th><th>私家車</th></tr></thead>
         <tbody>
 ${rows(segments)}
@@ -53,13 +51,11 @@ ${rows(segments)}
       </table>`;
 
 const tvtBlock = (id) => {
-  const tables = ['weekday', 'weekend']
-    .map((day) => table(getDaySegments({ tunnelId: id, vehicleId: 'car', dayType: day }), day))
+  const days = ['weekday', 'weekend']
+    .map((day) => `      <p class="tbl-day">${DAY[day]}</p>\n`
+      + table(getDaySegments({ tunnelId: id, vehicleId: 'car', dayType: day })))
     .join('\n');
-  return `    <details class="tolls">
-      <summary>${TITLE[id]}收費時段表</summary>
-${tables}
-    </details>`;
+  return `      <h4>${TITLE[id]}</h4>\n${days}`;
 };
 
 const flatBlock = () => {
@@ -75,15 +71,13 @@ const flatBlock = () => {
       return `        <tr><td>${tunnel.name.tc}</td><td>${money(amount)}</td></tr>`;
     })
     .join('\n');
-  return `    <details class="tolls">
-      <summary>劃一收費隧道（全日同價）</summary>
+  return `      <h4>劃一收費隧道（全日同價）</h4>
       <table>
         <thead><tr><th>隧道</th><th>私家車</th></tr></thead>
         <tbody>
 ${lines}
         </tbody>
-      </table>
-    </details>`;
+      </table>`;
 };
 
 // The whole set, in the order it appears in index.html.
