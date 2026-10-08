@@ -585,6 +585,43 @@ test('the route totals follow the chosen vehicle', () => {
   assert.ok($('plan-result').innerHTML.includes('HK$ 20.00'), 'motorcycle: Lion Rock $8 + red tunnel $12');
 });
 
+test('live conditions from the transport department sit beside the tunnels', async () => {
+  storage.set(STORAGE_KEY, JSON.stringify({ tunnelId: 'cht', vehicleId: 'car' }));
+  globalThis.location = { protocol: 'https:' };
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({
+      updatedAt: '2026-10-08T22:57:00',
+      tunnels: {
+        cht: { state: 'jam', minutes: 18, reports: 3 },
+        ehc: { state: 'free', minutes: 9, reports: 2 },
+      },
+      incidents: [{
+        id: '147614',
+        at: '2026-10-08T22:01:00',
+        textCn: '東區海底隧道(往柴灣方向)部分行車線封閉',
+        textEn: 'Part of the Eastern Harbour Crossing (Chai Wan bound) is closed',
+        tunnels: ['ehc'],
+      }],
+    }),
+  });
+
+  await import('../js/app.js?traffic=1');
+  await new Promise((resolve) => setImmediate(resolve));
+
+  const list = $('alt-list').innerHTML;
+  assert.ok(list.includes('擠塞'), 'the congested reading shows');
+  assert.ok(list.includes('18 分鐘'), 'with its journey time');
+  assert.ok(list.includes('暢通'), 'and the free-flowing one');
+  assert.ok(list.includes('交通消息'), 'the incident block appears');
+  assert.ok(list.includes('東區海底隧道(往柴灣方向)部分行車線封閉'));
+  assert.ok(list.includes('更新於 22:57'), 'and the source is dated');
+  assert.ok($('alt-categories').innerHTML.includes('⚠️'), 'the affected corridor is flagged');
+
+  delete globalThis.location;
+  delete globalThis.fetch;
+});
+
 test('a stale, string-named data module can never render undefined', async () => {
   const data = await import('../js/data.js');
   const tunnelName = data.TUNNELS[0].name;      // { tc, sc, en }

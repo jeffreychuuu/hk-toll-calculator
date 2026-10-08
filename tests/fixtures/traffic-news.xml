@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://www.td.gov.hk/en/special_news/trafficnews.xsd">
+  <message>
+    <INCIDENT_NUMBER>IN-26-07377</INCIDENT_NUMBER>
+    <INCIDENT_HEADING_EN>Road Incident</INCIDENT_HEADING_EN>
+    <INCIDENT_HEADING_CN>道路事故</INCIDENT_HEADING_CN>
+    <INCIDENT_DETAIL_EN>Watermain emergency works</INCIDENT_DETAIL_EN>
+    <INCIDENT_DETAIL_CN>水管緊急維修 </INCIDENT_DETAIL_CN>
+    <LOCATION_EN>Island Eastern Corridor</LOCATION_EN>
+    <LOCATION_CN>東區走廊</LOCATION_CN>
+    <DISTRICT_EN/>
+    <DISTRICT_CN/>
+    <DIRECTION_EN>Chai Wan</DIRECTION_EN>
+    <DIRECTION_CN>柴灣</DIRECTION_CN>
+    <ANNOUNCEMENT_DATE>2026-10-08T22:01:00</ANNOUNCEMENT_DATE>
+    <INCIDENT_STATUS_EN>UPDATED</INCIDENT_STATUS_EN>
+    <INCIDENT_STATUS_CN>更新情況</INCIDENT_STATUS_CN>
+    <NEAR_LANDMARK_EN>Quarry Bay Park</NEAR_LANDMARK_EN>
+    <NEAR_LANDMARK_CN>鰂魚涌公園</NEAR_LANDMARK_CN>
+    <BETWEEN_LANDMARK_EN/>
+    <BETWEEN_LANDMARK_CN/>
+    <ID>147614</ID>
+    <CONTENT_EN>Due to watermain emergency works , the fast lane of Island Eastern Corridor (Chai Wan bound) near Quarry Bay Park is closed to all traffic. Only remaining lanes are available to motorists. </CONTENT_EN>
+    <CONTENT_CN>因水管緊急維修，東區走廊(往柴灣方向)近鰂魚涌公園的快線現已封閉。 駕駛人士只可使用餘下行車線行車。</CONTENT_CN>
+    <LATITUDE/>
+    <LONGITUDE/>
+  </message>
+</list>

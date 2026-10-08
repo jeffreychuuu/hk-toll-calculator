@@ -42,7 +42,8 @@
 ## 技術棧
 
 - HTML5 / CSS3 / vanilla JavaScript（ES modules）
-- 冇框架、冇 bundler、冇依賴
+- 冇框架、冇 bundler、冇 runtime 依賴
+- 一個 Vercel serverless function 用嚟抓交通 feed —— 網站本身仍然係靜態
 - 數據內嵌為靜態 JS module（冇 fetch、冇 build step）
 
 ## 專案結構
@@ -56,6 +57,7 @@ hk-toll-calculator/
 │   ├── data.js         # 收費表 + 車輛類別
 │   ├── holidays.js     # 香港公眾假期日期
 │   ├── i18n.js         # 三語文案 + 瀏覽器語言偵測
+│   ├── traffic.js      # 運輸署行車時間／交通消息解析
 │   ├── engine.js       # 純收費計算函數
 │   └── app.js          # UI 綁定同渲染
 ├── tests/              # Node 測試套件
@@ -72,6 +74,7 @@ hk-toll-calculator/
 git clone https://github.com/jeffreychuuu/hk-toll-calculator.git
 cd hk-toll-calculator
 python3 -m http.server 8000   # 然後開 http://localhost:8000
+# 實時路況需要 function：npx vercel dev
 npm test                      # 跑 engine、收費表同 UI 單元測試
 ```
 

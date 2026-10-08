@@ -268,6 +268,17 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 .compare-row.cheapest .compare-tag { color: #157a4d; }
 div.compare-row { cursor: default; }
 div.compare-row:hover { background: transparent; }
+/* Live conditions from the Transport Department */
+.traffic { font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+.traffic-free { color: #157a4d; }
+.traffic-slow { color: #a2650f; }
+.traffic-jam { color: #b91c1c; }
+.traffic-closed { color: #6b7280; }
+.incidents { margin-top: 10px; background: #fdf6e8; border-radius: 12px; padding: 10px 12px; }
+.incidents-title { margin: 0 0 4px; font-size: 0.85rem; font-weight: 700; color: #a2650f; }
+.incident { margin: 0; font-size: 0.85rem; line-height: 1.55; }
+.incident-time { color: var(--muted); }
+.traffic-source { margin: 8px 0 0; color: var(--muted); font-size: 0.75rem; }
 .compare-note { margin: 8px 0 0; color: var(--muted); font-size: 0.88rem; font-weight: 600; }
 
 /* Chart card */
