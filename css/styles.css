@@ -222,6 +222,8 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 .plan-route-name { flex: 1 1 auto; min-width: 0; }
 .plan-route.cheapest .plan-route-name { color: #157a4d; font-weight: 700; }
 .plan-route-price { font-variant-numeric: tabular-nums; font-weight: 600; }
+.plan-route-time { color: var(--muted); font-size: 0.78rem; }
+.journey-fastest { margin: 0 0 8px; color: #157a4d; font-size: 0.85rem; font-weight: 700; }
 .plan-route-tag { color: var(--muted); font-size: 0.78rem; }
 .plan-route.cheapest .plan-route-tag { color: #157a4d; font-weight: 700; }
 .plan-sep { color: var(--muted); margin: 0 2px; }
