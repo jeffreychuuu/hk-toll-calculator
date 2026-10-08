@@ -32,9 +32,8 @@
           <select id="tunnel-select" class="title-select" aria-label="選擇隧道"></select>
           <p class="subtitle">
             <select id="vehicle-select" class="inline-select" aria-label="車輛類別"></select>
-            <span class="sep">·</span>
-            <select id="daytype-select" class="inline-select" aria-label="日期類型"></select>
           </p>
+          <p class="live-traffic" id="live-traffic"></p>
         </div>
         <span class="badge" id="period-badge">—</span>
       </div>
@@ -49,16 +48,18 @@
       <div class="chart-head">
         <h2 id="chart-title">24小時收費時段分佈圖</h2>
         <div class="chart-controls">
+          <button type="button" class="now-pill" id="back-to-now">回到現在</button>
           <input id="date-input" class="date-input" type="date" aria-label="日期">
+          <select id="daytype-select" class="inline-select" aria-label="日期類型"></select>
           <span class="time-selects">
-            <select id="hour-select" aria-label="小時"></select>
+            <select id="hour-select" class="inline-select" aria-label="小時"></select>
             <span class="time-colon">:</span>
-            <select id="minute-select" aria-label="分鐘"></select>
+            <select id="minute-select" class="inline-select" aria-label="分鐘"></select>
           </span>
-          <button type="button" class="link-btn" id="back-to-now">回到現在</button>
         </div>
       </div>
       <div class="chart" id="chart">
+        <span class="marker-label" id="marker-label"></span>
         <div class="chart-bar" id="chart-bar"></div>
         <div class="chart-marker" id="chart-marker"></div>
         <input id="time-slider" type="range" min="0" max="1439" step="1" value="0" aria-label="通行時間">
@@ -74,21 +75,6 @@
       <div class="pick-chips" id="alt-categories"></div>
       <ul class="alt-list" id="alt-list"></ul>
       <p class="compare-note" id="compare-note" hidden></p>
-    </section>
-
-    <section class="card" id="plan-card">
-      <h2 id="plan-title">行程建議</h2>
-      <div class="field-row">
-        <label class="field">
-          <span class="field-label" id="label-from">起點</span>
-          <select id="from-select"></select>
-        </label>
-        <label class="field">
-          <span class="field-label" id="label-to">終點</span>
-          <select id="to-select"></select>
-        </label>
-      </div>
-      <div class="plan-result" id="plan-result"></div>
     </section>
 
     <footer class="site-footer" id="site-footer"></footer>

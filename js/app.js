@@ -3,7 +3,8 @@ import { TUNNELS, vehiclesFor, CROSS_HARBOUR_IDS, canonicalFor, classIdFor } fro
 import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison } from './engine.js';
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
-import { REGIONS, regionById, planRoutes, compareGroups, categoryForTunnel } from './regions.js';
+import { compareGroups, categoryForTunnel } from './regions.js';
+import { incidentsForTunnels } from './traffic.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
 const FOOTER_LINKS = ['tvt', 'flat', 'taiLam'];
@@ -97,8 +98,6 @@ function saveLang() {
 const initialDayType = defaultDayType();
 const state = {
   lang: 'tc',
-  fromId: '',              // journey suggestion — deliberately not persisted
-  toId: '',
   date: toDateKey(new Date()),
   category: 'weekday',
   tunnelId: 'cht',
@@ -117,14 +116,43 @@ function deriveDayType(dateKey) {
   return { dayType: weekend ? 'weekend' : 'weekday', dataCurrent: inHolidayRange(date) };
 }
 
+// The next date on or after `fromKey` whose schedule is `dayType`. Picking a
+// schedule jumps the date here, so the date always explains the schedule.
+function nextDateOfType(dayType, fromKey) {
+  const [y, m, d] = fromKey.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  for (let i = 0; i < 8; i += 1) {
+    const key = toDateKey(date);
+    if (deriveDayType(key).dayType === dayType) return key;
+    date.setDate(date.getDate() + 1);
+  }
+  return fromKey;
+}
+
 // While true, the toll card follows the real clock. Any manual time selection
 // (slider or dropdowns) pins it; the back-to-now button releases it.
 let following = true;
 // Set when the user picks their own date. Kept separate from `following` so a
 // pinned date is neither reported as "showing now" nor rolled over by the clock.
 let datePinned = false;
-let dayTypePinned = false; // set when the visitor overrides the day type by hand
 let altCategory = null;   // which corridor the alternatives list is showing
+
+// Live road conditions from the Transpart Department, by way of our own
+// serverless proxy. Absent until it loads, and silently absent if it cannot:
+// the prices must never depend on it.
+const TRAFFIC_ENDPOINT = '/api/traffic';
+let traffic = null;
+
+async function loadTraffic() {
+  try {
+    const response = await fetch(TRAFFIC_ENDPOINT);
+    if (!response.ok) return;
+    traffic = await response.json();
+    renderToll(); // the readings show on the headline card and in the rows
+  } catch {
+    // no live data is a normal state, not an error worth showing
+  }
+}
 
 function fillTunnelSelect() {
   const copy = t();
@@ -161,7 +189,7 @@ function fillVehicleSelect() {
 
 function renderDateType() {
   const derived = deriveDayType(state.date);
-  if (!dayTypePinned) state.dayType = derived.dayType;
+  state.dayType = derived.dayType;
   state.dataCurrent = derived.dataCurrent;
 
   $('date-input').value = state.date;
@@ -201,16 +229,10 @@ function applyLanguage() {
   document.title = copy.pageTitle;
   $('chart-title').textContent = copy.chartTitle;
   $('alt-title').textContent = copy.compareTitle;
-  $('plan-title').textContent = copy.planTitle;
-  $('label-from').textContent = copy.planFrom;
-  $('label-to').textContent = copy.planTo;
-  fillPlanSelects();
-  renderPlan();
   $('tunnel-select').setAttribute('aria-label', copy.labelTunnel);
   $('vehicle-select').setAttribute('aria-label', copy.labelVehicle);
   $('date-input').setAttribute('aria-label', copy.labelDate);
   $('daytype-select').setAttribute('aria-label', copy.labelCategory);
-  $('back-to-now').textContent = copy.backToNow;
   $('holiday-notice').textContent = copy.notice;
   $('hour-select').setAttribute('aria-label', copy.timeHour);
   $('minute-select').setAttribute('aria-label', copy.timeMinute);
@@ -222,6 +244,9 @@ function applyLanguage() {
 function renderResult() {
   const copy = t();
   const { amount, periodType } = getToll(state);
+  $('live-traffic').innerHTML = traffic && !isShowingNow()
+    ? `<span class="traffic-hint">${esc(t().trafficOnlyNow)}</span>`
+    : trafficChip('tunnel', state.tunnelId);
   const badge = $('period-badge');
   badge.textContent = copy.period[periodType];
   badge.className = `badge ${periodType}`;
@@ -250,7 +275,7 @@ function alternativeRows(group, canonical) {
   const copy = t();
   const options = [
     ...group.tunnels.map((id) => ({ kind: 'tunnel', id, name: nameOf(tunnelById(id)) })),
-    ...group.roads.map((road) => ({ kind: 'road', id: `road:${road.en}`, name: road[state.lang] })),
+    ...group.roads.map((road) => ({ kind: 'road', id: road.id, name: road.name[state.lang] })),
   ]
     .map((option) => ({
       ...option,
@@ -265,6 +290,7 @@ function alternativeRows(group, canonical) {
     if (option.amount === cheapest) tags.push(copy.planCheapest);
     const best = tags.includes(copy.planCheapest);
     const content = `<span class="compare-name">${esc(option.name)}</span>`
+      + trafficChip(option.kind, option.id)
       + `<span class="compare-price">HK$ ${option.amount.toFixed(2)}</span>`
       + (tags.length ? `<span class="compare-tag">${esc(tags.join(' · '))}</span>` : '');
     // Roads are places, not choices: only tunnels switch the selector.
@@ -276,6 +302,67 @@ function alternativeRows(group, canonical) {
 
   const tied = options.length > 1 && options.every((option) => option.amount === cheapest);
   return { rows, tied, cheapest };
+}
+
+// Live condition for one tunnel, per side of the harbour, when the feed has a
+// reading for it. The worst reading sets the colour; the sides are spelled out
+// because a journey time only means something for the direction you drive.
+// Live readings describe this moment, so they only belong on screen when the
+// view really is this moment: the clock is still following and the date is today.
+const isShowingNow = () => following && state.date === toDateKey(new Date());
+
+const DIRECTION_LABEL = {
+  island: 'dirIsland',
+  kowloon: 'dirKowloon',
+  'kowloon-c': 'dirKowloonC',
+  'kowloon-e': 'dirKowloonE',
+  'kowloon-w': 'dirKowloonW',
+  tsuenwan: 'dirTsuenWan',
+  shatin: 'dirShatin',
+  wanchai: 'dirWanChai',
+  tingkau: 'dirTingKau',
+};
+
+function trafficChip(kind, id) {
+  if (!isShowingNow()) return '';
+  const source = traffic ? traffic[kind === 'road' ? 'roads' : 'tunnels'] : null;
+  const report = source ? source[id] : null;
+  if (!report) return '';
+  const copy = t();
+  const label = copy[`traffic${report.state[0].toUpperCase()}${report.state.slice(1)}`];
+  const sides = Object.entries(report.byDirection || {})
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([direction, side]) => `${copy.trafficTowards.replace('{place}', copy[DIRECTION_LABEL[direction]] || direction)} `
+      + copy.trafficMinutes.replace('{minutes}', String(side.minutes)));
+  const detail = report.state === 'closed' || !sides.length
+    ? ''
+    : ` <span class="traffic-detail">${esc(sides.join(' · '))}</span>`;
+  return `<span class="traffic traffic-${report.state}">${esc(label)}</span>${detail}`;
+}
+
+const corridorIncidents = (group) =>
+  (isShowingNow() && traffic && traffic.incidents
+    ? incidentsForTunnels(traffic.incidents, group.tunnels)
+    : []);
+
+function incidentBlock(group) {
+  const copy = t();
+  const relevant = corridorIncidents(group);
+  if (!relevant.length) return '';
+  const lines = relevant.map((item) => {
+    const text = state.lang === 'en'
+      ? item.textEn
+      : (state.lang === 'sc' ? (item.textSc || item.textCn) : item.textCn);
+    const at = (item.at || '').slice(11, 16);
+    return `<p class="incident">${esc(text)}${at ? ` <span class="incident-time">${esc(at)}</span>` : ''}</p>`;
+  }).join('');
+  return `<div class="incidents"><p class="incidents-title">⚠️ ${esc(copy.trafficIncidents)}</p>${lines}</div>`;
+}
+
+function trafficSourceLine() {
+  if (!traffic || !traffic.updatedAt || !isShowingNow()) return '';
+  const at = traffic.updatedAt.slice(11, 16);
+  return `<p class="traffic-source">${esc(t().trafficSource.replace('{time}', at))}</p>`;
 }
 
 function renderAlternatives() {
@@ -298,12 +385,13 @@ function renderAlternatives() {
 
   $('alt-categories').innerHTML = groups.map((group) => {
     const on = group.id === activeId;
+    const warn = corridorIncidents(group).length ? ' ⚠️' : '';
     return `<button type="button" class="chip${on ? ' on' : ''}" data-group="${group.id}"`
-      + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]])}</button>`;
+      + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]])}${warn}</button>`;
   }).join('');
 
   const rows = alternativeRows(active, vehicle);
-  $('alt-list').innerHTML = rows.rows;
+  $('alt-list').innerHTML = rows.rows + incidentBlock(active) + trafficSourceLine();
   $('compare-note').hidden = !rows.tied;
   $('compare-note').textContent = rows.tied
     ? copy.compareTie.replace('{amount}', rows.cheapest.toFixed(2))
@@ -325,61 +413,34 @@ const priceTunnelFor = (tunnelId, canonical) => getToll({
   minutes: state.minutes,
 }).amount;
 
-function fillPlanSelects() {
+// The moment the page is describing: a live chip only while it is the present,
+// and a label on the chart marker that names it — or the chosen time when not.
+function renderMoment() {
   const copy = t();
-  const areaLabel = { island: copy.areaIsland, kowloon: copy.areaKowloon, nt: copy.areaNt };
-  const groups = ['island', 'kowloon', 'nt']
-    .map((area) => {
-      const options = REGIONS.filter((region) => region.area === area)
-        .map((region) => `<option value="${region.id}">${esc(region.name[state.lang])}</option>`)
-        .join('');
-      return `<optgroup label="${esc(areaLabel[area])}">${options}</optgroup>`;
-    })
-    .join('');
-  const blank = `<option value="">${esc(copy.planUnset)}</option>`;
+  const now = isShowingNow();
 
-  $('from-select').innerHTML = blank + groups;
-  $('to-select').innerHTML = blank + groups;
-  $('from-select').value = state.fromId;
-  $('to-select').value = state.toId;
-}
+  // One pill, two states: the status while the view is the present, and the
+  // way back once it is not. Same box either way, so the row never jumps.
+  const pill = $('back-to-now');
+  pill.className = `now-pill${now ? ' is-now' : ''}`;
+  pill.disabled = now;
+  pill.innerHTML = now
+    ? `<span class="now-dot" aria-hidden="true"></span>${esc(copy.nowLabel)}`
+    : '<svg class="now-arrow" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">'
+      + '<path d="M11 5l-7 7 7 7M4 12h16" fill="none" stroke="currentColor" stroke-width="2.2" '
+      + 'stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      + esc(copy.backToNow);
 
-const ROUTES_SHOWN = 6;
-
-function renderPlan() {
-  const copy = t();
-  const result = $('plan-result');
-
-  if (!regionById(state.fromId) || !regionById(state.toId)) {
-    result.innerHTML = `<p class="plan-note">${esc(copy.planPick)}</p>`;
-    return;
-  }
-
-  const { routes } = planRoutes({ fromId: state.fromId, toId: state.toId });
-  const vehicle = canonicalFor(state.tunnelId, state.vehicleId);
-  const priced = routes
-    .map((route) => ({
-      legs: route.legs,
-      tunnels: route.tunnels,
-      amount: route.tunnels.reduce((sum, id) => sum + priceTunnelFor(id, vehicle), 0),
-    }))
-    .sort((a, b) => a.amount - b.amount)
-    .slice(0, ROUTES_SHOWN);
-
-  const cheapest = priced.length ? priced[0].amount : 0;
-  result.innerHTML = priced.map((route) => {
-    const name = route.legs
-      .map((leg) => esc(leg.tunnel ? nameOf(tunnelById(leg.tunnel)) : leg.road[state.lang]))
-      .join('<span class="plan-sep">·</span>');
-    const tag = route.amount === cheapest
-      ? copy.planCheapest
-      : (route.tunnels.length ? copy.planPricier : '');
-    return `<div class="plan-route${route.amount === cheapest ? ' cheapest' : ''}">`
-      + `<span class="plan-route-name">${name}</span>`
-      + `<span class="plan-route-price">HK$ ${route.amount.toFixed(2)}</span>`
-      + (tag ? `<span class="plan-route-tag">${esc(tag)}</span>` : '')
-      + '</div>';
-  }).join('') + `<p class="plan-disclaimer">${esc(copy.planDisclaimer)}</p>`;
+  const label = $('marker-label');
+  const position = (state.minutes / 1440) * 100;
+  const hh = String(Math.floor(state.minutes / 60)).padStart(2, '0');
+  const mm = String(state.minutes % 60).padStart(2, '0');
+  label.textContent = now ? copy.nowLabel : `${hh}:${mm}`;
+  label.className = `marker-label${now ? ' now' : ''}`;
+  label.style.left = `${position}%`;
+  // keep the label inside the card at the ends of the day
+  label.style.transform = position < 8 ? 'translateX(0)'
+    : (position > 92 ? 'translateX(-100%)' : 'translateX(-50%)');
 }
 
 function renderChart() {
@@ -401,7 +462,6 @@ function renderTime() {
   $('hour-select').value = String(Math.floor(state.minutes / 60)).padStart(2, '0');
   $('minute-select').value = String(state.minutes % 60).padStart(2, '0');
   $('time-slider').value = String(state.minutes);
-  $('back-to-now').disabled = following && !datePinned;
 }
 
 function fillTimeSelects() {
@@ -414,6 +474,7 @@ function renderToll() {
   renderResult();
   renderAlternatives();
   renderChart();
+  renderMoment();
 }
 
 function render() {
@@ -423,7 +484,14 @@ function render() {
   renderDateType();
   renderTime();
   renderToll();
-  renderPlan();
+}
+
+// Return to the present moment: follow the clock again, on today's date.
+function goNow() {
+  following = true;
+  datePinned = false;
+  state.minutes = nowMinutes();
+  state.date = toDateKey(new Date());
 }
 
 function selectTime(minutes) {
@@ -473,14 +541,6 @@ function init() {
     $('lang-trigger').focus();
   });
 
-  $('from-select').addEventListener('change', (e) => {
-    state.fromId = e.target.value;
-    renderPlan();
-  });
-  $('to-select').addEventListener('change', (e) => {
-    state.toId = e.target.value;
-    renderPlan();
-  });
   $('tunnel-select').addEventListener('change', (e) => {
     state.tunnelId = e.target.value;
     altCategory = null; // re-anchor the alternatives on the new corridor
@@ -509,8 +569,16 @@ function init() {
     render();
   });
   $('daytype-select').addEventListener('change', (e) => {
-    state.dayType = e.target.value; // a deliberate override of the date's schedule
-    dayTypePinned = true;
+    // A schedule means the next day from today that has it — and today itself
+    // means the present, so choosing today's schedule is going back to now.
+    const today = toDateKey(new Date());
+    const target = nextDateOfType(e.target.value, today);
+    if (target === today) {
+      goNow();
+    } else {
+      state.date = target;
+      datePinned = true;
+    }
     render();
   });
   $('date-input').addEventListener('change', (e) => {
@@ -521,7 +589,6 @@ function init() {
     }
     state.date = value;
     datePinned = true;
-    dayTypePinned = false;
     render();
   });
   $('hour-select').addEventListener('change', () => {
@@ -532,15 +599,13 @@ function init() {
   });
   $('time-slider').addEventListener('input', (e) => selectTime(Number(e.target.value)));
   $('back-to-now').addEventListener('click', () => {
-    following = true;
-    datePinned = false;
-    dayTypePinned = false;
-    state.minutes = nowMinutes();
-    state.date = toDateKey(new Date());
+    goNow();
     render();
   });
 
   render();
+  // Live conditions only make sense on a real page (the proxy is same-origin).
+  if (typeof location !== 'undefined' && /^https?:$/.test(location.protocol)) loadTraffic();
   setInterval(() => {
     if (!following) return;
     const now = new Date();

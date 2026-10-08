@@ -72,11 +72,10 @@ function mk(id) {
 }
 for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amount', 'next-hint',
   'now-date', 'now-time', 'chart-bar', 'chart-marker', 'legend', 'tunnel-select', 'vehicle-select',
-  'date-input', 'daytype-select',
+  'date-input', 'daytype-select', 'live-traffic',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
-  'chart-title', 'lang-picker',
+  'chart-title', 'marker-label', 'lang-picker',
   'compare-note',
-  'plan-card', 'plan-title', 'label-from', 'label-to', 'from-select', 'to-select', 'plan-result',
   'alt-card', 'alt-title', 'alt-list', 'alt-categories',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
@@ -281,12 +280,11 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal($('lang-current').textContent, 'English');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
   assert.equal($('alt-title').textContent, 'Trip comparison');
-  assert.equal($('plan-title').textContent, 'Journey suggestion');
   assert.equal($('tunnel-select').getAttribute('aria-label'), 'Tunnel');
   assert.equal($('vehicle-select').getAttribute('aria-label'), 'Vehicle class');
   assert.equal($('daytype-select').getAttribute('aria-label'), 'Day type');
   assert.equal($('date-input').getAttribute('aria-label'), 'Date');
-  assert.equal($('back-to-now').textContent, 'Back to now');
+  assert.ok(/Now|Back to now/.test($('back-to-now').innerHTML), 'the way back speaks English');
   assert.ok($('daytype-select').innerHTML.includes('Mon–Sat (non-holiday)'));
   assert.ok($('tunnel-select').innerHTML.includes('Cross-Harbour Tunnel (Hung Hom)'));
   assert.ok($('tunnel-select').innerHTML.includes('Tai Lam Tunnel'));
@@ -354,22 +352,62 @@ test('a public holiday that lands on a weekday uses the weekend schedule', () =>
   assert.equal($('price-amount').textContent, '25.00');
 });
 
-test('choosing a day type overrides what the date implies', () => {
+test('a day type jumps to the next date with that schedule, counted from today', () => {
   $('tunnel-select').value = 'cht';
   fire('tunnel-select', 'change');
-  setTime('12', '00');
-  $('date-input').value = '2026-10-11'; // Sunday -> weekend
-  fire('date-input', 'change');
+  setTime('09', '30'); // a manual time, so the return to now is visible
+  // fakeNow is Thursday 2026-10-08 12:00, a weekday
+
+  $('daytype-select').value = 'weekend';
+  fire('daytype-select', 'change');
+  assert.equal($('date-input').value, '2026-10-11', 'the coming Sunday');
+  assert.equal($('daytype-select').value, 'weekend');
+
   $('daytype-select').value = 'weekday';
   fire('daytype-select', 'change');
-  assert.equal($('price-amount').textContent, '30.00', 'the override wins');
+  assert.equal($('date-input').value, '2026-10-08', 'today, not the Monday after the Sunday');
+  assert.equal(shownTime(), '12:00', 'and the clock is following the present again');
 
-  $('date-input').value = '2026-10-09'; // a new date clears the override
+  // the jump counts from today, whatever date is on screen
+  $('date-input').value = '2026-12-25'; // Christmas, a holiday
   fire('date-input', 'change');
-  assert.equal($('daytype-select').value, 'weekday', 'and the date decides again');
+  $('daytype-select').value = 'weekend';
+  fire('daytype-select', 'change');
+  assert.equal($('date-input').value, '2026-10-11', 'still the coming Sunday from today');
 });
 
-test('back-to-now returns to today and clears the override', () => {
+test('a run of public holidays is skipped whole', () => {
+  fakeNowMs = new RealDate(2026, 1, 17, 10, 0).getTime(); // Lunar New Year day 1, a Tuesday
+  $('daytype-select').value = 'weekday';
+  fire('daytype-select', 'change');
+  assert.equal($('date-input').value, '2026-02-20', 'past the three New Year days');
+});
+
+test('the present moment and the way back share one pill', () => {
+  fakeNowMs = new RealDate(2026, 9, 8, 12, 0).getTime(); // Thursday noon
+  fire('back-to-now', 'click');
+
+  const words = ['現在', '现在', 'Now'];
+  assert.equal($('back-to-now').disabled, true, 'at now the pill is the status');
+  assert.ok($('back-to-now').className.includes('is-now'), 'dressed as the status');
+  assert.ok($('back-to-now').innerHTML.includes('now-dot'), 'with a live dot');
+  assert.ok(words.some((word) => $('back-to-now').innerHTML.includes(word)), 'and a word for it');
+  assert.equal($('marker-label').className, 'marker-label now', 'the marker reads as now too');
+  assert.ok(words.some((word) => $('marker-label').textContent === word));
+
+  setTime('09', '30');
+  assert.equal($('back-to-now').disabled, false, 'a chosen time turns it into the button');
+  assert.ok(!$('back-to-now').className.includes('is-now'), 'no longer dressed as the status');
+  assert.ok($('back-to-now').innerHTML.includes('now-arrow'), 'with a way back rather than a dot');
+  assert.equal($('marker-label').textContent, '09:30', 'and the marker names that time');
+  assert.equal($('marker-label').className, 'marker-label');
+
+  fire('back-to-now', 'click');
+  assert.equal($('back-to-now').disabled, true, 'catching up to now restores the status');
+  assert.equal($('marker-label').className, 'marker-label now');
+});
+
+test('back-to-now returns to today', () => {
   fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
   $('date-input').value = '2027-01-01'; // a Friday public holiday
   fire('date-input', 'change');
@@ -380,7 +418,7 @@ test('back-to-now returns to today and clears the override', () => {
   assert.equal($('date-input').value, '2026-10-08');
   assert.equal($('daytype-select').value, 'weekday', 'the date decides again');
   assert.equal(shownTime(), '16:38');
-  assert.equal($('back-to-now').disabled, true);
+  assert.equal($('back-to-now').disabled, true, 'and the pill is the status again');
 });
 
 test('the notice appears only for dates outside the holiday data', () => {
@@ -485,10 +523,9 @@ test('choosing another corridor swaps the list in one click', () => {
   assert.ok($('alt-list').innerHTML.includes('現用'));
 });
 
-test('the result and the schedule sit on the same page, with the journey last', () => {
+test('the result and the schedule sit on the same page', () => {
   assert.equal($('alt-card').hidden, false, 'the alternatives card is shown');
   assert.equal($('chart-marker') !== undefined, true, 'the chart is on screen too');
-  assert.ok($('plan-result').innerHTML.length > 0, 'the journey section is rendered at the bottom');
 });
 
 test('a tunnel outside the macro map shows no alternatives', () => {
@@ -509,80 +546,89 @@ test('the alternatives follow the chosen vehicle', () => {
   assert.ok(!list.includes('HK$ 30.00'));
 });
 
-test('the journey card groups districts by macro area', async () => {
-  const { REGIONS: ALL_DISTRICTS } = await import('../js/regions.js');
-  storage.delete('hk-toll-calculator.selection');
-  fakeNowMs = new RealDate(2026, 9, 8, 12, 0).getTime();
-  await import('../js/app.js?plan=2');
+test('live conditions from the transport department sit beside the tunnels', async () => {
+  storage.set(STORAGE_KEY, JSON.stringify({ tunnelId: 'cht', vehicleId: 'car' }));
+  globalThis.location = { protocol: 'https:' };
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({
+      updatedAt: '2026-10-08T22:57:00',
+      tunnels: {
+        cht: {
+          state: 'jam',
+          minutes: 18,
+          reports: 3,
+          byDirection: { kowloon: { state: 'free', minutes: 4 }, island: { state: 'jam', minutes: 18 } },
+        },
+        ehc: { state: 'free', minutes: 9, reports: 2, byDirection: { kowloon: { state: 'free', minutes: 9 } } },
+        tlt: { state: 'free', minutes: 10, reports: 1, byDirection: { tingkau: { state: 'free', minutes: 10 } } },
+        whc: {
+          state: 'free',
+          minutes: 13,
+          reports: 2,
+          byDirection: { island: { state: 'free', minutes: 13 }, kowloon: { state: 'free', minutes: 11 } },
+        },
+      },
+      roads: {
+        tmr: { state: 'slow', minutes: 22, reports: 2, byDirection: { tsuenwan: { state: 'slow', minutes: 22 } } },
+        lamkam: { state: 'slow', minutes: 28, reports: 1, byDirection: { tsuenwan: { state: 'slow', minutes: 28 } } },
+      },
+      incidents: [{
+        id: '147614',
+        at: '2026-10-08T22:01:00',
+        textCn: '東區海底隧道(往柴灣方向)部分行車線封閉',
+        textEn: 'Part of the Eastern Harbour Crossing (Chai Wan bound) is closed',
+        tunnels: ['ehc'],
+      }],
+    }),
+  });
 
-  const from = $('from-select').innerHTML;
-  assert.equal((from.match(/<optgroup/g) || []).length, 3, 'island / kowloon / new territories');
-  for (const label of ['港島', '九龍', '新界']) assert.ok(from.includes(label), `missing group ${label}`);
-  assert.equal((from.match(/<option/g) || []).length, ALL_DISTRICTS.length + 1, 'every district plus unset');
-  assert.ok($('plan-result').innerHTML.includes('揀返起點同終點'));
-});
+  await import('../js/app.js?traffic=1');
+  await new Promise((resolve) => setImmediate(resolve));
 
-test('a harbour trip lists routes with their tunnels and total toll', () => {
-  $('from-select').value = 'nt-st';
-  fire('from-select', 'change');
-  $('to-select').value = 'hki-wc';
-  fire('to-select', 'change');
+  const list = $('alt-list').innerHTML;
+  assert.ok(list.includes('擠塞'), 'the congested reading shows');
+  assert.ok(list.includes('往港島 18 分鐘'), 'the congested direction, towards the island');
+  assert.ok(list.includes('往九龍 4 分鐘'), 'and the other direction separately');
+  assert.ok(list.includes('暢通'), 'and the free-flowing one');
+  assert.ok(list.includes('交通消息'), 'the incident block appears');
+  assert.ok(list.includes('東區海底隧道(往柴灣方向)部分行車線封閉'));
+  assert.ok(list.includes('更新於 22:57'), 'and the source is dated');
+  assert.ok($('alt-categories').innerHTML.includes('⚠️'), 'the affected corridor is flagged');
+  assert.ok($('live-traffic').innerHTML.includes('往港島 18 分鐘'),
+    'the chosen tunnel\'s directions show on the headline card too');
 
-  const html = $('plan-result').innerHTML;
-  assert.ok(html.includes('獅子山隧道'), 'the approach tunnel is named');
-  assert.ok(html.includes('海底隧道（紅隧）'));
-  assert.ok(html.includes('東區海底隧道（東隧）'));
-  assert.ok(html.includes('HK$ 38.00'), 'Lion Rock + red tunnel at noon');
-  assert.ok(html.includes('大埔道'), 'the free corridor is named');
-  assert.ok(html.indexOf('大埔道') < html.indexOf('海底隧道（紅隧）'), 'road then crossing, in order');
-  assert.ok(html.includes('最平'), 'the cheapest route is labelled');
-});
+  // a free corridor is measured too, when its row is on screen
+  fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-ntw' } }) } });
+  assert.ok($('alt-list').innerHTML.includes('往荃灣 22 分鐘'), 'Tuen Mun Road carries a reading');
 
-test('a route with no tunnel is labelled as free roads', () => {
-  $('from-select').value = 'nt-st';
-  fire('from-select', 'change');
-  $('to-select').value = 'nt-tw';
-  fire('to-select', 'change');
+  // picking the schedule already on screen keeps us at now
+  $('daytype-select').value = 'weekday';
+  fire('daytype-select', 'change');
+  assert.equal($('date-input').value, '2026-10-08', 'today already has this schedule');
+  assert.ok($('alt-list').innerHTML.includes('往荃灣'), 'so the readings stay');
 
-  const html = $('plan-result').innerHTML;
-  assert.ok(html.includes('林錦公路／青山公路'), 'the free corridor is named');
-  assert.ok(html.includes('HK$ 0.00'));
-  assert.ok(html.includes('城門隧道'));
-  assert.ok(html.includes('HK$ 8.00'));
-});
+  // the other schedule jumps to the next date that has it, and readings have
+  // no business on a hypothetical day
+  $('daytype-select').value = 'weekend';
+  fire('daytype-select', 'change');
+  assert.equal($('date-input').value, '2026-10-11', 'the coming Sunday');
+  assert.ok(!$('alt-list').innerHTML.includes('往荃灣'), 'the readings go');
+  assert.ok($('live-traffic').innerHTML.includes('只喺'), 'and say why');
 
-test('a trip that needs no tunnel at all still gets a suggestion', () => {
-  $('from-select').value = 'kln-ytm';
-  fire('from-select', 'change');
-  $('to-select').value = 'kln-kt';
-  fire('to-select', 'change');
+  // back to now resumes them
+  fire('back-to-now', 'click');
+  assert.equal($('date-input').value, '2026-10-08');
+  assert.ok($('alt-list').innerHTML.includes('往荃灣'), 'and back-to-now brings them back');
 
-  const html = $('plan-result').innerHTML;
-  assert.ok(html.includes('太子道東'), 'the free road is named');
-  assert.ok(html.includes('HK$ 0.00'));
-  assert.ok(html.includes('最平'));
-});
+  // a hypothetical time is not now, so live readings have no business showing
+  setTime('12', '00');
+  assert.ok(!$('alt-list').innerHTML.includes('往港島'), 'the reading goes when the hour is not now');
+  assert.ok(!$('alt-list').innerHTML.includes('交通消息'), 'and so does the incident news');
+  assert.ok($('live-traffic').innerHTML.includes('只喺'), 'with a word about why');
 
-test('the route list is capped so the card stays readable', () => {
-  $('from-select').value = 'nt-tm'; // Tuen Mun: the widest choice of options
-  fire('from-select', 'change');
-  $('to-select').value = 'hki-cw';
-  fire('to-select', 'change');
-
-  const rows = ($('plan-result').innerHTML.match(/plan-route-name/g) || []).length;
-  assert.ok(rows >= 1 && rows <= 6, `expected 1-6 routes, got ${rows}`);
-});
-
-test('the route totals follow the chosen vehicle', () => {
-  $('from-select').value = 'nt-st';
-  fire('from-select', 'change');
-  $('to-select').value = 'hki-wc';
-  fire('to-select', 'change');
-  assert.ok($('plan-result').innerHTML.includes('HK$ 38.00'));
-
-  $('vehicle-select').value = 'moto';
-  fire('vehicle-select', 'change');
-  assert.ok($('plan-result').innerHTML.includes('HK$ 20.00'), 'motorcycle: Lion Rock $8 + red tunnel $12');
+  delete globalThis.location;
+  delete globalThis.fetch;
 });
 
 test('a stale, string-named data module can never render undefined', async () => {

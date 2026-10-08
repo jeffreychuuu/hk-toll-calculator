@@ -25,3 +25,23 @@ test('the app tests stub every element the app reaches for', () => {
   const missing = referenced.filter((id) => !stubBlock.includes(`'${id}'`));
   assert.deepEqual(missing, [], `the stub is missing: ${missing.join(', ')}`);
 });
+
+const section = (id) => {
+  const start = html.indexOf(`id="${id}"`);
+  assert.ok(start !== -1, `#${id} is missing from the markup`);
+  return html.slice(start, html.indexOf('</section>', start));
+};
+
+test('the day type and the clock live on the chart card', () => {
+  const chart = section('chart-card');
+  for (const id of ['date-input', 'daytype-select', 'hour-select', 'minute-select',
+    'time-slider', 'back-to-now']) {
+    assert.ok(chart.includes(`id="${id}"`), `#${id} should sit with the 24-hour chart`);
+  }
+
+  const result = section('result-card');
+  for (const id of ['daytype-select', 'hour-select', 'minute-select']) {
+    assert.ok(!result.includes(`id="${id}"`), `#${id} should have left the result card`);
+  }
+  assert.ok(result.includes('id="vehicle-select"'), 'the vehicle class stays with the price');
+});

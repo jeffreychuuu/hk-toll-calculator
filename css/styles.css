@@ -134,7 +134,6 @@ body {
 
 .subtitle { margin: 6px 0 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .title-select { max-width: 100%; }
-.subtitle .sep { color: var(--muted); }
 .inline-select {
   appearance: none;
   width: auto;
@@ -149,14 +148,61 @@ body {
   cursor: pointer;
 }
 
-/* The chart card carries the date and the time */
+/* The chart card carries the date, the day type and the time */
 .chart-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .chart-controls .date-input { width: auto; min-width: 9rem; padding: 6px 10px; font-size: 0.85rem; }
-.chart-controls .time-selects select { width: auto; min-width: 4.6rem; padding: 6px 26px 6px 10px; font-size: 0.85rem; font-weight: 700; }
+.time-selects .time-colon { color: var(--muted); font-weight: 700; }
 .chart-controls .link-btn { font-size: 0.82rem; }
+/* The present moment and the way back share one pill, so the row never jumps */
+.now-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 6.5rem;
+  padding: 4px 11px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: none;
+  color: #157a4d;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.now-pill.is-now,
+.now-pill.is-now:disabled {
+  background: #e7f6ee;
+  color: #157a4d;
+  cursor: default;
+  opacity: 1;
+}
+.now-pill:not(.is-now) {
+  background: #fff;
+  border-color: #bfe3cf;
+}
+.now-pill:not(.is-now):hover { background: #e7f6ee; }
+.now-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #1aa564;
+  animation: now-pulse 1.7s ease-in-out infinite;
+}
+.now-arrow { flex: 0 0 auto; }
+@keyframes now-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.65); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .now-dot { animation: none; }
+}
 
 /* The bar is the slider: an invisible range sits on top of it */
-.chart { position: relative; height: 34px; margin: 12px 0 0; }
+.chart { position: relative; height: 34px; margin: 22px 0 0; }
 #time-slider {
   position: absolute;
   inset: 0;
@@ -206,29 +252,6 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
   line-height: 1.5;
 }
 
-/* Journey suggestion — a list of tunnel combinations with totals */
-.plan-result { margin-top: 12px; display: flex; flex-direction: column; gap: 4px; }
-.plan-note { margin: 0; color: var(--muted); font-size: 0.92rem; }
-.plan-route {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  border-radius: 12px;
-  padding: 8px 10px;
-  font-size: 0.92rem;
-}
-.plan-route.cheapest { background: #e7f6ee; }
-.plan-route-name { flex: 1 1 auto; min-width: 0; }
-.plan-route.cheapest .plan-route-name { color: #157a4d; font-weight: 700; }
-.plan-route-price { font-variant-numeric: tabular-nums; font-weight: 600; }
-.plan-route-tag { color: var(--muted); font-size: 0.78rem; }
-.plan-route.cheapest .plan-route-tag { color: #157a4d; font-weight: 700; }
-.plan-sep { color: var(--muted); margin: 0 2px; }
-.plan-disclaimer { margin: 6px 0 0; color: var(--muted); font-size: 0.78rem; }
-
-
-
 /* Same-trip alternatives: corridor chips over a priced list */
 .alt-title { font-size: 1rem; margin: 0; }
 .pick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
@@ -268,16 +291,40 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 .compare-row.cheapest .compare-tag { color: #157a4d; }
 div.compare-row { cursor: default; }
 div.compare-row:hover { background: transparent; }
+/* Live conditions from the Transport Department */
+.traffic { font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+.traffic-free { color: #157a4d; }
+.traffic-slow { color: #a2650f; }
+.traffic-jam { color: #b91c1c; }
+.traffic-closed { color: #6b7280; }
+.traffic-detail { color: var(--muted); font-weight: 600; font-size: 0.75rem; }
+.live-traffic { margin: 8px 0 0; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.live-traffic:empty { display: none; }
+.traffic-hint { color: var(--muted); font-size: 0.78rem; }
+.incidents { margin-top: 10px; background: #fdf6e8; border-radius: 12px; padding: 10px 12px; }
+.incidents-title { margin: 0 0 4px; font-size: 0.85rem; font-weight: 700; color: #a2650f; }
+.incident { margin: 0; font-size: 0.85rem; line-height: 1.55; }
+.incident-time { color: var(--muted); }
+.traffic-source { margin: 8px 0 0; color: var(--muted); font-size: 0.75rem; }
 .compare-note { margin: 8px 0 0; color: var(--muted); font-size: 0.88rem; font-weight: 600; }
 
 /* Chart card */
 .chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 10px; }
 .chart-head h2 { flex: 1 1 100%; }
 .chart-head h2 { font-size: 1rem; margin: 0; }
-.now-label { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
-.now-label strong { color: var(--focus); font-size: 1rem; font-variant-numeric: tabular-nums; }
 
-.chart { position: relative; height: 34px; margin: 12px 0 0; }
+.marker-label {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.marker-label.now { color: #157a4d; }
+
 .chart-bar { display: flex; height: 100%; border-radius: 8px; overflow: hidden; }
 .chart-bar .seg { height: 100%; }
 .seg.non-peak { background: var(--green); }
@@ -409,7 +456,6 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
       "topbar topbar"
       "query  chart"
       "alt    chart"
-      "plan   plan"
       "footer footer";
     align-items: start;
     gap: 14px;
@@ -419,6 +465,5 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
   #result-card { grid-area: query; }
   #chart-card { grid-area: chart; }
   #alt-card { grid-area: alt; }
-  #plan-card { grid-area: plan; }
   .site-footer { grid-area: footer; }
 }

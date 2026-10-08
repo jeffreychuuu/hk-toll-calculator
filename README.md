@@ -18,15 +18,14 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
   - Time-varying toll: Cross-Harbour Tunnel (Hung Hom), Eastern Harbour Crossing, Western Harbour Crossing, Tai Lam Tunnel
   - Flat-rate tunnels: Aberdeen, Shing Mun, Lion Rock, Sha Tin Pass / Tsuen Shin / Tai Wai, Tate's Cross, Discovery Bay Tunnel
 - **Real-time toll card** — current period badge (peak / normal / non-peak / transition), price, and next-period hint
-- **24-hour distribution chart** — colour-coded periods with a live date/time label and a current-time marker
+- **24-hour distribution chart** — colour-coded periods, the date / day-type / clock controls, a marker labelled 現在 while the view is the present moment (or the time you picked), and one pill that reads 現在 at now and becomes the 回到現在 button once you leave — same box either way, so nothing jumps
 - **Flexible inputs**
   - Tunnel selector
   - Vehicle class selector (private car, motorcycle, taxi, goods vehicles, buses, etc.)
-  - Date mode switch — pick a **specific date** (the weekday / Sun-and-public-holiday schedule follows it automatically) or a **date type** for a general rate; each mode remembers its own value
-  - Hour and minute dropdowns for any time of day, a slider, plus a **back-to-now** button
+  - A **date** and a **day type** (Mon–Sat non-holiday / Sunday and public holidays): the schedule follows the date, and picking a day type jumps to the next day (counted from today) that has it — or straight back to now when today already does
+  - Hour and minute dropdowns for any time of day, a slider, plus a **back-to-now** button — the date, the day type and the clock all sit on the 24-hour chart card
 - **Everything choosable is in one menu** — the tunnel dropdown groups every tunnel by the corridor it serves and puts the price in the label, with your current choice marked 現用 and the cheapest of each corridor marked 最平. The free corridors (Tuen Mun Road, Tai Po Road, Lung Cheung Road, West Kowloon Corridor) appear in their corridor as disabled options, so the comparison is still visible even though there is no schedule to chart for them
-- **Journey suggestion** — pick a start and a destination district (all 18, grouped by region) and see the tunnel combinations for that trip: every route names its tunnels and its total toll, with the cheapest marked. Tunnels that merely lie between two districts (Shing Mun, Tai Lam) appear on their own, and a route that uses no tunnel at all is offered when one exists. Free corridors are named, so a route reads as “Tai Po Road · Cross-Harbour Tunnel (Hung Hom)”. It never claims to be the fastest — that data is not in this project
-- **One page** — the result card and the chart sit together, and the journey suggestion card sits at the bottom
+- **One page** — the result card and the chart sit together
 - **Remembers your choice** — the last tunnel and vehicle class are restored on the next visit (localStorage)
 - **Three languages** — 繁體中文 / 简体中文 / English, picked automatically from the browser language and remembered once chosen
 - **Transition-aware pricing** — computes exact stepwise rates during transition windows (e.g. +$2 every 2 minutes for private cars), matching TD's minute-by-minute schedule
@@ -42,7 +41,8 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
 ## Tech Stack
 
 - HTML5 / CSS3 / vanilla JavaScript (ES modules)
-- No framework, no bundler, no dependencies
+- No framework, no bundler, no runtime dependencies
+- One Vercel serverless function for the traffic feeds — the site itself is still static
 - Data embedded as static JS modules (no fetch, no build step)
 
 ## Project Structure
@@ -56,6 +56,7 @@ hk-toll-calculator/
 │   ├── data.js         # toll schedules + vehicle classes
 │   ├── holidays.js     # HK public holiday dates
 │   ├── i18n.js         # UI copy + bundle language detection
+│   ├── traffic.js      # TD journey-time and traffic-news parsing
 │   ├── engine.js       # pure toll calculation functions
 │   └── app.js          # UI wiring & rendering
 ├── tests/              # Node test runner suites
@@ -73,6 +74,7 @@ straight from the file system shows a blank page. Serve the folder instead:
 git clone https://github.com/jeffreychuuu/hk-toll-calculator.git
 cd hk-toll-calculator
 python3 -m http.server 8000   # then open http://localhost:8000
+# live traffic needs the function: npx vercel dev
 npm test                      # run the engine, schedule and UI unit tests
 ```
 
