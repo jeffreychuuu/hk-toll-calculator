@@ -3,16 +3,99 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>香港隧道收費計算器</title>
+  <title>香港隧道收費計算器｜紅隧 · 東隧 · 西隧 · 大欖 分時段收費</title>
+  <meta name="description" content="一頁睇晒香港全部收費隧道：紅隧、東隧、西隧、大欖、獅子山、城門、大老山、香港仔、沙田嶺／尖山、愉景灣。分時段收費、免費道路比較、運輸署實時行車時間同交通消息。">
+  <link rel="canonical" href="https://hk-toll-calculator.jeffreychuuu.com/">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="theme-color" content="#22a06b">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="香港隧道收費計算器">
+  <meta property="og:title" content="香港隧道收費計算器｜紅隧 · 東隧 · 西隧 · 大欖 分時段收費">
+  <meta property="og:description" content="一頁睇晒全港收費隧道：分時段收費、免費道路比較、實時行車時間。">
+  <meta property="og:url" content="https://hk-toll-calculator.jeffreychuuu.com/">
+  <meta property="og:image" content="https://hk-toll-calculator.jeffreychuuu.com/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="zh_HK">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "香港隧道收費計算器",
+    "alternateName": "HK Tunnel Toll Calculator",
+    "url": "https://hk-toll-calculator.jeffreychuuu.com/",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Web",
+    "inLanguage": "zh-Hant",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "HKD" },
+    "description": "查香港全部收費隧道嘅分時段收費，比較免費道路替代，睇埋運輸署實時行車時間同交通消息。",
+    "featureList": [
+      "全港 10 條收費隧道收費",
+      "分時段收費同過渡期逐步計價",
+      "免費道路（屯門公路、大埔道、林錦公路／青山公路）比較",
+      "運輸署實時行車時間同交通消息",
+      "繁體中文／简体中文／English"
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "香港隧道收費點樣分時段？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "三條過海隧道（紅隧、東隧、西隧）同大欖隧道採用分時段收費，分繁忙、一般同非繁忙三個時段，轉換時段每 2 分鐘逐步調整；其餘隧道（獅子山、城門、大老山、香港仔、沙田嶺／尖山、愉景灣）劃一收費。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "星期日同公眾假期隧道收費唔同嗎？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "唔同。三條過海隧道喺星期日及公眾假期用另一套收費表，一般全日同價；大欖隧道喺星期日及公眾假期亦全日劃一。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "有冇免費道路可以代替隧道？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "有。屯門公路、大埔道、林錦公路／青山公路都免費，會同隧道一齊列出，連隧道費同實時行車時間一齊比較。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "實時行車時間係由邊度量起？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "讀數嚟自運輸署「行車時間顯示器」，係由指定分流點量到目的地（例如獅子山由沙田馬場起、大埔道往九龍由青沙公路起），唔係隧道管道內嘅時間，而且只喺揀「現在」時顯示。"
+        }
+      }
+    ]
+  }
+  </script>
+
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <main class="wrap" id="wrap">
-    <nav class="topbar" aria-label="Language">
-      <div class="lang-picker" id="lang-picker">
+    <header class="topbar">
+      <h1 class="site-name" id="site-name">香港隧道收費計算器</h1>
+      <div class="topbar-actions">
+        <a class="icon-link" id="github-link" href="https://github.com/jeffreychuuu/hk-toll-calculator"
+           target="_blank" rel="noopener" aria-label="GitHub 原始碼" title="GitHub 原始碼">
+          <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        </a>
+        <nav class="lang-picker" id="lang-picker" aria-label="Language">
         <button type="button" class="lang-trigger" id="lang-trigger"
                 aria-haspopup="listbox" aria-expanded="false" aria-label="語言">
           <svg class="lang-globe" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
@@ -26,8 +109,9 @@
           </svg>
         </button>
         <ul class="lang-menu" id="lang-menu" role="listbox" hidden></ul>
+      </nav>
       </div>
-    </nav>
+    </header>
 
     <section class="card" id="alt-card" hidden>
       <div class="alt-head">
@@ -70,6 +154,171 @@
       </div>
       <ul class="legend" id="legend"></ul>
       <div class="hint" id="next-hint" hidden></div>
+    </section>
+
+    <section class="card about" id="about">
+      <details class="seo">
+        <summary>關於香港隧道收費</summary>
+        <p>
+          一頁睇晒全港 10 條收費隧道——紅隧、東隧、西隧、大欖、獅子山、城門、大老山、香港仔、
+          沙田嶺／尖山／大圍、愉景灣。揀日期、車種同時間，即刻睇到分時段收費、免費道路替代，
+          同運輸署實時行車時間同交通消息。
+        </p>
+        <p>
+          三條過海隧道（紅隧、東隧、西隧）同大欖隧道採用分時段收費；其餘隧道全日劃一。
+          電單車收費為私家車嘅四成；的士喺過海隧道全日劃一 $25，商用車輛（貨車、小巴、巴士）
+          $50，大欖隧道分別為 $28 同 $43。收費以運輸署公布為準。
+        </p>
+      </details>
+
+      <details class="seo">
+        <summary>常見問題</summary>
+        <dl class="faq">
+          <dt>香港隧道收費點樣分時段？</dt>
+          <dd>
+            三條過海隧道（紅隧、東隧、西隧）同大欖隧道採用分時段收費，分繁忙、一般同非繁忙三個時段，
+            轉換時段每 2 分鐘逐步調整。其餘隧道（獅子山、城門、大老山、香港仔、沙田嶺／尖山、愉景灣）劃一收費。
+          </dd>
+          <dt>星期日同公眾假期隧道收費唔同嗎？</dt>
+          <dd>唔同。三條過海隧道喺星期日及公眾假期用另一套收費表，一般全日同價；大欖隧道亦全日劃一。</dd>
+          <dt>有冇免費道路可以代替隧道？</dt>
+          <dd>有。屯門公路、大埔道、林錦公路／青山公路都免費，會同隧道一齊列出，連車費同實時行車時間一齊比較。</dd>
+          <dt>實時行車時間係由邊度量起？</dt>
+          <dd>
+            讀數嚟自運輸署「行車時間顯示器」，係由指定分流點量到目的地（例如獅子山由沙田馬場起、
+            大埔道往九龍由青沙公路起），唔係隧道管道內嘅時間，而且只喺揀「現在」時顯示。
+          </dd>
+        </dl>
+      </details>
+
+      <!-- toll tables: generated by scripts/print-toll-tables.mjs — do not edit by hand -->
+    <details class="tolls">
+      <summary>紅隧（海底隧道）收費時段表</summary>
+      <h4>平日（星期一至六，非公眾假期）</h4>
+      <table>
+        <thead><tr><th>時段</th><th>時間</th><th>私家車</th></tr></thead>
+        <tbody>
+        <tr><td>非繁忙時段</td><td>00:00 – 07:29</td><td>$20</td></tr>
+        <tr><td>過渡期</td><td>07:30 – 07:47</td><td>$22 – $38</td></tr>
+        <tr><td>繁忙時段</td><td>07:48 – 10:14</td><td>$40</td></tr>
+        <tr><td>過渡期</td><td>10:15 – 10:22</td><td>$38 – $32</td></tr>
+        <tr><td>一般時段</td><td>10:23 – 16:29</td><td>$30</td></tr>
+        <tr><td>過渡期</td><td>16:30 – 16:37</td><td>$32 – $38</td></tr>
+        <tr><td>繁忙時段</td><td>16:38 – 18:59</td><td>$40</td></tr>
+        <tr><td>過渡期</td><td>19:00 – 19:17</td><td>$38 – $22</td></tr>
+        <tr><td>非繁忙時段</td><td>19:18 – 23:59</td><td>$20</td></tr>
+        </tbody>
+      </table>
+      <h4>星期日及公眾假期</h4>
+      <table>
+        <thead><tr><th>時段</th><th>時間</th><th>私家車</th></tr></thead>
+        <tbody>
+        <tr><td>非繁忙時段</td><td>00:00 – 10:10</td><td>$20</td></tr>
+        <tr><td>過渡期</td><td>10:11 – 10:14</td><td>$21 – $23</td></tr>
+        <tr><td>一般時段</td><td>10:15 – 19:14</td><td>$25</td></tr>
+        <tr><td>過渡期</td><td>19:15 – 19:18</td><td>$23 – $21</td></tr>
+        <tr><td>非繁忙時段</td><td>19:19 – 23:59</td><td>$20</td></tr>
+        </tbody>
+      </table>
+    </details>
+    <details class="tolls">
+      <summary>東隧（東區海底隧道）收費時段表</summary>
+      <h4>平日（星期一至六，非公眾假期）</h4>
+      <table>
+        <thead><tr><th>時段</th><th>時間</th><th>私家車</th></tr></thead>
+        <tbody>
+        <tr><td>非繁忙時段</td><td>00:00 – 07:29</td><td>$20</td></tr>
+        <tr><td>過渡期</td><td>07:30 – 07:47</td><td>$22 – $38</td></tr>
+        <tr><td>繁忙時段</td><td>07:48 – 10:14</td><td>$40</td></tr>
+        <tr><td>過渡期</td><td>10:15 – 10:22</td><td>$38 – $32</td></tr>
+        <tr><td>一般時段</td><td>10:23 – 16:29</td><td>$30</td></tr>
+        <tr><td>過渡期</td><td>16:30 – 16:37</td><td>$32 – $38</td></tr>
+        <tr><td>繁忙時段</td><td>16:38 – 18:59</td><td>$40</td></tr>
+        <tr><td>過渡期</td><td>19:00 – 19:17</td><td>$38 – $22</td></tr>
+        <tr><td>非繁忙時段</td><td>19:18 – 23:59</td><td>$20</td></tr>
+        </tbody>
+      </table>
+      <h4>星期日及公眾假期</h4>
+      <table>
+        <thead><tr><th>時段</th><th>時間</th><th>私家車</th></tr></thead>
+        <tbody>
+        <tr><td>非繁忙時段</td><td>00:00 – 10:10</td><td>$20</td></tr>
+        <tr><td>過渡期</td><td>10:11 – 10:14</td><td>$21 – $23</td></tr>
+        <tr><td>一般時段</td><td>10:15 – 19:14</td><td>$25</td></tr>
+        <tr><td>過渡期</td><td>19:15 – 19:18</td><td>$23 – $21</td></tr>
+        <tr><td>非繁忙時段</td><td>19:19 – 23:59</td><td>$20</td></tr>
+        </tbody>
+      </table>
+    </details>
+    <details class="tolls">
+      <summary>西隧（西區海底隧道）收費時段表</summary>
+      <h4>平日（星期一至六，非公眾假期）</h4>
+      <table>
+        <thead><tr><th>時段</th><th>時間</th><th>私家車</th></tr></thead>
+        <tbody>
+        <tr><td>非繁忙時段</td><td>00:00 – 07:29</td><td>$20</td></tr>
+        <tr><td>過渡期</td><td>07:30 – 08:07</td><td>$22 – $58</td></tr>
+        <tr><td>繁忙時段</td><td>08:08 – 10:14</td><td>$60</td></tr>
+        <tr><td>過渡期</td><td>10:15 – 10:42</td><td>$58 – $32</td></tr>
+        <tr><td>一般時段</td><td>10:43 – 16:29</td><td>$30</td></tr>
+        <tr><td>過渡期</td><td>16:30 – 16:57</td><td>$32 – $58</td></tr>
+        <tr><td>繁忙時段</td><td>16:58 – 18:59</td><td>$60</td></tr>
+        <tr><td>過渡期</td><td>19:00 – 19:37</td><td>$58 – $22</td></tr>
+        <tr><td>非繁忙時段</td><td>19:38 – 23:59</td><td>$20</td></tr>
+        </tbody>
+      </table>
+      <h4>星期日及公眾假期</h4>
+      <table>
+        <thead><tr><th>時段</th><th>時間</th><th>私家車</th></tr></thead>
+        <tbody>
+        <tr><td>非繁忙時段</td><td>00:00 – 10:10</td><td>$20</td></tr>
+        <tr><td>過渡期</td><td>10:11 – 10:14</td><td>$21 – $23</td></tr>
+        <tr><td>一般時段</td><td>10:15 – 19:14</td><td>$25</td></tr>
+        <tr><td>過渡期</td><td>19:15 – 19:18</td><td>$23 – $21</td></tr>
+        <tr><td>非繁忙時段</td><td>19:19 – 23:59</td><td>$20</td></tr>
+        </tbody>
+      </table>
+    </details>
+    <details class="tolls">
+      <summary>大欖隧道收費時段表</summary>
+      <h4>平日（星期一至六，非公眾假期）</h4>
+      <table>
+        <thead><tr><th>時段</th><th>時間</th><th>私家車</th></tr></thead>
+        <tbody>
+        <tr><td>非繁忙時段</td><td>00:00 – 07:14</td><td>$18</td></tr>
+        <tr><td>過渡期</td><td>07:15 – 07:40</td><td>$19 – $43</td></tr>
+        <tr><td>繁忙時段</td><td>07:41 – 09:44</td><td>$45</td></tr>
+        <tr><td>過渡期</td><td>09:45 – 09:58</td><td>$43 – $31</td></tr>
+        <tr><td>一般時段</td><td>09:59 – 17:14</td><td>$30</td></tr>
+        <tr><td>過渡期</td><td>17:15 – 17:28</td><td>$31 – $43</td></tr>
+        <tr><td>繁忙時段</td><td>17:29 – 18:59</td><td>$45</td></tr>
+        <tr><td>過渡期</td><td>19:00 – 19:25</td><td>$43 – $19</td></tr>
+        <tr><td>非繁忙時段</td><td>19:26 – 23:59</td><td>$18</td></tr>
+        </tbody>
+      </table>
+      <h4>星期日及公眾假期</h4>
+      <table>
+        <thead><tr><th>時段</th><th>時間</th><th>私家車</th></tr></thead>
+        <tbody>
+        <tr><td>全日劃一</td><td>00:00 – 23:59</td><td>$18</td></tr>
+        </tbody>
+      </table>
+    </details>
+    <details class="tolls">
+      <summary>劃一收費隧道（全日同價）</summary>
+      <table>
+        <thead><tr><th>隧道</th><th>私家車</th></tr></thead>
+        <tbody>
+        <tr><td>香港仔隧道</td><td>$8</td></tr>
+        <tr><td>城門隧道</td><td>$8</td></tr>
+        <tr><td>獅子山隧道</td><td>$8</td></tr>
+        <tr><td>沙田嶺／尖山／大圍隧道</td><td>$8</td></tr>
+        <tr><td>大老山隧道</td><td>$20</td></tr>
+        <tr><td>愉景灣隧道</td><td>$250</td></tr>
+        </tbody>
+      </table>
+    </details>
+      <!-- /toll tables -->
     </section>
 
     <footer class="site-footer" id="site-footer"></footer>

@@ -46,7 +46,11 @@ body {
 }
 
 /* Language picker — globe trigger with a drop-down menu */
-.topbar { display: flex; justify-content: flex-end; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.site-name { margin: 0; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.01em; }
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.icon-link { display: inline-flex; color: var(--muted); }
+.icon-link:hover { color: var(--ink); }
 .lang-picker { position: relative; }
 
 .lang-trigger {
@@ -372,7 +376,7 @@ select {
   font-family: inherit;
   color: var(--ink);
 }
-select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+select:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 
 .time-selects { display: flex; align-items: center; gap: 8px; }
 #hour-select, #minute-select {
@@ -426,14 +430,33 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .site-footer { color: var(--muted); font-size: 0.78rem; line-height: 1.65; padding: 0 4px; }
 .site-footer a { color: var(--focus); }
 
+/* The static introduction, FAQ and toll tables — real text for search engines,
+   folded away so the tool itself stays the first thing you see */
+.about { color: var(--muted); font-size: 0.9rem; }
+.about details { border-top: 1px solid var(--line); }
+.about details:first-of-type { border-top: 0; }
+.about summary { padding: 11px 0; color: var(--ink); font-weight: 700; cursor: pointer; }
+.about summary::marker { color: var(--muted); }
+.about details[open] > summary { color: var(--focus); }
+.about p { margin: 0 0 10px; line-height: 1.7; }
+.faq { margin: 0 0 12px; }
+.faq dt { margin-top: 12px; color: var(--ink); font-weight: 700; }
+.faq dd { margin: 4px 0 0; line-height: 1.7; }
+.about h4 { margin: 12px 0 4px; font-size: 0.9rem; color: var(--ink); }
+.about table { width: 100%; border-collapse: collapse; margin: 4px 0 12px; font-size: 0.85rem; }
+.about th, .about td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+.about th { color: var(--muted); font-weight: 600; }
+.about th:last-child, .about td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+
 /* Wide screens: the comparison left, the chart right */
 @media (min-width: 900px) {
   .wrap {
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
     grid-template-areas:
-      "topbar topbar"
+      "topbar  topbar"
       "alt     chart"
+      "about   about"
       "footer  footer";
     align-items: start;
     gap: 14px;
@@ -442,5 +465,6 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
   .topbar { grid-area: topbar; }
   #alt-card { grid-area: alt; }
   #chart-card { grid-area: chart; }
+  #about { grid-area: about; }
   .site-footer { grid-area: footer; }
 }

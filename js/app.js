@@ -234,6 +234,9 @@ function applyLanguage() {
   const lang = LANGS.find((l) => l.id === state.lang);
   document.documentElement.lang = lang.htmlLang;
   document.title = copy.pageTitle;
+  $('site-name').textContent = copy.siteName;
+  $('github-link').setAttribute('aria-label', copy.github);
+  $('github-link').setAttribute('title', copy.github);
   $('chart-title').textContent = copy.chartTitle;
   $('label-vehicle-class').textContent = copy.compareVehicle;
   $('vehicle-select').setAttribute('aria-label', copy.labelVehicle);

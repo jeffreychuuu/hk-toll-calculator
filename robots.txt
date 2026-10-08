@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://hk-toll-calculator.jeffreychuuu.com/sitemap.xml
