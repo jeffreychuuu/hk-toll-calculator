@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   REGIONS, NODES, TUNNEL_EDGES, FREE_EDGES, COMPARE_ROADS, regionById, planRoutes, compareGroups,
+  categoryForTunnel,
 } from '../js/regions.js';
 
 const sets = (routes) => routes.map((route) => route.tunnels.slice().sort().join('+'));
@@ -35,7 +36,7 @@ test('four districts straddle two areas so both crossing directions are offered'
 
 test('the macro graph has the published tunnels as its edges', () => {
   assert.deepEqual(TUNNEL_EDGES.map((edge) => edge.tunnel).sort(),
-    ['abt', 'cht', 'ehc', 'lrt', 'smt', 'tct', 'tlt', 'whc']);
+    ['abt', 'cht', 'ehc', 'lrt', 'smt', 'stg', 'tct', 'tlt', 'whc']);
   for (const edge of TUNNEL_EDGES) {
     assert.ok(NODES.includes(edge.a) && NODES.includes(edge.b), `${edge.tunnel} endpoints`);
   }
@@ -165,4 +166,19 @@ test('each category lists only the alternatives for that kind of trip', () => {
 
   // Tai Po Road borders both east Kowloon areas, but is one corridor
   assert.deepEqual(byId['kln-nte'].roads.map((road) => road.tc), ['大埔道', '龍翔道']);
+});
+
+test('every tunnel in the graph belongs to exactly one trip category', () => {
+  for (const edge of TUNNEL_EDGES) {
+    const category = categoryForTunnel(edge.tunnel);
+    assert.ok(category, `${edge.tunnel} has a category`);
+    const group = compareGroups().find((g) => g.id === category);
+    assert.ok(group.tunnels.includes(edge.tunnel), `${edge.tunnel} is listed in ${category}`);
+  }
+  // Sha Tin Heights / Eagle's Nest / Tai Wai is the Sha Tin to West Kowloon corridor
+  assert.equal(categoryForTunnel('stg'), 'kln-nte');
+  assert.equal(categoryForTunnel('tlt'), 'kln-ntw');
+  assert.equal(categoryForTunnel('cht'), 'harbour');
+  // Discovery Bay is not part of the macro map at all
+  assert.equal(categoryForTunnel('dbt'), undefined);
 });

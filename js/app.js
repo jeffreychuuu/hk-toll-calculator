@@ -3,7 +3,7 @@ import { TUNNELS, vehiclesFor, CROSS_HARBOUR_IDS, canonicalFor, classIdFor } fro
 import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison } from './engine.js';
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
-import { REGIONS, regionById, planRoutes, compareGroups } from './regions.js';
+import { REGIONS, regionById, planRoutes, compareGroups, categoryForTunnel } from './regions.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
 const FOOTER_LINKS = ['tvt', 'flat', 'taiLam'];
@@ -17,7 +17,6 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 
 const STORAGE_KEY = 'hk-toll-calculator.selection';
 const LANG_KEY = 'hk-toll-calculator.lang';
-const COMPARE_GROUP_KEY = 'hk-toll-calculator.compareGroup';
 
 const t = () => UI[state.lang];
 
@@ -66,9 +65,9 @@ function saveSelection() {
   }
 }
 
-// The toll comparison is organised by the kind of trip: only options serving
-// the same corridor are alternatives, so the winner is decided inside a
-// category and never across different journeys.
+// The toll comparison is anchored to the tunnel the visitor picked: a tunnel
+// belongs to exactly one kind of trip, so its alternatives are simply the
+// other ways to make that trip. Nothing to choose.
 const CATEGORY_LABEL = {
   harbour: 'cmpCatHarbour',
   'kln-nte': 'cmpCatKlnNte',
@@ -78,23 +77,7 @@ const CATEGORY_LABEL = {
   kowloon: 'cmpCatKowloon',
 };
 
-function loadCompareGroup() {
-  try {
-    const saved = localStorage.getItem(COMPARE_GROUP_KEY);
-    if (compareGroups().some((group) => group.id === saved)) return saved;
-  } catch {
-    // fall through to the default
-  }
-  return 'harbour';
-}
-
-function saveCompareGroup() {
-  try {
-    localStorage.setItem(COMPARE_GROUP_KEY, state.compareGroup);
-  } catch {
-    // persistence is a convenience, never a failure
-  }
-}
+let showOtherCategories = false;
 
 function loadLang() {
   try {
@@ -118,8 +101,7 @@ function saveLang() {
 const initialDayType = defaultDayType();
 const state = {
   lang: 'tc',
-  view: 'fares',           // which output section is open
-  compareGroup: 'harbour', // which corridor category the comparison shows
+  view: 'journey',         // which output section is open
   fromId: '',              // journey suggestion — deliberately not persisted
   toId: '',
   mode: 'date',            // 'date' picks a calendar day; 'category' picks a schedule
@@ -226,12 +208,13 @@ function applyLanguage() {
   document.documentElement.lang = lang.htmlLang;
   document.title = copy.pageTitle;
   $('chart-title').textContent = copy.chartTitle;
-  $('compare-title').textContent = copy.compareTitle;
+  $('alt-title').textContent = copy.compareTitle;
+  $('alt-toggle').textContent = copy.compareOtherCategories;
   $('plan-title').textContent = copy.planTitle;
   $('label-from').textContent = copy.planFrom;
   $('label-to').textContent = copy.planTo;
   for (const btn of $('view-tabs').querySelectorAll('button')) {
-    btn.textContent = { fares: copy.viewFares, journey: copy.viewJourney, schedule: copy.viewSchedule }[btn.dataset.view];
+    btn.textContent = { journey: copy.viewJourney, schedule: copy.viewSchedule }[btn.dataset.view];
   }
   fillPlanSelects();
   renderPlan();
@@ -282,28 +265,21 @@ function renderResult(tunnel) {
     .replace('{amount}', next.amount.toFixed(2));
 }
 
-function renderCompare() {
+function alternativeRows(group, canonical, excludeTunnelId) {
   const copy = t();
-  const groups = compareGroups();
-
-  $('compare-picks').innerHTML = groups.map((group) => {
-    const on = group.id === state.compareGroup;
-    return `<button type="button" class="chip${on ? ' on' : ''}" data-group="${group.id}"`
-      + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]])}</button>`;
-  }).join('');
-
-  const active = groups.find((group) => group.id === state.compareGroup) || groups[0];
-  const vehicle = canonicalFor(state.tunnelId, state.vehicleId);
   const options = [
-    ...active.tunnels.map((id) => ({ kind: 'tunnel', id, name: nameOf(tunnelById(id)) })),
-    ...active.roads.map((road) => ({ kind: 'road', id: `road:${road.en}`, name: road[state.lang] })),
-  ].map((option) => ({
-    ...option,
-    amount: option.kind === 'tunnel' ? priceTunnelFor(option.id, vehicle) : 0,
-  })).sort((a, b) => a.amount - b.amount);
+    ...group.tunnels.map((id) => ({ kind: 'tunnel', id, name: nameOf(tunnelById(id)) })),
+    ...group.roads.map((road) => ({ kind: 'road', id: `road:${road.en}`, name: road[state.lang] })),
+  ]
+    .filter((option) => option.id !== excludeTunnelId)
+    .map((option) => ({
+      ...option,
+      amount: option.kind === 'tunnel' ? priceTunnelFor(option.id, canonical) : 0,
+    }))
+    .sort((a, b) => a.amount - b.amount);
 
   const cheapest = options.length ? options[0].amount : 0;
-  $('compare-list').innerHTML = options.map((option) => {
+  const rows = options.map((option) => {
     const best = option.amount === cheapest;
     const content = `<span class="compare-name">${esc(option.name)}</span>`
       + `<span class="compare-price">HK$ ${option.amount.toFixed(2)}</span>`
@@ -316,8 +292,39 @@ function renderCompare() {
   }).join('');
 
   const tied = options.length > 1 && options.every((option) => option.amount === cheapest);
-  $('compare-note').hidden = !tied;
-  $('compare-note').textContent = tied ? copy.compareTie.replace('{amount}', cheapest.toFixed(2)) : '';
+  return { rows, tied, cheapest };
+}
+
+function renderAlternatives() {
+  const copy = t();
+  const section = $('alternatives');
+  const categoryId = categoryForTunnel(state.tunnelId);
+
+  if (!categoryId) {
+    section.hidden = true;
+    return;
+  }
+  section.hidden = false;
+
+  const groups = compareGroups();
+  const active = groups.find((group) => group.id === categoryId);
+  const vehicle = canonicalFor(state.tunnelId, state.vehicleId);
+
+  const main = alternativeRows(active, vehicle, state.tunnelId);
+  $('alt-caption').textContent = copy[CATEGORY_LABEL[categoryId]];
+  $('alt-list').innerHTML = main.rows;
+  $('compare-note').hidden = !main.tied;
+  $('compare-note').textContent = main.tied
+    ? copy.compareTie.replace('{amount}', main.cheapest.toFixed(2))
+    : '';
+
+  $('alt-toggle').setAttribute('aria-expanded', String(showOtherCategories));
+  $('alt-others').hidden = !showOtherCategories;
+  $('alt-others').innerHTML = groups
+    .filter((group) => group.id !== categoryId)
+    .map((group) => `<p class="alt-caption">${esc(copy[CATEGORY_LABEL[group.id]])}</p>`
+      + `<ul class="compare-list">${alternativeRows(group, vehicle).rows}</ul>`)
+    .join('');
 }
 
 const tunnelById = (id) => TUNNELS.find((x) => x.id === id);
@@ -436,7 +443,7 @@ function renderClock() {
 
 function renderToll() {
   renderResult(currentTunnel());
-  renderCompare();
+  renderAlternatives();
   renderChart();
 }
 
@@ -469,7 +476,6 @@ function chooseLang(lang) {
 function init() {
   state.lang = loadLang();
 
-  state.compareGroup = loadCompareGroup();
 
   const saved = loadSelection();
   if (saved) {
@@ -521,14 +527,20 @@ function init() {
     state.toId = e.target.value;
     renderPlan();
   });
-  $('compare-picks').addEventListener('click', (e) => {
-    const chip = e.target.closest('button[data-group]');
-    if (!chip || chip.dataset.group === state.compareGroup) return;
-    state.compareGroup = chip.dataset.group;
-    saveCompareGroup();
-    renderCompare();
+  $('alt-toggle').addEventListener('click', () => {
+    showOtherCategories = !showOtherCategories;
+    renderAlternatives();
   });
-  $('compare-list').addEventListener('click', (e) => {
+  $('alt-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-tunnel-id]');
+    if (!btn) return;
+    state.tunnelId = btn.dataset.tunnelId;
+    fillTunnelSelect();
+    fillVehicleSelect();
+    saveSelection();
+    render();
+  });
+  $('alt-others').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-tunnel-id]');
     if (!btn) return;
     state.tunnelId = btn.dataset.tunnelId;

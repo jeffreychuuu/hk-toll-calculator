@@ -17,6 +17,7 @@ export const TUNNEL_EDGES = [
   { a: 'ntw', b: 'klw', tunnel: 'tlt' }, // Tai Lam
   { a: 'nte', b: 'klc', tunnel: 'lrt' }, // Lion Rock
   { a: 'nte', b: 'kle', tunnel: 'tct' }, // Tate's Cairn
+  { a: 'nte', b: 'klw', tunnel: 'stg' }, // Sha Tin Heights / Eagle's Nest / Tai Wai
   { a: 'klc', b: 'isc', tunnel: 'cht' }, // Cross-Harbour
   { a: 'kle', b: 'ise', tunnel: 'ehc' }, // Eastern Harbour Crossing
   { a: 'klw', b: 'isw', tunnel: 'whc' }, // Western Harbour Crossing
@@ -85,6 +86,13 @@ const CORRIDOR_CATEGORIES = [
 ];
 
 const pairKey = (a, b) => [a, b].sort().join('-');
+
+// Which kind of trip a tunnel serves. Each tunnel sits on exactly one edge,
+// so a tunnel's category is well defined and never has to be chosen.
+export function categoryForTunnel(tunnelId) {
+  const group = compareGroups().find((entry) => entry.tunnels.includes(tunnelId));
+  return group ? group.id : undefined;
+}
 
 export function compareGroups() {
   return CORRIDOR_CATEGORIES.map((category) => {
