@@ -77,7 +77,7 @@ for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amou
   'chart-title', 'lang-picker',
   'compare-note',
   'plan-card', 'plan-title', 'label-from', 'label-to', 'from-select', 'to-select', 'plan-result',
-  'alternatives', 'alt-title', 'alt-list', 'alt-categories',
+  'alt-card', 'alt-title', 'alt-list', 'alt-categories',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
 globalThis.document = {
@@ -425,7 +425,7 @@ test('the result card lists the ways to make the same trip, current tunnel first
   fakeNowMs = new RealDate(2026, 9, 8, 12, 0).getTime(); // midweek noon
   await import('../js/app.js?alt=1');
 
-  assert.equal($('alternatives').hidden, false);
+  assert.equal($('alt-card').hidden, false);
 
   const list = $('alt-list').innerHTML;
   assert.ok(list.includes('東區海底隧道（東隧）'));
@@ -485,7 +485,7 @@ test('choosing another corridor swaps the list in one click', () => {
 });
 
 test('the result and the schedule sit on the same page, with the journey last', () => {
-  assert.equal($('alternatives').hidden, false, 'the comparison is part of the result card');
+  assert.equal($('alt-card').hidden, false, 'the alternatives card is shown');
   assert.equal($('chart-marker') !== undefined, true, 'the chart is on screen too');
   assert.ok($('plan-result').innerHTML.length > 0, 'the journey section is rendered at the bottom');
 });
@@ -493,11 +493,11 @@ test('the result and the schedule sit on the same page, with the journey last', 
 test('a tunnel outside the macro map shows no alternatives', () => {
   $('tunnel-select').value = 'dbt'; // Discovery Bay stands alone
   fire('tunnel-select', 'change');
-  assert.equal($('alternatives').hidden, true);
+  assert.equal($('alt-card').hidden, true);
 
   $('tunnel-select').value = 'cht';
   fire('tunnel-select', 'change');
-  assert.equal($('alternatives').hidden, false);
+  assert.equal($('alt-card').hidden, false);
 });
 
 test('the alternatives follow the chosen vehicle', () => {

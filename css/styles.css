@@ -133,9 +133,12 @@ body {
 .title-select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
 
 .subtitle { margin: 6px 0 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.title-select { max-width: 100%; }
 .subtitle .sep { color: var(--muted); }
 .inline-select {
   appearance: none;
+  width: auto;
+  flex: 0 1 auto;
   border: 1px solid var(--line);
   background: #fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6' fill='none' stroke='%239aa0a6' stroke-width='2' stroke-linecap='round'/></svg>") no-repeat right 8px center;
   border-radius: 999px;
@@ -148,7 +151,7 @@ body {
 
 /* The chart card carries the date and the time */
 .chart-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.chart-controls .date-input { width: auto; padding: 6px 10px; font-size: 0.85rem; }
+.chart-controls .date-input { width: auto; min-width: 9rem; padding: 6px 10px; font-size: 0.85rem; }
 .chart-controls .time-selects select { width: auto; min-width: 4.6rem; padding: 6px 26px 6px 10px; font-size: 0.85rem; font-weight: 700; }
 .chart-controls .link-btn { font-size: 0.82rem; }
 
@@ -227,8 +230,7 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 
 
 /* Same-trip alternatives: corridor chips over a priced list */
-.alt { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
-.alt-title { font-size: 0.92rem; font-weight: 700; }
+.alt-title { font-size: 1rem; margin: 0; }
 .pick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .chip {
   border: 1px solid var(--line);
@@ -269,7 +271,8 @@ div.compare-row:hover { background: transparent; }
 .compare-note { margin: 8px 0 0; color: var(--muted); font-size: 0.88rem; font-weight: 600; }
 
 /* Chart card */
-.chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 10px; }
+.chart-head h2 { flex: 1 1 100%; }
 .chart-head h2 { font-size: 1rem; margin: 0; }
 .now-label { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
 .now-label strong { color: var(--focus); font-size: 1rem; font-variant-numeric: tabular-nums; }
@@ -405,6 +408,7 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
     grid-template-areas:
       "topbar topbar"
       "query  chart"
+      "alt    chart"
       "plan   plan"
       "footer footer";
     align-items: start;
@@ -414,6 +418,7 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
   .topbar { grid-area: topbar; }
   #result-card { grid-area: query; }
   #chart-card { grid-area: chart; }
+  #alt-card { grid-area: alt; }
   #plan-card { grid-area: plan; }
   .site-footer { grid-area: footer; }
 }

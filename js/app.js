@@ -280,7 +280,7 @@ function alternativeRows(group, canonical) {
 
 function renderAlternatives() {
   const copy = t();
-  const section = $('alternatives');
+  const section = $('alt-card');
   const tunnelCategory = categoryForTunnel(state.tunnelId);
 
   if (!tunnelCategory) {
