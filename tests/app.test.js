@@ -610,19 +610,19 @@ test('live conditions from the transport department sit beside the tunnels', asy
 
   const list = $('alt-list').innerHTML;
   assert.ok(list.includes('擠塞'), 'the congested reading shows');
-  assert.ok(list.includes('往港島 18 分鐘'), 'the congested direction, towards the island');
-  assert.ok(list.includes('往九龍 4 分鐘'), 'and the other direction separately');
-  assert.ok(list.includes('暢通'), 'and the free-flowing one');
+  assert.ok(list.includes('往港島 擠塞 18 分鐘'), 'the congested direction, towards the island');
+  assert.ok(list.includes('往九龍 暢通 4 分鐘'), 'and the free one gets its own chip, not the worst shared');
+  assert.ok(list.includes('暢通'), 'the free-flowing one');
   assert.ok(list.includes('交通消息'), 'the incident block appears');
   assert.ok(list.includes('東區海底隧道(往柴灣方向)部分行車線封閉'));
   assert.ok(list.includes('更新於 22:57'), 'and the source is dated');
   assert.ok($('alt-categories').innerHTML.includes('⚠️'), 'the affected corridor is flagged');
-  assert.ok($('live-traffic').innerHTML.includes('往港島 18 分鐘'),
+  assert.ok($('live-traffic').innerHTML.includes('往港島 擠塞 18 分鐘'),
     'the chosen tunnel\'s directions show on the headline card too');
 
   // a free corridor is measured too, when its row is on screen
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-ntw' } }) } });
-  assert.ok($('alt-list').innerHTML.includes('往荃灣 22 分鐘'), 'Tuen Mun Road carries a reading');
+  assert.ok($('alt-list').innerHTML.includes('往荃灣 慢車 22 分鐘'), 'Tuen Mun Road carries a reading');
   assert.ok($('alt-list').innerHTML.includes('屯門公路(往九龍方向)'),
     'and its own road incident is shown with it');
 

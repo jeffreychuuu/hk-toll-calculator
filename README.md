@@ -18,7 +18,7 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
   - Time-varying toll: Cross-Harbour Tunnel (Hung Hom), Eastern Harbour Crossing, Western Harbour Crossing, Tai Lam Tunnel
   - Flat-rate tunnels: Aberdeen, Shing Mun, Lion Rock, Sha Tin Pass / Tsuen Shin / Tai Wai, Tate's Cross, Discovery Bay Tunnel
 - **Real-time toll card** — current period badge (peak / normal / non-peak / transition), price, and next-period hint
-- **Live conditions, shown only while it is now** — the Transport Department's journey times sit beside each tunnel and free corridor, split by direction (往…), together with that corridor's traffic news, whether the news names a tunnel or the road itself
+- **Live conditions, shown only while it is now** — the Transport Department's journey times sit beside each tunnel and free corridor, one chip per direction (往…) with its own condition and minutes, together with that corridor's traffic news, whether the news names a tunnel or the road itself
 - **24-hour distribution chart** — colour-coded periods, the date / day-type / clock controls, a marker labelled 現在 while the view is the present moment (or the time you picked), and one pill that reads 現在 at now and becomes the 回到現在 button once you leave — same box either way, so nothing jumps
 - **Flexible inputs**
   - Tunnel selector
