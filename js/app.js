@@ -4,6 +4,7 @@ import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison }
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 import { REGIONS, regionById, planRoutes, compareGroups, categoryForTunnel } from './regions.js';
+import { incidentsForTunnels } from './traffic.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
 const FOOTER_LINKS = ['tvt', 'flat', 'taiLam'];
@@ -125,6 +126,23 @@ let following = true;
 let datePinned = false;
 let dayTypePinned = false; // set when the visitor overrides the day type by hand
 let altCategory = null;   // which corridor the alternatives list is showing
+
+// Live road conditions from the Transpart Department, by way of our own
+// serverless proxy. Absent until it loads, and silently absent if it cannot:
+// the prices must never depend on it.
+const TRAFFIC_ENDPOINT = '/api/traffic';
+let traffic = null;
+
+async function loadTraffic() {
+  try {
+    const response = await fetch(TRAFFIC_ENDPOINT);
+    if (!response.ok) return;
+    traffic = await response.json();
+    renderAlternatives();
+  } catch {
+    // no live data is a normal state, not an error worth showing
+  }
+}
 
 function fillTunnelSelect() {
   const copy = t();
@@ -265,6 +283,7 @@ function alternativeRows(group, canonical) {
     if (option.amount === cheapest) tags.push(copy.planCheapest);
     const best = tags.includes(copy.planCheapest);
     const content = `<span class="compare-name">${esc(option.name)}</span>`
+      + (option.kind === 'tunnel' ? trafficChip(option.id) : '')
       + `<span class="compare-price">HK$ ${option.amount.toFixed(2)}</span>`
       + (tags.length ? `<span class="compare-tag">${esc(tags.join(' · '))}</span>` : '');
     // Roads are places, not choices: only tunnels switch the selector.
@@ -276,6 +295,41 @@ function alternativeRows(group, canonical) {
 
   const tied = options.length > 1 && options.every((option) => option.amount === cheapest);
   return { rows, tied, cheapest };
+}
+
+// Live condition for one tunnel, when the feed has a reading for it.
+function trafficChip(tunnelId) {
+  const report = traffic && traffic.tunnels ? traffic.tunnels[tunnelId] : null;
+  if (!report) return '';
+  const copy = t();
+  const label = copy[`traffic${report.state[0].toUpperCase()}${report.state.slice(1)}`];
+  const minutes = report.state === 'closed'
+    ? ''
+    : ` ${copy.trafficMinutes.replace('{minutes}', String(report.minutes))}`;
+  return `<span class="traffic traffic-${report.state}">${esc(label)}${esc(minutes)}</span>`;
+}
+
+const corridorIncidents = (group) =>
+  (traffic && traffic.incidents ? incidentsForTunnels(traffic.incidents, group.tunnels) : []);
+
+function incidentBlock(group) {
+  const copy = t();
+  const relevant = corridorIncidents(group);
+  if (!relevant.length) return '';
+  const lines = relevant.map((item) => {
+    const text = state.lang === 'en'
+      ? item.textEn
+      : (state.lang === 'sc' ? (item.textSc || item.textCn) : item.textCn);
+    const at = (item.at || '').slice(11, 16);
+    return `<p class="incident">${esc(text)}${at ? ` <span class="incident-time">${esc(at)}</span>` : ''}</p>`;
+  }).join('');
+  return `<div class="incidents"><p class="incidents-title">⚠️ ${esc(copy.trafficIncidents)}</p>${lines}</div>`;
+}
+
+function trafficSourceLine() {
+  if (!traffic || !traffic.updatedAt) return '';
+  const at = traffic.updatedAt.slice(11, 16);
+  return `<p class="traffic-source">${esc(t().trafficSource.replace('{time}', at))}</p>`;
 }
 
 function renderAlternatives() {
@@ -298,12 +352,13 @@ function renderAlternatives() {
 
   $('alt-categories').innerHTML = groups.map((group) => {
     const on = group.id === activeId;
+    const warn = corridorIncidents(group).length ? ' ⚠️' : '';
     return `<button type="button" class="chip${on ? ' on' : ''}" data-group="${group.id}"`
-      + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]])}</button>`;
+      + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]])}${warn}</button>`;
   }).join('');
 
   const rows = alternativeRows(active, vehicle);
-  $('alt-list').innerHTML = rows.rows;
+  $('alt-list').innerHTML = rows.rows + incidentBlock(active) + trafficSourceLine();
   $('compare-note').hidden = !rows.tied;
   $('compare-note').textContent = rows.tied
     ? copy.compareTie.replace('{amount}', rows.cheapest.toFixed(2))
@@ -541,6 +596,8 @@ function init() {
   });
 
   render();
+  // Live conditions only make sense on a real page (the proxy is same-origin).
+  if (typeof location !== 'undefined' && /^https?:$/.test(location.protocol)) loadTraffic();
   setInterval(() => {
     if (!following) return;
     const now = new Date();

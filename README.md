@@ -42,7 +42,8 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
 ## Tech Stack
 
 - HTML5 / CSS3 / vanilla JavaScript (ES modules)
-- No framework, no bundler, no dependencies
+- No framework, no bundler, no runtime dependencies
+- One Vercel serverless function for the traffic feeds — the site itself is still static
 - Data embedded as static JS modules (no fetch, no build step)
 
 ## Project Structure
@@ -56,6 +57,7 @@ hk-toll-calculator/
 │   ├── data.js         # toll schedules + vehicle classes
 │   ├── holidays.js     # HK public holiday dates
 │   ├── i18n.js         # UI copy + bundle language detection
+│   ├── traffic.js      # TD journey-time and traffic-news parsing
 │   ├── engine.js       # pure toll calculation functions
 │   └── app.js          # UI wiring & rendering
 ├── tests/              # Node test runner suites
@@ -73,6 +75,7 @@ straight from the file system shows a blank page. Serve the folder instead:
 git clone https://github.com/jeffreychuuu/hk-toll-calculator.git
 cd hk-toll-calculator
 python3 -m http.server 8000   # then open http://localhost:8000
+# live traffic needs the function: npx vercel dev
 npm test                      # run the engine, schedule and UI unit tests
 ```
 
