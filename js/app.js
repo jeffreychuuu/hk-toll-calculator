@@ -423,6 +423,9 @@ function renderMoment() {
   const chip = $('now-chip');
   chip.hidden = !now;
   chip.innerHTML = `<span class="now-dot" aria-hidden="true"></span>${esc(copy.nowLabel)}`;
+  // The way back sits in the same slot as the status, and shows only when
+  // there is somewhere to go back from.
+  $('back-to-now').hidden = now;
 
   const label = $('marker-label');
   const position = (state.minutes / 1440) * 100;
@@ -455,7 +458,6 @@ function renderTime() {
   $('hour-select').value = String(Math.floor(state.minutes / 60)).padStart(2, '0');
   $('minute-select').value = String(state.minutes % 60).padStart(2, '0');
   $('time-slider').value = String(state.minutes);
-  $('back-to-now').disabled = following && !datePinned;
 }
 
 function fillTimeSelects() {
