@@ -596,6 +596,19 @@ test('switching tunnel keeps the class of vehicle you picked', () => {
   assert.equal($('vehicle-select').value, 'moto', 'and back again');
 });
 
+test('a tunnel with its own classes hands the old vehicle back', () => {
+  selectTunnel('cht');
+  $('vehicle-select').value = 'moto';
+  fire('vehicle-select', 'change');
+
+  selectTunnel('dbt'); // Discovery Bay names its classes its own way
+  assert.ok(!['car', 'moto', 'taxi', 'other'].includes($('vehicle-select').value),
+    'a class of its own while you are there');
+
+  selectTunnel('cht');
+  assert.equal($('vehicle-select').value, 'moto', 'and the motorcycle is back');
+});
+
 test('a flat-rate tunnel drops the schedule controls and returns to now', () => {
   fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
   selectTunnel('cht');
