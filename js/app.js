@@ -116,13 +116,25 @@ function deriveDayType(dateKey) {
   return { dayType: weekend ? 'weekend' : 'weekday', dataCurrent: inHolidayRange(date) };
 }
 
+// The next date on or after `fromKey` whose schedule is `dayType`. Picking a
+// schedule jumps the date here, so the date always explains the schedule.
+function nextDateOfType(dayType, fromKey) {
+  const [y, m, d] = fromKey.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  for (let i = 0; i < 8; i += 1) {
+    const key = toDateKey(date);
+    if (deriveDayType(key).dayType === dayType) return key;
+    date.setDate(date.getDate() + 1);
+  }
+  return fromKey;
+}
+
 // While true, the toll card follows the real clock. Any manual time selection
 // (slider or dropdowns) pins it; the back-to-now button releases it.
 let following = true;
 // Set when the user picks their own date. Kept separate from `following` so a
 // pinned date is neither reported as "showing now" nor rolled over by the clock.
 let datePinned = false;
-let dayTypePinned = false; // set when the visitor overrides the day type by hand
 let altCategory = null;   // which corridor the alternatives list is showing
 
 // Live road conditions from the Transpart Department, by way of our own
@@ -177,7 +189,7 @@ function fillVehicleSelect() {
 
 function renderDateType() {
   const derived = deriveDayType(state.date);
-  if (!dayTypePinned) state.dayType = derived.dayType;
+  state.dayType = derived.dayType;
   state.dataCurrent = derived.dataCurrent;
 
   $('date-input').value = state.date;
@@ -297,10 +309,8 @@ function alternativeRows(group, canonical) {
 // reading for it. The worst reading sets the colour; the sides are spelled out
 // because a journey time only means something for the direction you drive.
 // Live readings describe this moment, so they only belong on screen when the
-// view really is this moment: the clock is still following, the date is today,
-// and the day type has not been pinned to something else by hand.
-const isShowingNow = () =>
-  following && !dayTypePinned && state.date === toDateKey(new Date());
+// view really is this moment: the clock is still following and the date is today.
+const isShowingNow = () => following && state.date === toDateKey(new Date());
 
 const DIRECTION_LABEL = {
   island: 'dirIsland',
@@ -522,8 +532,9 @@ function init() {
     render();
   });
   $('daytype-select').addEventListener('change', (e) => {
-    state.dayType = e.target.value; // a deliberate override of the date's schedule
-    dayTypePinned = true;
+    // Choosing a schedule jumps to the next date that actually has it.
+    state.date = nextDateOfType(e.target.value, state.date);
+    datePinned = state.date !== toDateKey(new Date());
     render();
   });
   $('date-input').addEventListener('change', (e) => {
@@ -534,7 +545,6 @@ function init() {
     }
     state.date = value;
     datePinned = true;
-    dayTypePinned = false;
     render();
   });
   $('hour-select').addEventListener('change', () => {
@@ -547,7 +557,6 @@ function init() {
   $('back-to-now').addEventListener('click', () => {
     following = true;
     datePinned = false;
-    dayTypePinned = false;
     state.minutes = nowMinutes();
     state.date = toDateKey(new Date());
     render();

@@ -32,14 +32,6 @@
           <select id="tunnel-select" class="title-select" aria-label="選擇隧道"></select>
           <p class="subtitle">
             <select id="vehicle-select" class="inline-select" aria-label="車輛類別"></select>
-            <span class="sep">·</span>
-            <select id="daytype-select" class="inline-select" aria-label="日期類型"></select>
-            <span class="sep">·</span>
-            <span class="time-selects">
-              <select id="hour-select" class="inline-select" aria-label="小時"></select>
-              <span class="time-colon">:</span>
-              <select id="minute-select" class="inline-select" aria-label="分鐘"></select>
-            </span>
           </p>
           <p class="live-traffic" id="live-traffic"></p>
         </div>
@@ -57,6 +49,12 @@
         <h2 id="chart-title">24小時收費時段分佈圖</h2>
         <div class="chart-controls">
           <input id="date-input" class="date-input" type="date" aria-label="日期">
+          <select id="daytype-select" class="inline-select" aria-label="日期類型"></select>
+          <span class="time-selects">
+            <select id="hour-select" class="inline-select" aria-label="小時"></select>
+            <span class="time-colon">:</span>
+            <select id="minute-select" class="inline-select" aria-label="分鐘"></select>
+          </span>
           <button type="button" class="link-btn" id="back-to-now">回到現在</button>
         </div>
       </div>
