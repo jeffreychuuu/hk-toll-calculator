@@ -151,7 +151,7 @@ const distanceTo = (node, to) => Math.abs(X[node] - X[to]) + Math.abs(Y[node] - 
 
 const EDGES = [
   ...TUNNEL_EDGES.map((edge) => ({ a: edge.a, b: edge.b, tunnel: edge.tunnel })),
-  ...FREE_EDGES.map((edge) => ({ a: edge.a, b: edge.b, tunnel: null, road: edge.name })),
+  ...FREE_EDGES.map((edge) => ({ a: edge.a, b: edge.b, tunnel: null, road: edge.name, roadId: edge.id })),
 ];
 
 const neighbours = (node) => EDGES.filter((edge) => edge.a === node || edge.b === node);
@@ -229,7 +229,10 @@ export function planRoutes({ fromId, toId } = {}) {
       walk(fromNode, toNode, new Set([fromNode]), [], paths);
       for (const path of paths) {
         if (!toward(nodesOn(path, fromNode), fromNode, toNode)) continue;
-        addRoute(path.map((edge) => (edge.tunnel ? { tunnel: edge.tunnel } : { road: edge.road })));
+        const walked = [fromNode, ...nodesOn(path, fromNode)];
+        addRoute(path.map((edge, index) => (edge.tunnel
+          ? { tunnel: edge.tunnel, from: walked[index], to: walked[index + 1] }
+          : { road: edge.road, roadId: edge.roadId, from: walked[index], to: walked[index + 1] })));
       }
     }
   }

@@ -4,7 +4,7 @@ import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison }
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 import { REGIONS, regionById, planRoutes, compareGroups, categoryForTunnel } from './regions.js';
-import { incidentsForTunnels } from './traffic.js';
+import { incidentsForTunnels, publishedDirection } from './traffic.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
 const FOOTER_LINKS = ['tvt', 'flat', 'taiLam'];
@@ -430,6 +430,24 @@ function fillPlanSelects() {
 
 const ROUTES_SHOWN = 6;
 
+// A route's measured time: the sum of the published readings for the
+// directions it actually travels, and only when every leg has one — a partial
+// sum would read as a total it is not.
+function measuredMinutes(route) {
+  if (!isShowingNow() || !traffic) return null;
+  let total = 0;
+  for (const leg of route.legs) {
+    const direction = publishedDirection(leg);
+    if (!direction) return null;
+    const id = leg.tunnel || leg.roadId;
+    const report = (leg.tunnel ? traffic.tunnels : traffic.roads)?.[id];
+    const towards = report && report.byDirection ? report.byDirection[direction] : null;
+    if (!towards || typeof towards.minutes !== 'number') return null;
+    total += towards.minutes;
+  }
+  return total;
+}
+
 function renderPlan() {
   const copy = t();
   const result = $('plan-result');
@@ -451,15 +469,28 @@ function renderPlan() {
     .slice(0, ROUTES_SHOWN);
 
   const cheapest = priced.length ? priced[0].amount : 0;
-  result.innerHTML = priced.map((route) => {
+  const withTimes = priced
+    .map((route, index) => ({ index, minutes: measuredMinutes(route) }))
+    .filter((entry) => entry.minutes !== null);
+  const fastest = withTimes.filter((entry) => entry.minutes === Math.min(...withTimes.map((e) => e.minutes)));
+  const fastestLine = fastest.length
+    ? `<p class="journey-fastest">${esc(copy.journeyFastest.replace('{routes}',
+        fastest.map((entry) => priced[entry.index].legs.map((leg) => (leg.tunnel
+          ? nameOf(tunnelById(leg.tunnel)) : leg.road[state.lang])).join(' · ')).join('｜')))}</p>`
+    : '';
+
+  result.innerHTML = fastestLine + priced.map((route) => {
     const name = route.legs
       .map((leg) => esc(leg.tunnel ? nameOf(tunnelById(leg.tunnel)) : leg.road[state.lang]))
       .join('<span class="plan-sep">·</span>');
     const tag = route.amount === cheapest
       ? copy.planCheapest
       : (route.tunnels.length ? copy.planPricier : '');
+    const measured = measuredMinutes(route);
     return `<div class="plan-route${route.amount === cheapest ? ' cheapest' : ''}">`
       + `<span class="plan-route-name">${name}</span>`
+      + (measured === null ? '' : `<span class="plan-route-time">${esc(copy.trafficMeasured
+          .replace('{minutes}', String(measured)))}</span>`)
       + `<span class="plan-route-price">HK$ ${route.amount.toFixed(2)}</span>`
       + (tag ? `<span class="plan-route-tag">${esc(tag)}</span>` : '')
       + '</div>';
@@ -498,6 +529,7 @@ function renderToll() {
   renderResult();
   renderAlternatives();
   renderChart();
+  renderPlan(); // its measured times depend on the moment being now
 }
 
 function render() {

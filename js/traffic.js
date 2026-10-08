@@ -56,6 +56,34 @@ const DESTINATION_DIRECTIONS = {
   TKTL: 'tingkau', // Ting Kau via Tai Lam Tunnel
 };
 
+// For every leg we can travel, the direction the department actually publishes
+// (or nothing, when it only measures the other way). A leg's `from`/`to` are
+// macro areas, so this is a pure lookup.
+const LEG_DIRECTIONS = {
+  lrt: { from: 'nte', direction: 'kowloon-c' },
+  tct: { from: 'nte', direction: 'kowloon-e' },
+  smt: { from: 'nte', direction: 'tsuenwan' },
+  stg: { from: 'nte', direction: 'kowloon-w' },
+  tlt: { from: 'ntw', direction: 'tingkau' },
+  abt: { from: 'isc', direction: 'wanchai' },
+  tmr: { from: 'ntw', direction: 'tsuenwan' },
+  tpr: { from: 'nte', direction: 'kowloon' },
+  lamkam: { from: 'nte', direction: 'tsuenwan' },
+};
+const ISLAND_NODES = new Set(['isw', 'isc', 'ise', 'iss']);
+
+export function publishedDirection(leg) {
+  const id = leg.tunnel || leg.roadId;
+  if (!id) return null;
+  const harbour = ['cht', 'ehc', 'whc'].includes(id);
+  if (harbour) {
+    // Crossings are published both ways: from the island you head to Kowloon.
+    return ISLAND_NODES.has(leg.from) ? 'kowloon' : 'island';
+  }
+  const known = LEG_DIRECTIONS[id];
+  return known && known.from === leg.from ? known.direction : null;
+}
+
 export function directionFor(destination, locationId) {
   if (DESTINATION_DIRECTIONS[destination]) return DESTINATION_DIRECTIONS[destination];
   // Harbour crossings: island gantries feed the crossing towards Kowloon.

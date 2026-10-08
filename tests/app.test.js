@@ -600,9 +600,17 @@ test('live conditions from the transport department sit beside the tunnels', asy
           byDirection: { kowloon: { state: 'free', minutes: 4 }, island: { state: 'jam', minutes: 18 } },
         },
         ehc: { state: 'free', minutes: 9, reports: 2, byDirection: { kowloon: { state: 'free', minutes: 9 } } },
+        tlt: { state: 'free', minutes: 10, reports: 1, byDirection: { tingkau: { state: 'free', minutes: 10 } } },
+        whc: {
+          state: 'free',
+          minutes: 13,
+          reports: 2,
+          byDirection: { island: { state: 'free', minutes: 13 }, kowloon: { state: 'free', minutes: 11 } },
+        },
       },
       roads: {
         tmr: { state: 'slow', minutes: 22, reports: 2, byDirection: { tsuenwan: { state: 'slow', minutes: 22 } } },
+        lamkam: { state: 'slow', minutes: 28, reports: 1, byDirection: { tsuenwan: { state: 'slow', minutes: 28 } } },
       },
       incidents: [{
         id: '147614',
@@ -633,11 +641,21 @@ test('live conditions from the transport department sit beside the tunnels', asy
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-ntw' } }) } });
   assert.ok($('alt-list').innerHTML.includes('往荃灣 22 分鐘'), 'Tuen Mun Road carries a reading');
 
+  // a journey route adds up the readings of the directions it travels
+  $('from-select').value = 'nt-tm';
+  fire('from-select', 'change');
+  $('to-select').value = 'hki-cw';
+  fire('to-select', 'change');
+  const plan = $('plan-result').innerHTML;
+  assert.ok(plan.includes('沿路實測 23 分鐘'), 'Big Lam + the western crossing: 10 + 13');
+  assert.ok(plan.includes('現時最快'), 'and the quickest route is named');
+
   // a hypothetical time is not now, so live readings have no business showing
   setTime('12', '00');
   assert.ok(!$('alt-list').innerHTML.includes('往港島'), 'the reading goes when the hour is not now');
   assert.ok(!$('alt-list').innerHTML.includes('交通消息'), 'and so does the incident news');
   assert.ok($('live-traffic').innerHTML.includes('只喺'), 'with a word about why');
+  assert.ok(!$('plan-result').innerHTML.includes('沿路實測'), 'and the journey times go too');
 
   delete globalThis.location;
   delete globalThis.fetch;
