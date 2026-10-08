@@ -1,7 +1,7 @@
 // js/engine.js
 // Pure toll calculation. No DOM access, no side effects — importable by Node.
 // User-facing copy lives in js/i18n.js; this module returns period types only.
-import { TUNNELS, FLAT_TOLLS, TVT_FIXED, TVT_SCHEDULES } from './data.js';
+import { TUNNELS, FLAT_TOLLS, TVT_FIXED, TVT_SCHEDULES, CROSS_HARBOUR_IDS } from './data.js';
 
 const findSegment = (schedule, minutes) =>
   schedule.find((seg) => minutes >= seg.s && minutes <= seg.e);
@@ -79,4 +79,19 @@ export function getNextTransition({ tunnelId, vehicleId, dayType, minutes }) {
   if (idx < 0 || idx === segs.length - 1) return null;
   const next = segs[idx + 1];
   return { atMin: next.startMin, periodType: next.periodType, amount: next.firstAmount };
+}
+
+// Which of the three harbour crossings is cheapest for this vehicle at this
+// moment. Ties are returned in full — the crossings are often identical.
+export function getCrossHarbourComparison({ vehicleId, dayType, minutes }) {
+  const options = CROSS_HARBOUR_IDS.map((tunnelId) => ({
+    tunnelId,
+    amount: getToll({ tunnelId, vehicleId, dayType, minutes }).amount,
+  }));
+  const amount = Math.min(...options.map((o) => o.amount));
+  return {
+    amount,
+    cheapest: options.filter((o) => o.amount === amount).map((o) => o.tunnelId),
+    options,
+  };
 }

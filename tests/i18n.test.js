@@ -43,6 +43,12 @@ test('the hint template keeps all five placeholders in every language', () => {
   }
 });
 
+test('the tie note keeps its amount placeholder in every language', () => {
+  for (const lang of ['tc', 'sc', 'en']) {
+    assert.ok(UI[lang].compareTie.includes('{amount}'), `${lang}.compareTie missing {amount}`);
+  }
+});
+
 test('period labels cover every period type', () => {
   const periods = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
   for (const lang of ['tc', 'sc', 'en']) {

@@ -5,6 +5,10 @@
 // - https://www.td.gov.hk/tc/transport_in_hong_kong/tunnels_and_bridges_n/tlt/index.html
 // Rates as of October 2026.
 
+// The three harbour crossings share the time-varying scheme, so they are the
+// set a "cheapest crossing" comparison looks at.
+export const CROSS_HARBOUR_IDS = ['cht', 'ehc', 'whc'];
+
 const GROUP_TVT = { tc: '分時段收費', sc: '分时段收费', en: 'Time-varying toll' };
 const GROUP_FLAT = { tc: '劃一收費', sc: '划一收费', en: 'Flat rate' };
 

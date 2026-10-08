@@ -24,6 +24,7 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
   - Vehicle class selector (private car, motorcycle, taxi, goods vehicles, buses, etc.)
   - Date mode switch — pick a **specific date** (the weekday / Sun-and-public-holiday schedule follows it automatically) or a **date type** for a general rate; each mode remembers its own value
   - Hour and minute dropdowns for any time of day, a slider, plus a **back-to-now** button
+- **Cheapest harbour crossing** — a live three-row comparison of the red, eastern and western crossings for the current vehicle and time, with ties called out; click a row to switch
 - **Remembers your choice** — the last tunnel and vehicle class are restored on the next visit (localStorage)
 - **Three languages** — 繁體中文 / 简体中文 / English, picked automatically from the browser language and remembered once chosen
 - **Transition-aware pricing** — computes exact stepwise rates during transition windows (e.g. +$2 every 2 minutes for private cars), matching TD's minute-by-minute schedule

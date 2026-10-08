@@ -1,6 +1,6 @@
 // js/app.js
-import { TUNNELS, vehiclesFor } from './data.js';
-import { getToll, getDaySegments, getNextTransition } from './engine.js';
+import { TUNNELS, vehiclesFor, CROSS_HARBOUR_IDS } from './data.js';
+import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison } from './engine.js';
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 
@@ -190,6 +190,7 @@ function applyLanguage() {
   document.documentElement.lang = lang.htmlLang;
   document.title = copy.pageTitle;
   $('chart-title').textContent = copy.chartTitle;
+  $('compare-title').textContent = copy.compareTitle;
   $('label-tunnel').textContent = copy.labelTunnel;
   $('label-vehicle').textContent = copy.labelVehicle;
   $('label-date').textContent = copy.labelDate;
@@ -237,6 +238,28 @@ function renderResult(tunnel) {
     .replace('{amount}', next.amount.toFixed(2));
 }
 
+function renderCompare() {
+  const isCrossHarbour = CROSS_HARBOUR_IDS.includes(state.tunnelId);
+  $('compare-card').hidden = !isCrossHarbour;
+  if (!isCrossHarbour) return;
+
+  const copy = t();
+  const { amount, cheapest, options } = getCrossHarbourComparison(state);
+  $('compare-list').innerHTML = options.map((option) => {
+    const tunnel = TUNNELS.find((x) => x.id === option.tunnelId);
+    const best = cheapest.includes(option.tunnelId);
+    return `<li><button type="button" class="compare-row${best ? ' cheapest' : ''}"`
+      + ` data-tunnel-id="${option.tunnelId}"${best ? ' aria-current="true"' : ''}>`
+      + `<span class="compare-name">${esc(nameOf(tunnel))}</span>`
+      + `<span class="compare-price">HK$ ${option.amount.toFixed(2)}</span>`
+      + '</button></li>';
+  }).join('');
+
+  const tied = cheapest.length === CROSS_HARBOUR_IDS.length;
+  $('compare-note').hidden = !tied;
+  $('compare-note').textContent = tied ? copy.compareTie.replace('{amount}', amount.toFixed(2)) : '';
+}
+
 function renderChart() {
   const copy = t();
   const segs = getDaySegments(state);
@@ -273,6 +296,7 @@ function renderClock() {
 
 function renderToll() {
   renderResult(currentTunnel());
+  renderCompare();
   renderChart();
 }
 
@@ -335,6 +359,15 @@ function init() {
 
   $('tunnel-select').addEventListener('change', (e) => {
     state.tunnelId = e.target.value;
+    fillVehicleSelect();
+    saveSelection();
+    render();
+  });
+  $('compare-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-tunnel-id]');
+    if (!btn) return;
+    state.tunnelId = btn.dataset.tunnelId;
+    fillTunnelSelect();
     fillVehicleSelect();
     saveSelection();
     render();
