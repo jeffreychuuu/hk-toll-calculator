@@ -182,9 +182,10 @@ body {
 }
 .now-pill:not(.is-now) {
   background: #fff;
-  border-color: #bfe3cf;
+  border-color: #f0b478;
+  color: #c2410c;
 }
-.now-pill:not(.is-now):hover { background: #e7f6ee; }
+.now-pill:not(.is-now):hover { background: #fdf1df; }
 .now-dot {
   width: 7px;
   height: 7px;
