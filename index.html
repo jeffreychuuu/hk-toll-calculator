@@ -66,17 +66,17 @@
       </div>
 
       <div class="field">
-        <span class="field-label" id="label-daytype">日期類型</span>
-        <div class="segmented" id="daytype-toggle">
-          <button type="button" data-daytype="weekday">星期一至六（非假期）</button>
-          <button type="button" data-daytype="weekend">星期日及公眾假期</button>
+        <span class="field-label" id="label-date">日期</span>
+        <div class="date-row">
+          <input id="date-input" class="date-input" type="date">
+          <span class="daytype-pill" id="daytype-label">—</span>
         </div>
       </div>
 
       <div class="field">
         <div class="time-row">
           <span class="field-label" id="label-time">過海／通行時間</span>
-          <button type="button" class="link-btn" id="back-to-now">回到現在時間</button>
+          <button type="button" class="link-btn" id="back-to-now">回到現在</button>
         </div>
         <div class="time-selects">
           <select id="hour-select" aria-label="小時"></select>

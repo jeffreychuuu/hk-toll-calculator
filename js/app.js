@@ -1,7 +1,7 @@
 // js/app.js
 import { TUNNELS, vehiclesFor } from './data.js';
 import { getToll, getDaySegments, getNextTransition } from './engine.js';
-import { defaultDayType } from './holidays.js';
+import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
@@ -79,12 +79,22 @@ function saveLang() {
 const initialDayType = defaultDayType();
 const state = {
   lang: 'tc',
+  date: toDateKey(new Date()),
   tunnelId: 'cht',
   vehicleId: 'car',
   dayType: initialDayType.dayType,
   minutes: nowMinutes(),
   dataCurrent: initialDayType.dataCurrent,
 };
+
+// The weekday/weekend schedule follows the picked date, not a manual toggle:
+// Sundays and gazetted public holidays use the weekend schedule.
+function deriveDayType(dateKey) {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const weekend = date.getDay() === 0 || isPublicHoliday(date);
+  return { dayType: weekend ? 'weekend' : 'weekday', dataCurrent: inHolidayRange(date) };
+}
 
 // While true, the toll card follows the real clock. Any manual time selection
 // (slider or dropdowns) pins it; the back-to-now button releases it.
@@ -111,12 +121,10 @@ function fillVehicleSelect() {
   $('vehicle-select').value = state.vehicleId;
 }
 
-function fillDayTypeToggle() {
-  const labels = { weekday: t().dayWeekday, weekend: t().dayWeekend };
-  for (const btn of $('daytype-toggle').querySelectorAll('button')) {
-    btn.textContent = labels[btn.dataset.daytype];
-    btn.setAttribute('aria-pressed', String(btn.dataset.daytype === state.dayType));
-  }
+function renderDateType() {
+  $('date-input').value = state.date;
+  $('daytype-label').textContent = state.dayType === 'weekend' ? t().dayWeekend : t().dayWeekday;
+  $('holiday-notice').hidden = state.dataCurrent;
 }
 
 function fillLangMenu() {
@@ -152,7 +160,7 @@ function applyLanguage() {
   $('chart-title').textContent = copy.chartTitle;
   $('label-tunnel').textContent = copy.labelTunnel;
   $('label-vehicle').textContent = copy.labelVehicle;
-  $('label-daytype').textContent = copy.labelDayType;
+  $('label-date').textContent = copy.labelDate;
   $('label-time').textContent = copy.labelTime;
   $('back-to-now').textContent = copy.backToNow;
   $('holiday-notice').textContent = copy.notice;
@@ -232,10 +240,9 @@ function renderToll() {
 }
 
 function render() {
-  fillDayTypeToggle();
+  renderDateType();
   renderTime();
   renderToll();
-  $('holiday-notice').hidden = state.dataCurrent;
 }
 
 function selectTime(minutes) {
@@ -298,10 +305,16 @@ function init() {
     saveSelection();
     render();
   });
-  $('daytype-toggle').addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-daytype]');
-    if (!btn) return;
-    state.dayType = btn.dataset.daytype;
+  $('date-input').addEventListener('change', (e) => {
+    const value = e.target.value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      renderDateType();
+      return;
+    }
+    state.date = value;
+    const derived = deriveDayType(value);
+    state.dayType = derived.dayType;
+    state.dataCurrent = derived.dataCurrent;
     render();
   });
   $('hour-select').addEventListener('change', () => {
@@ -314,8 +327,11 @@ function init() {
   $('back-to-now').addEventListener('click', () => {
     following = true;
     state.minutes = nowMinutes();
-    renderTime();
-    renderToll();
+    state.date = toDateKey(new Date());
+    const derived = deriveDayType(state.date);
+    state.dayType = derived.dayType;
+    state.dataCurrent = derived.dataCurrent;
+    render();
   });
 
   render();
@@ -323,7 +339,16 @@ function init() {
   setInterval(() => {
     renderClock();
     if (!following) return;
-    state.minutes = nowMinutes();
+    const now = new Date();
+    state.minutes = now.getHours() * 60 + now.getMinutes();
+    const today = toDateKey(now);
+    if (today !== state.date) {
+      state.date = today;
+      const derived = deriveDayType(today);
+      state.dayType = derived.dayType;
+      state.dataCurrent = derived.dataCurrent;
+    }
+    renderDateType();
     renderTime();
     renderToll();
   }, 30000);

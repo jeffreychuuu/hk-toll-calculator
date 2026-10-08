@@ -42,8 +42,7 @@ const mkButton = (ds) => ({
   setAttribute(k, v) { if (k === 'aria-pressed') this.ariaPressed = v; },
   addEventListener() {}, closest() { return this; },
 });
-const daytypeButtons = ['weekday', 'weekend'].map((dt) => mkButton({ daytype: dt }));
-const buttonsFor = { 'daytype-toggle': daytypeButtons };
+const buttonsFor = {};
 
 const elements = new Map();
 function mk(id) {
@@ -70,8 +69,8 @@ function mk(id) {
 }
 for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amount', 'next-hint',
   'now-date', 'now-time', 'chart-bar', 'chart-marker', 'legend', 'tunnel-select', 'vehicle-select',
-  'daytype-toggle', 'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
-  'chart-title', 'label-tunnel', 'label-vehicle', 'label-daytype', 'label-time', 'lang-picker',
+  'date-input', 'daytype-label', 'hour-select', 'minute-select', 'time-slider', 'back-to-now',
+  'holiday-notice', 'chart-title', 'label-tunnel', 'label-vehicle', 'label-date', 'label-time', 'lang-picker',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
 globalThis.document = {
@@ -287,8 +286,9 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal($('label-tunnel').textContent, 'Tunnel');
   assert.equal($('label-vehicle').textContent, 'Vehicle class');
   assert.equal($('label-time').textContent, 'Crossing time');
+  assert.equal($('label-date').textContent, 'Date');
   assert.equal($('back-to-now').textContent, 'Back to now');
-  assert.equal(daytypeButtons[0].textContent, 'Mon–Sat (non-holiday)');
+  assert.equal($('daytype-label').textContent, 'Mon–Sat (non-holiday)');
   assert.equal($('result-title').textContent, 'Cross-Harbour Tunnel (Hung Hom)');
   assert.ok($('tunnel-select').innerHTML.includes('Tai Lam Tunnel'));
   assert.equal($('period-badge').textContent, 'Peak'); // 17:30 on a weekday is the red tunnel's peak
@@ -327,6 +327,64 @@ test('a non-Chinese browser language defaults to English', async () => {
   await import('../js/app.js?nav-en=1');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
   navigator.language = 'zh-TW';
+});
+
+test('the date picker defaults to today and shows the derived day type', async () => {
+  storage.delete('hk-toll-calculator.selection');
+  fakeNowMs = new RealDate(2026, 9, 8, 17, 30).getTime(); // Thursday
+  await import('../js/app.js?date-default=1');
+
+  assert.equal($('date-input').value, '2026-10-08');
+  assert.equal($('daytype-label').textContent, '星期一至六（非假期）');
+  assert.equal($('holiday-notice').hidden, true);
+});
+
+test('picking a Sunday switches to the weekend schedule', () => {
+  $('date-input').value = '2026-10-11'; // Sunday
+  fire('date-input', 'change');
+
+  assert.equal($('daytype-label').textContent, '星期日及公眾假期');
+  assert.equal($('price-amount').textContent, '25.00'); // 17:30 weekend normal window
+});
+
+test('picking a public holiday on a weekday switches to the weekend schedule', () => {
+  $('date-input').value = '2026-10-19'; // the day following Chung Yeung, a Monday
+  fire('date-input', 'change');
+
+  assert.equal($('daytype-label').textContent, '星期日及公眾假期');
+  assert.equal($('price-amount').textContent, '25.00');
+});
+
+test('an ordinary weekday keeps the weekday schedule', () => {
+  $('date-input').value = '2026-10-09'; // Friday
+  fire('date-input', 'change');
+
+  assert.equal($('daytype-label').textContent, '星期一至六（非假期）');
+  assert.equal($('price-amount').textContent, '40.00'); // 17:30 weekday peak
+});
+
+test('the notice appears only for dates outside the holiday data', () => {
+  $('date-input').value = '2028-01-01';
+  fire('date-input', 'change');
+  assert.equal($('holiday-notice').hidden, false);
+
+  $('date-input').value = '2026-10-09';
+  fire('date-input', 'change');
+  assert.equal($('holiday-notice').hidden, true);
+});
+
+test('back-to-now resets the date to today as well as the time', () => {
+  $('date-input').value = '2026-10-19';
+  fire('date-input', 'change');
+  assert.equal($('daytype-label').textContent, '星期日及公眾假期');
+
+  fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
+  fire('back-to-now', 'click');
+
+  assert.equal($('date-input').value, '2026-10-08');
+  assert.equal($('daytype-label').textContent, '星期一至六（非假期）');
+  assert.equal(shownTime(), '16:38');
+  assert.equal($('price-amount').textContent, '40.00'); // 16:38 weekday peak
 });
 
 test('a stale, string-named data module can never render undefined', async () => {
