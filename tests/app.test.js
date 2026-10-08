@@ -72,7 +72,7 @@ function mk(id) {
 }
 for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amount', 'next-hint',
   'now-date', 'now-time', 'chart-bar', 'chart-marker', 'legend', 'tunnel-select', 'vehicle-select',
-  'date-input', 'daytype-select',
+  'date-input', 'daytype-select', 'live-traffic',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
   'chart-title', 'lang-picker',
   'compare-note',
@@ -623,6 +623,8 @@ test('live conditions from the transport department sit beside the tunnels', asy
   assert.ok(list.includes('東區海底隧道(往柴灣方向)部分行車線封閉'));
   assert.ok(list.includes('更新於 22:57'), 'and the source is dated');
   assert.ok($('alt-categories').innerHTML.includes('⚠️'), 'the affected corridor is flagged');
+  assert.ok($('live-traffic').innerHTML.includes('往港島 18 分鐘'),
+    'the chosen tunnel\'s directions show on the headline card too');
 
   delete globalThis.location;
   delete globalThis.fetch;

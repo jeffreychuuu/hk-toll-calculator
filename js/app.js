@@ -138,7 +138,7 @@ async function loadTraffic() {
     const response = await fetch(TRAFFIC_ENDPOINT);
     if (!response.ok) return;
     traffic = await response.json();
-    renderAlternatives();
+    renderToll(); // the readings show on the headline card and in the rows
   } catch {
     // no live data is a normal state, not an error worth showing
   }
@@ -240,6 +240,7 @@ function applyLanguage() {
 function renderResult() {
   const copy = t();
   const { amount, periodType } = getToll(state);
+  $('live-traffic').innerHTML = trafficChip(state.tunnelId);
   const badge = $('period-badge');
   badge.textContent = copy.period[periodType];
   badge.className = `badge ${periodType}`;
