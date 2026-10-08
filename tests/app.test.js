@@ -79,8 +79,7 @@ for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amou
   'chart-title', 'label-tunnel', 'label-vehicle', 'label-date', 'label-category', 'label-time', 'lang-picker',
   'compare-note',
   'plan-card', 'plan-title', 'label-from', 'label-to', 'from-select', 'to-select', 'plan-result',
-  'alternatives', 'alt-title', 'alt-caption', 'alt-list', 'alt-toggle', 'alt-others',
-  'alt-categories', 'alt-other-caption', 'alt-other-list',
+  'alternatives', 'alt-title', 'alt-list', 'alt-categories',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
 globalThis.document = {
@@ -298,7 +297,6 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal($('lang-current').textContent, 'English');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
   assert.equal($('alt-title').textContent, 'Options for the same trip');
-  assert.equal($('alt-toggle').textContent, 'Other categories');
   assert.equal($('plan-title').textContent, 'Journey suggestion');
   assert.equal($('label-tunnel').textContent, 'Tunnel');
   assert.equal($('label-vehicle').textContent, 'Vehicle class');
@@ -474,7 +472,6 @@ test('the result card lists the ways to make the same trip, current tunnel first
   await import('../js/app.js?alt=1');
 
   assert.equal($('alternatives').hidden, false);
-  assert.ok($('alt-caption').textContent.includes('過海'), 'the category is named');
 
   const list = $('alt-list').innerHTML;
   assert.ok(list.includes('東區海底隧道（東隧）'));
@@ -486,14 +483,19 @@ test('the result card lists the ways to make the same trip, current tunnel first
   const current = list.slice(list.indexOf('海底隧道（紅隧）'), list.indexOf('東區海底隧道'));
   assert.ok(current.includes('現用'), 'marked as the current choice');
   assert.ok(current.includes('最平'), 'and as cheapest, because it is');
-  assert.equal($('alt-others').hidden, true, 'other categories start collapsed');
+  const chips = $('alt-categories').innerHTML;
+  assert.equal((chips.match(/data-group=/g) || []).length, 6, 'every corridor is one click away');
+  const harbourChip = chips.slice(chips.indexOf('data-group="harbour"'), chips.indexOf('data-group="kln-nte"'));
+  assert.ok(harbourChip.includes('aria-pressed="true"'), 'the selected tunnel\'s corridor is preselected');
 });
 
-test('a category is derived from the selected tunnel, not chosen', () => {
+test('the category selector follows the selected tunnel', () => {
   $('tunnel-select').value = 'lrt'; // Lion Rock: the Kowloon to East NT corridor
   fire('tunnel-select', 'change');
 
-  assert.ok($('alt-caption').textContent.includes('九龍 ↔ 新界東'));
+  const chips = $('alt-categories').innerHTML;
+  const kowloonChip = chips.slice(chips.indexOf('data-group="kln-nte"'), chips.indexOf('data-group="kln-ntw"'));
+  assert.ok(kowloonChip.includes('aria-pressed="true"'), 'its corridor is selected');
   const list = $('alt-list').innerHTML;
   assert.ok(list.includes('大老山隧道'));
   assert.ok(list.includes('沙田嶺／尖山／大圍隧道'), 'the Sha Tin Heights corridor belongs here too');
@@ -510,28 +512,21 @@ test('clicking an alternative switches the tunnel', () => {
   assert.ok(rows[0].includes('現用'), 'and marks it as the current choice');
 });
 
-test('other categories are a second step: names first, then that category', () => {
-  assert.equal($('alt-others').hidden, true);
-
-  fire('alt-toggle', 'click');
-  assert.equal($('alt-others').hidden, false);
-  assert.equal($('alt-toggle').getAttribute('aria-expanded'), 'true');
-
-  // first step: only the category names, never every option at once
-  const chips = $('alt-categories').innerHTML;
-  assert.equal((chips.match(/data-group=/g) || []).length, 5, 'the five other corridors');
-  assert.ok(chips.includes('過海'));
-  assert.ok(!$('alt-other-list').innerHTML.includes('西區海底隧道'), 'no harbour rows yet');
-
-  // second step: choosing a corridor shows that corridor only
+test('choosing another corridor swaps the list in one click', () => {
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'harbour' } }) } });
-  const rows = $('alt-other-list').innerHTML;
+
+  const rows = $('alt-list').innerHTML;
   assert.ok(rows.includes('西區海底隧道（西隧）'));
-  assert.ok(!rows.includes('大老山隧道'), 'nothing from the other corridors');
-  assert.ok($('alt-other-caption').textContent.includes('過海'));
+  assert.ok(rows.includes('東區海底隧道（東隧）'));
+  assert.ok(!rows.includes('大老山隧道'), 'nothing from other corridors');
+  assert.ok(!rows.includes('現用'), 'the selected tunnel belongs to another corridor');
 
   fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'nte-ntw' } }) } });
-  assert.ok($('alt-other-list').innerHTML.includes('城門隧道'), 'switching corridors swaps the rows');
+  assert.ok($('alt-list').innerHTML.includes('城門隧道'), 'another corridor, one click');
+
+  // and back to the selected tunnel's corridor
+  fire('alt-categories', 'click', { target: { closest: () => ({ dataset: { group: 'kln-nte' } }) } });
+  assert.ok($('alt-list').innerHTML.includes('現用'));
 });
 
 test('the result and the schedule sit on the same page, with the journey last', () => {

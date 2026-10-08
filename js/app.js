@@ -77,8 +77,7 @@ const CATEGORY_LABEL = {
   kowloon: 'cmpCatKowloon',
 };
 
-let showOtherCategories = false;
-let otherCategoryId = null;
+let altCategory = null;
 
 function loadLang() {
   try {
@@ -209,7 +208,6 @@ function applyLanguage() {
   document.title = copy.pageTitle;
   $('chart-title').textContent = copy.chartTitle;
   $('alt-title').textContent = copy.compareTitle;
-  $('alt-toggle').textContent = copy.compareOtherCategories;
   $('plan-title').textContent = copy.planTitle;
   $('label-from').textContent = copy.planFrom;
   $('label-to').textContent = copy.planTo;
@@ -297,42 +295,33 @@ function alternativeRows(group, canonical) {
 function renderAlternatives() {
   const copy = t();
   const section = $('alternatives');
-  const categoryId = categoryForTunnel(state.tunnelId);
+  const tunnelCategory = categoryForTunnel(state.tunnelId);
 
-  if (!categoryId) {
+  if (!tunnelCategory) {
     section.hidden = true;
     return;
   }
   section.hidden = false;
 
   const groups = compareGroups();
-  const active = groups.find((group) => group.id === categoryId);
-  const others = groups.filter((group) => group.id !== categoryId);
+  // The selector opens on the selected tunnel's own corridor; the visitor can
+  // switch to another corridor in one click without drilling down.
+  const activeId = groups.some((group) => group.id === altCategory) ? altCategory : tunnelCategory;
+  const active = groups.find((group) => group.id === activeId);
   const vehicle = canonicalFor(state.tunnelId, state.vehicleId);
 
-  const main = alternativeRows(active, vehicle);
-  $('alt-caption').textContent = copy[CATEGORY_LABEL[categoryId]];
-  $('alt-list').innerHTML = main.rows;
-  $('compare-note').hidden = !main.tied;
-  $('compare-note').textContent = main.tied
-    ? copy.compareTie.replace('{amount}', main.cheapest.toFixed(2))
-    : '';
-
-  $('alt-toggle').setAttribute('aria-expanded', String(showOtherCategories));
-  $('alt-others').hidden = !showOtherCategories;
-  if (!showOtherCategories) return;
-
-  // Second step: name the other corridors first, then show the chosen one only.
-  if (!others.some((group) => group.id === otherCategoryId)) otherCategoryId = null;
-  $('alt-categories').innerHTML = others.map((group) => {
-    const on = group.id === otherCategoryId;
+  $('alt-categories').innerHTML = groups.map((group) => {
+    const on = group.id === activeId;
     return `<button type="button" class="chip${on ? ' on' : ''}" data-group="${group.id}"`
       + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]])}</button>`;
   }).join('');
 
-  const browsed = others.find((group) => group.id === otherCategoryId);
-  $('alt-other-caption').textContent = browsed ? copy[CATEGORY_LABEL[browsed.id]] : '';
-  $('alt-other-list').innerHTML = browsed ? alternativeRows(browsed, vehicle).rows : '';
+  const rows = alternativeRows(active, vehicle);
+  $('alt-list').innerHTML = rows.rows;
+  $('compare-note').hidden = !rows.tied;
+  $('compare-note').textContent = rows.tied
+    ? copy.compareTie.replace('{amount}', rows.cheapest.toFixed(2))
+    : '';
 }
 
 const tunnelById = (id) => TUNNELS.find((x) => x.id === id);
@@ -508,6 +497,7 @@ function init() {
 
   $('tunnel-select').addEventListener('change', (e) => {
     state.tunnelId = e.target.value;
+    altCategory = null; // re-anchor the alternatives on the new corridor
     fillVehicleSelect();
     saveSelection();
     render();
@@ -520,35 +510,17 @@ function init() {
     state.toId = e.target.value;
     renderPlan();
   });
-  $('alt-toggle').addEventListener('click', () => {
-    showOtherCategories = !showOtherCategories;
+  $('alt-categories').addEventListener('click', (e) => {
+    const chip = e.target.closest('button[data-group]');
+    if (!chip || chip.dataset.group === altCategory) return;
+    altCategory = chip.dataset.group;
     renderAlternatives();
   });
   $('alt-list').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-tunnel-id]');
     if (!btn) return;
     state.tunnelId = btn.dataset.tunnelId;
-    if (btn.dataset.tunnelId && categoryForTunnel(btn.dataset.tunnelId) === otherCategoryId) {
-      otherCategoryId = null;
-    }
-    fillTunnelSelect();
-    fillVehicleSelect();
-    saveSelection();
-    render();
-  });
-  $('alt-categories').addEventListener('click', (e) => {
-    const chip = e.target.closest('button[data-group]');
-    if (!chip || chip.dataset.group === otherCategoryId) return;
-    otherCategoryId = chip.dataset.group;
-    renderAlternatives();
-  });
-  $('alt-others').addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-tunnel-id]');
-    if (!btn) return;
-    state.tunnelId = btn.dataset.tunnelId;
-    if (btn.dataset.tunnelId && categoryForTunnel(btn.dataset.tunnelId) === otherCategoryId) {
-      otherCategoryId = null;
-    }
+    altCategory = null;
     fillTunnelSelect();
     fillVehicleSelect();
     saveSelection();
