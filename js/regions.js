@@ -72,6 +72,36 @@ export const COMPARE_ROADS = FREE_EDGES
   .filter((edge, index, all) => all.findIndex((x) => x.name.en === edge.name.en) === index)
   .map((edge) => ({ id: `road:${edge.name.en}`, name: edge.name }));
 
+// The comparison is organised by the kind of trip, because only options that
+// serve the same trip are alternatives: a Tuen Mun driver compares Tai Lam
+// with Tuen Mun Road, never with the Lion Rock Tunnel.
+const CORRIDOR_CATEGORIES = [
+  { id: 'harbour', pairs: [['klc', 'isc'], ['kle', 'ise'], ['klw', 'isw']] },
+  { id: 'kln-nte', pairs: [['nte', 'klc'], ['nte', 'kle'], ['nte', 'klw']] },
+  { id: 'kln-ntw', pairs: [['ntw', 'klw']] },
+  { id: 'nte-ntw', pairs: [['ntw', 'nte']] },
+  { id: 'island', pairs: [['isw', 'isc'], ['isc', 'ise'], ['isc', 'iss']] },
+  { id: 'kowloon', pairs: [['klw', 'klc'], ['klc', 'kle']] },
+];
+
+const pairKey = (a, b) => [a, b].sort().join('-');
+
+export function compareGroups() {
+  return CORRIDOR_CATEGORIES.map((category) => {
+    const pairs = new Set(category.pairs.map(([a, b]) => pairKey(a, b)));
+    const tunnels = TUNNEL_EDGES
+      .filter((edge) => pairs.has(pairKey(edge.a, edge.b)))
+      .map((edge) => edge.tunnel);
+    const roads = [];
+    for (const edge of FREE_EDGES) {
+      if (!pairs.has(pairKey(edge.a, edge.b))) continue;
+      if (roads.some((road) => road.en === edge.name.en)) continue;
+      roads.push(edge.name);
+    }
+    return { id: category.id, tunnels, roads };
+  });
+}
+
 export const REGIONS = [
   // Hong Kong Island
   { id: 'hki-cw', area: 'island', nodes: ['isw', 'isc'], name: { tc: '中西區', sc: '中西区', en: 'Central and Western' } },

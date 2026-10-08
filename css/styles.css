@@ -190,13 +190,9 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 .plan-sep { color: var(--muted); margin: 0 2px; }
 .plan-disclaimer { margin: 6px 0 0; color: var(--muted); font-size: 0.78rem; }
 
-.compare-empty { margin: 8px 0 0; color: var(--muted); font-size: 0.9rem; }
 
 /* Toll comparison picker */
-.compare-picks { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
-.pick-group { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.pick-label { color: var(--muted); font-size: 0.78rem; font-weight: 600; min-width: 4.6em; }
-.pick-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.compare-picks { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
   border: 1px solid var(--line);
   background: #fff;
