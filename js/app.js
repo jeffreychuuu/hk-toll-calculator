@@ -125,7 +125,6 @@ let following = true;
 let datePinned = false;
 let dayTypePinned = false; // set when the visitor overrides the day type by hand
 let altCategory = null;   // which corridor the alternatives list is showing
-const currentTunnel = () => TUNNELS.find((x) => x.id === state.tunnelId);
 
 function fillTunnelSelect() {
   const copy = t();
@@ -220,13 +219,9 @@ function applyLanguage() {
   renderFooter();
 }
 
-function renderResult(tunnel) {
+function renderResult() {
   const copy = t();
   const { amount, periodType } = getToll(state);
-  $('result-title').textContent = nameOf(tunnel);
-  $('result-subtitle').textContent =
-    `${$('vehicle-select').selectedOptions[0].textContent} • ${
-      state.dayType === 'weekend' ? copy.dayWeekend : copy.dayWeekday}`;
   const badge = $('period-badge');
   badge.textContent = copy.period[periodType];
   badge.className = `badge ${periodType}`;
@@ -415,14 +410,8 @@ function fillTimeSelects() {
   $('minute-select').innerHTML = Array.from({ length: 60 }, (_, m) => `<option value="${two(m)}">${two(m)}</option>`).join('');
 }
 
-function renderClock() {
-  const now = new Date();
-  $('now-date').textContent = fmtDate(now);
-  $('now-time').textContent = fmtTime(now.getHours() * 60 + now.getMinutes());
-}
-
 function renderToll() {
-  renderResult(currentTunnel());
+  renderResult();
   renderAlternatives();
   renderChart();
 }
@@ -552,9 +541,7 @@ function init() {
   });
 
   render();
-  renderClock();
   setInterval(() => {
-    renderClock();
     if (!following) return;
     const now = new Date();
     state.minutes = now.getHours() * 60 + now.getMinutes();
