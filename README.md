@@ -23,6 +23,7 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
   - Day type: auto-detects Hong Kong public holidays, with manual override (Mon–Sat vs Sun & public holiday)
   - Hour and minute dropdowns for any time of day, plus a **back-to-now** button
 - **Remembers your choice** — the last tunnel and vehicle class are restored on the next visit (localStorage)
+- **Three languages** — 繁體中文 / 简体中文 / English, picked automatically from the browser language and remembered once chosen
 - **Transition-aware pricing** — computes exact stepwise rates during transition windows (e.g. +$2 every 2 minutes for private cars), matching TD's minute-by-minute schedule
 - **Pure static** — no backend, no build step, no runtime dependencies
 
@@ -49,6 +50,7 @@ hk-toll-calculator/
 ├── js/
 │   ├── data.js         # toll schedules + vehicle classes
 │   ├── holidays.js     # HK public holiday dates
+│   ├── i18n.js         # UI copy + bundle language detection
 │   ├── engine.js       # pure toll calculation functions
 │   └── app.js          # UI wiring & rendering
 ├── tests/              # Node test runner suites

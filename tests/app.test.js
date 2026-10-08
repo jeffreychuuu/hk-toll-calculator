@@ -14,6 +14,14 @@ class FakeDate extends RealDate {
 }
 globalThis.Date = FakeDate;
 
+// Node 24 exposes a getter-only `navigator`; redefine it so the default
+// language is deterministic instead of the runtime's 'en-US'.
+Object.defineProperty(globalThis, 'navigator', {
+  value: { language: 'zh-TW' },
+  configurable: true,
+  writable: true,
+});
+
 const storage = new Map();
 let storageFails = false;
 globalThis.localStorage = {
@@ -29,20 +37,23 @@ globalThis.localStorage = {
 };
 const STORAGE_KEY = 'hk-toll-calculator.selection';
 
-const daytypeButtons = ['weekday', 'weekend'].map((dt) => ({
-  dataset: { daytype: dt }, ariaPressed: null,
+const mkButton = (ds) => ({
+  dataset: ds, ariaPressed: null, textContent: '', disabled: false,
   setAttribute(k, v) { if (k === 'aria-pressed') this.ariaPressed = v; },
   addEventListener() {}, closest() { return this; },
-}));
+});
+const daytypeButtons = ['weekday', 'weekend'].map((dt) => mkButton({ daytype: dt }));
+const langButtons = ['tc', 'sc', 'en'].map((lang) => mkButton({ lang }));
+const buttonsFor = { 'daytype-toggle': daytypeButtons, 'lang-switch': langButtons };
 
 const elements = new Map();
 function mk(id) {
   return {
-    id, _innerHTML: '', textContent: '', hidden: false, className: '', value: '', style: {},
+    id, _innerHTML: '', textContent: '', hidden: false, className: '', value: '', style: {}, disabled: false,
     _handlers: {},
     addEventListener(t, h) { this._handlers[t] = h; },
     setAttribute() {},
-    querySelectorAll(sel) { return sel === 'button' ? daytypeButtons : []; },
+    querySelectorAll(sel) { return sel === 'button' ? (buttonsFor[id] || []) : []; },
     closest() { return null; },
     get innerHTML() { return this._innerHTML; },
     set innerHTML(v) { this._innerHTML = v; },
@@ -55,17 +66,23 @@ function mk(id) {
 }
 for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amount', 'next-hint',
   'now-date', 'now-time', 'chart-bar', 'chart-marker', 'legend', 'tunnel-select', 'vehicle-select',
-  'daytype-toggle', 'hour-select', 'minute-select', 'back-to-now', 'holiday-notice']) elements.set(id, mk(id));
+  'daytype-toggle', 'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
+  'chart-title', 'label-tunnel', 'label-vehicle', 'label-daytype', 'label-time', 'lang-switch',
+  'site-footer']) elements.set(id, mk(id));
 
-globalThis.document = { getElementById: (id) => elements.get(id) };
+globalThis.document = {
+  getElementById: (id) => elements.get(id),
+  documentElement: { lang: '' },
+  title: '',
+};
 let intervalCb = null;
 globalThis.setInterval = (fn) => { intervalCb = fn; return 1; };
 
 const $ = (id) => elements.get(id);
-const fire = (id, type) => {
+const fire = (id, type, extra = {}) => {
   const handler = $(id)._handlers[type];
   assert.ok(handler, `#${id} has a ${type} handler`);
-  handler({ target: $(id) });
+  handler({ target: $(id), ...extra });
 };
 const setTime = (hh, mm) => {
   $('hour-select').value = hh;
@@ -117,6 +134,27 @@ test('the clock label always tracks real time, even when following is off', () =
   fakeNowMs = new RealDate(2026, 9, 8, 18, 5).getTime();
   intervalCb();
   assert.equal($('now-time').textContent, '18:05');
+});
+
+test('the slider and the hour/minute dropdowns stay in sync', () => {
+  $('time-slider').value = '450'; // 07:30
+  fire('time-slider', 'input');
+  assert.equal(shownTime(), '07:30');
+  assert.equal($('price-amount').textContent, '22.00');
+
+  setTime('19', '16');
+  assert.equal($('time-slider').value, '1156');
+  assert.equal($('price-amount').textContent, '22.00');
+});
+
+test('the back-to-now button resets the slider too', () => {
+  setTime('10', '30');
+  assert.equal($('time-slider').value, '630');
+
+  fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
+  fire('back-to-now', 'click');
+  assert.equal(shownTime(), '16:38');
+  assert.equal($('time-slider').value, '998');
 });
 
 test('the back-to-now button returns to the current time and resumes following', () => {
@@ -177,4 +215,58 @@ test('storage failures do not break rendering', async () => {
   assert.equal($('result-title').textContent, '海底隧道（紅隧）');
   assert.equal($('vehicle-select').value, 'car');
   storageFails = false;
+});
+
+test('the language switcher offers exactly three languages', () => {
+  assert.deepEqual(langButtons.map((b) => b.dataset.lang), ['tc', 'sc', 'en']);
+});
+
+test('choosing English re-renders every label and the data names', () => {
+  fire('lang-switch', 'click', { target: langButtons[2] });
+
+  assert.equal(document.documentElement.lang, 'en');
+  assert.equal(document.title, 'HK Toll Calculator');
+  assert.equal($('chart-title').textContent, '24-hour toll period chart');
+  assert.equal($('label-tunnel').textContent, 'Tunnel');
+  assert.equal($('label-vehicle').textContent, 'Vehicle class');
+  assert.equal($('label-time').textContent, 'Crossing time');
+  assert.equal($('back-to-now').textContent, 'Back to now');
+  assert.equal(daytypeButtons[0].textContent, 'Mon–Sat (non-holiday)');
+  assert.equal($('result-title').textContent, 'Cross-Harbour Tunnel (Hung Hom)');
+  assert.ok($('tunnel-select').innerHTML.includes('Tai Lam Tunnel'));
+  assert.equal($('period-badge').textContent, 'Peak'); // 17:30 on a weekday is the red tunnel's peak
+});
+
+test('choosing Simplified Chinese re-renders the labels', () => {
+  fire('lang-switch', 'click', { target: langButtons[1] });
+  assert.equal(document.documentElement.lang, 'zh-Hans');
+  assert.equal($('chart-title').textContent, '24小时收费时段分布图');
+  assert.equal($('label-tunnel').textContent, '选择隧道');
+  assert.equal($('result-title').textContent, '海底隧道（红隧）');
+});
+
+test('the chosen language is stored', () => {
+  fire('lang-switch', 'click', { target: langButtons[0] });
+  assert.equal(storage.get('hk-toll-calculator.lang'), 'tc');
+});
+
+test('a saved language is restored on load', async () => {
+  storage.set('hk-toll-calculator.lang', 'en');
+  await import('../js/app.js?lang-en=1');
+  assert.equal($('chart-title').textContent, '24-hour toll period chart');
+  assert.equal(langButtons[2].ariaPressed, 'true');
+});
+
+test('an unsupported saved language falls back to detection', async () => {
+  storage.set('hk-toll-calculator.lang', 'klingon');
+  await import('../js/app.js?lang-bogus=1');
+  assert.equal($('chart-title').textContent, '24小時收費時段分佈圖');
+});
+
+test('a non-Chinese browser language defaults to English', async () => {
+  storage.delete('hk-toll-calculator.lang');
+  navigator.language = 'en-GB';
+  await import('../js/app.js?nav-en=1');
+  assert.equal($('chart-title').textContent, '24-hour toll period chart');
+  navigator.language = 'zh-TW';
 });
