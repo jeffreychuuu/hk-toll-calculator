@@ -17,6 +17,9 @@
 
 * { box-sizing: border-box; }
 
+/* Author `display` rules beat the UA rule for [hidden], so make it explicit. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background: var(--bg);
@@ -297,6 +300,9 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 @media (max-width: 560px) {
   .segmented { flex-direction: column; border-radius: 16px; }
   .segmented button { border-radius: 12px; padding: 10px 12px; text-align: left; }
+  /* the mode switch stays a single row whatever the width */
+  .mode-toggle { flex-direction: row; border-radius: 999px; }
+  .mode-toggle button { border-radius: 999px; padding: 9px 8px; text-align: center; }
 }
 
 .notice { margin: 0; color: #a2650f; font-size: 0.85rem; }

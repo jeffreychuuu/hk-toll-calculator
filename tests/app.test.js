@@ -43,7 +43,8 @@ const mkButton = (ds) => ({
   addEventListener() {}, closest() { return this; },
 });
 const daytypeButtons = ['weekday', 'weekend'].map((dt) => mkButton({ daytype: dt }));
-const buttonsFor = { 'daytype-toggle': daytypeButtons };
+const modeButtons = ['date', 'category'].map((m) => mkButton({ mode: m }));
+const buttonsFor = { 'daytype-toggle': daytypeButtons, 'mode-toggle': modeButtons };
 
 const elements = new Map();
 function mk(id) {
@@ -70,8 +71,9 @@ function mk(id) {
 }
 for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amount', 'next-hint',
   'now-date', 'now-time', 'chart-bar', 'chart-marker', 'legend', 'tunnel-select', 'vehicle-select',
-  'date-input', 'daytype-toggle', 'hour-select', 'minute-select', 'time-slider', 'back-to-now',
-  'holiday-notice', 'chart-title', 'label-tunnel', 'label-vehicle', 'label-date', 'label-time', 'lang-picker',
+  'date-input', 'date-field', 'category-field', 'mode-toggle', 'daytype-toggle',
+  'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
+  'chart-title', 'label-tunnel', 'label-vehicle', 'label-date', 'label-category', 'label-time', 'lang-picker',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
 globalThis.document = {
@@ -198,7 +200,11 @@ test('the selection is saved to localStorage when it changes', () => {
   fire('tunnel-select', 'change');
   $('vehicle-select').value = 'moto';
   fire('vehicle-select', 'change');
-  assert.deepEqual(JSON.parse(storage.get(STORAGE_KEY)), { tunnelId: 'tlt', vehicleId: 'moto' });
+  const saved = JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(saved.tunnelId, 'tlt');
+  assert.equal(saved.vehicleId, 'moto');
+  assert.equal(saved.mode, 'date');
+  assert.equal(saved.category, 'weekday');
 });
 
 test('a saved selection is restored on load', async () => {
@@ -330,151 +336,126 @@ test('a non-Chinese browser language defaults to English', async () => {
   navigator.language = 'zh-TW';
 });
 
-test('the date picker defaults to today and shows the derived day type', async () => {
+test('the app starts in the date mode with today picked', async () => {
   storage.delete('hk-toll-calculator.selection');
   fakeNowMs = new RealDate(2026, 9, 8, 17, 30).getTime(); // Thursday
-  await import('../js/app.js?date-default=1');
+  await import('../js/app.js?mode-default=1');
 
+  assert.equal(modeButtons[0].ariaPressed, 'true', '指定日期 is the default mode');
+  assert.equal(modeButtons[1].ariaPressed, 'false');
+  assert.equal($('date-field').hidden, false);
+  assert.equal($('category-field').hidden, true);
   assert.equal($('date-input').value, '2026-10-08');
-  assert.equal(daytypeButtons[0].ariaPressed, 'true', 'the control shows the weekday schedule');
-  assert.equal($('holiday-notice').hidden, true);
+  assert.equal($('price-amount').textContent, '40.00'); // weekday peak at 17:30
 });
 
-test('picking a Sunday switches to the weekend schedule', () => {
-  $('date-input').value = '2026-10-11'; // Sunday
+test('picking a Sunday in the date mode uses the weekend schedule', () => {
+  $('date-input').value = '2026-10-11';
   fire('date-input', 'change');
-
-  assert.equal(daytypeButtons[1].ariaPressed, 'true');
-  assert.equal($('price-amount').textContent, '25.00'); // 17:30 weekend normal window
-});
-
-test('picking a public holiday on a weekday switches to the weekend schedule', () => {
-  $('date-input').value = '2026-10-19'; // the day following Chung Yeung, a Monday
-  fire('date-input', 'change');
-
-  assert.equal(daytypeButtons[1].ariaPressed, 'true');
   assert.equal($('price-amount').textContent, '25.00');
 });
 
-test('an ordinary weekday keeps the weekday schedule', () => {
-  $('date-input').value = '2026-10-09'; // Friday
+test('picking a public holiday in the date mode uses the weekend schedule', () => {
+  $('date-input').value = '2026-10-19'; // the day following Chung Yeung, a Monday
   fire('date-input', 'change');
-
-  assert.equal(daytypeButtons[0].ariaPressed, 'true');
-  assert.equal($('price-amount').textContent, '40.00'); // 17:30 weekday peak
+  assert.equal($('price-amount').textContent, '25.00');
 });
 
-test('the notice appears only for dates outside the holiday data', () => {
+test('the notice appears only in the date mode and only outside the holiday data', () => {
   $('date-input').value = '2028-01-01';
   fire('date-input', 'change');
   assert.equal($('holiday-notice').hidden, false);
 
-  $('date-input').value = '2026-10-09';
-  fire('date-input', 'change');
-  assert.equal($('holiday-notice').hidden, true);
+  fire('mode-toggle', 'click', { target: modeButtons[1] }); // category mode
+  assert.equal($('holiday-notice').hidden, true, 'the category mode does not depend on a date');
+
+  fire('mode-toggle', 'click', { target: modeButtons[0] }); // back to the date mode
+  assert.equal($('holiday-notice').hidden, false);
 });
 
-test('back-to-now resets the date to today as well as the time', () => {
-  $('date-input').value = '2026-10-19';
-  fire('date-input', 'change');
-  assert.equal(daytypeButtons[1].ariaPressed, 'true');
+test('the category mode prices the chosen category without a date', () => {
+  fire('mode-toggle', 'click', { target: modeButtons[1] });
 
+  assert.equal($('date-field').hidden, true);
+  assert.equal($('category-field').hidden, false);
+
+  fire('daytype-toggle', 'click', { target: daytypeButtons[1] }); // weekend
+  assert.equal($('price-amount').textContent, '25.00');
+
+  fire('daytype-toggle', 'click', { target: daytypeButtons[0] }); // weekday
+  assert.equal($('price-amount').textContent, '40.00');
+});
+
+test('the two modes remember their own values', () => {
+  // category mode currently holds 平日; give it a distinct value
+  fire('mode-toggle', 'click', { target: modeButtons[1] });
+  fire('daytype-toggle', 'click', { target: daytypeButtons[1] }); // weekend
+  assert.equal($('price-amount').textContent, '25.00');
+
+  // switch to the date mode: its own date is still in place
+  fire('mode-toggle', 'click', { target: modeButtons[0] });
+  assert.equal($('date-input').value, '2028-01-01');
+  assert.equal($('price-amount').textContent, '40.00'); // a Saturday, so the weekday schedule applies
+
+  // back to the category mode: 星期日及公眾假期 is still selected
+  fire('mode-toggle', 'click', { target: modeButtons[1] });
+  assert.equal(daytypeButtons[1].ariaPressed, 'true');
+  assert.equal($('price-amount').textContent, '25.00');
+});
+
+test('back-to-now resets the date in the date mode', () => {
+  fire('mode-toggle', 'click', { target: modeButtons[0] });
   fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
   fire('back-to-now', 'click');
 
   assert.equal($('date-input').value, '2026-10-08');
-  assert.equal(daytypeButtons[0].ariaPressed, 'true');
   assert.equal(shownTime(), '16:38');
   assert.equal($('price-amount').textContent, '40.00'); // 16:38 weekday peak
+  assert.equal($('back-to-now').disabled, true);
 });
 
-test('picking a date enables back-to-now', () => {
-  $('date-input').value = '2026-10-19';
+test('back-to-now leaves the category choice alone', () => {
+  fire('mode-toggle', 'click', { target: modeButtons[1] });
+  fire('daytype-toggle', 'click', { target: daytypeButtons[1] }); // weekend
+
+  setTime('10', '30'); // pin the time so back-to-now has something to do
+  fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
+  fire('back-to-now', 'click');
+
+  assert.equal(shownTime(), '16:38');
+  assert.equal(daytypeButtons[1].ariaPressed, 'true', 'the generic category is not tied to now');
+  assert.equal($('price-amount').textContent, '25.00');
+});
+
+test('the clock tick rolls the date only in the date mode', () => {
+  fire('mode-toggle', 'click', { target: modeButtons[0] });
+  $('date-input').value = '2026-10-11';
   fire('date-input', 'change');
-  assert.equal($('back-to-now').disabled, false, 'back-to-now must be clickable after a date is picked');
-});
-
-test('a picked date survives the clock tick', () => {
-  $('date-input').value = '2026-10-19';
-  fire('date-input', 'change');
-  assert.equal($('date-input').value, '2026-10-19');
-
-  fakeNowMs = new RealDate(2026, 9, 20, 0, 5).getTime(); // past midnight, next day
-  intervalCb();
-
-  assert.equal($('date-input').value, '2026-10-19', 'the tick must not overwrite a picked date');
-  assert.equal(daytypeButtons[1].ariaPressed, 'true');
-});
-
-test('the clock tick still rolls the date over when no date was picked', () => {
-  fire('back-to-now', 'click'); // clear both pins
-  fakeNowMs = new RealDate(2026, 9, 8, 23, 59).getTime();
-  intervalCb();
-  assert.equal($('date-input').value, '2026-10-08');
+  fire('back-to-now', 'click'); // unpin
 
   fakeNowMs = new RealDate(2026, 9, 9, 0, 1).getTime();
   intervalCb();
   assert.equal($('date-input').value, '2026-10-09');
-  assert.equal(daytypeButtons[0].ariaPressed, 'true');
+
+  fire('mode-toggle', 'click', { target: modeButtons[1] });
+  fakeNowMs = new RealDate(2026, 9, 10, 0, 1).getTime();
+  intervalCb();
+  assert.equal($('date-input').value, '2026-10-09', 'the category mode never moves the date');
 });
 
-test('back-to-now clears a manually picked date', () => {
-  $('date-input').value = '2027-01-01'; // a public holiday
+test('a picked date is not overwritten by the clock tick', () => {
+  fire('mode-toggle', 'click', { target: modeButtons[0] });
+  $('date-input').value = '2026-10-19'; // a Monday public holiday
   fire('date-input', 'change');
-  assert.equal($('back-to-now').disabled, false);
-
-  fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
-  fire('back-to-now', 'click');
-
-  assert.equal($('date-input').value, '2026-10-08');
-  assert.equal(daytypeButtons[0].ariaPressed, 'true');
-  assert.equal($('back-to-now').disabled, true);
-});
-
-test('the category control shows the schedule for the current date', () => {
-  assert.equal(daytypeButtons[0].ariaPressed, 'true'); // Thu 2026-10-08
-  assert.equal(daytypeButtons[1].ariaPressed, 'false');
-});
-
-test('picking a date moves the control to that date\'s schedule', () => {
-  $('date-input').value = '2026-10-11'; // Sunday
-  fire('date-input', 'change');
-
-  assert.equal(daytypeButtons[1].ariaPressed, 'true');
-  assert.equal(daytypeButtons[0].ariaPressed, 'false');
-});
-
-test('clicking the other category overrides the picked date', () => {
-  $('date-input').value = '2026-10-11'; // Sunday -> weekend by default
-  fire('date-input', 'change');
+  setTime('10', '30'); // weekend normal window, so the schedule is visible in the price
+  assert.equal($('back-to-now').disabled, false, 'a picked date must be releasable');
   assert.equal($('price-amount').textContent, '25.00');
 
-  fire('daytype-toggle', 'click', { target: daytypeButtons[0] }); // weekday
+  fakeNowMs = new RealDate(2026, 9, 20, 0, 5).getTime();
+  intervalCb();
 
-  assert.equal(daytypeButtons[0].ariaPressed, 'true');
-  assert.equal($('price-amount').textContent, '40.00'); // weekday peak at 17:30
-});
-
-test('changing the date re-derives the category', () => {
-  fire('daytype-toggle', 'click', { target: daytypeButtons[1] }); // weekend override
-  assert.equal(daytypeButtons[1].ariaPressed, 'true');
-
-  $('date-input').value = '2026-10-09'; // Friday
-  fire('date-input', 'change');
-
-  assert.equal(daytypeButtons[0].ariaPressed, 'true', 'the new date decides the schedule');
-});
-
-test('back-to-now returns the control to today\'s schedule', () => {
-  $('date-input').value = '2026-10-11'; // Sunday
-  fire('date-input', 'change');
-  assert.equal(daytypeButtons[1].ariaPressed, 'true');
-
-  fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime(); // Thursday
-  fire('back-to-now', 'click');
-
-  assert.equal(daytypeButtons[0].ariaPressed, 'true');
-  assert.equal($('back-to-now').disabled, true);
+  assert.equal($('date-input').value, '2026-10-19', 'the tick must not overwrite a picked date');
+  assert.equal($('price-amount').textContent, '25.00'); // still the holiday schedule
 });
 
 test('a stale, string-named data module can never render undefined', async () => {

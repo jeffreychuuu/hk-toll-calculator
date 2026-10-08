@@ -66,10 +66,19 @@
       </div>
 
       <div class="field">
-        <span class="field-label" id="label-date">日期</span>
-        <div class="date-row">
-          <input id="date-input" class="date-input" type="date">
+        <div class="segmented mode-toggle" id="mode-toggle">
+          <button type="button" data-mode="date">指定日期</button>
+          <button type="button" data-mode="category">日期類型</button>
         </div>
+      </div>
+
+      <div class="field" id="date-field">
+        <span class="field-label" id="label-date">日期</span>
+        <input id="date-input" class="date-input" type="date">
+      </div>
+
+      <div class="field" id="category-field">
+        <span class="field-label" id="label-category">日期類型</span>
         <div class="segmented" id="daytype-toggle">
           <button type="button" data-daytype="weekday">星期一至六（非假期）</button>
           <button type="button" data-daytype="weekend">星期日及公眾假期</button>
