@@ -153,9 +153,37 @@ body {
 .chart-controls .date-input { width: auto; min-width: 9rem; padding: 6px 10px; font-size: 0.85rem; }
 .time-selects .time-colon { color: var(--muted); font-weight: 700; }
 .chart-controls .link-btn { font-size: 0.82rem; }
+/* A live chip that appears only when the page is describing the present */
+.now-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  background: #e7f6ee;
+  color: #157a4d;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.now-chip[hidden] { display: none; }
+.now-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #1aa564;
+  animation: now-pulse 1.7s ease-in-out infinite;
+}
+@keyframes now-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.65); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .now-dot { animation: none; }
+}
 
 /* The bar is the slider: an invisible range sits on top of it */
-.chart { position: relative; height: 34px; margin: 12px 0 0; }
+.chart { position: relative; height: 34px; margin: 22px 0 0; }
 #time-slider {
   position: absolute;
   inset: 0;
@@ -265,10 +293,19 @@ div.compare-row:hover { background: transparent; }
 .chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 10px; }
 .chart-head h2 { flex: 1 1 100%; }
 .chart-head h2 { font-size: 1rem; margin: 0; }
-.now-label { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
-.now-label strong { color: var(--focus); font-size: 1rem; font-variant-numeric: tabular-nums; }
 
-.chart { position: relative; height: 34px; margin: 12px 0 0; }
+.marker-label {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.marker-label.now { color: #157a4d; }
+
 .chart-bar { display: flex; height: 100%; border-radius: 8px; overflow: hidden; }
 .chart-bar .seg { height: 100%; }
 .seg.non-peak { background: var(--green); }
