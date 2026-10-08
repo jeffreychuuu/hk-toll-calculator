@@ -4,9 +4,11 @@ import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison }
 import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 import { compareGroups, categoryForTunnel } from './regions.js';
-import { incidentsForCorridor } from './traffic.js';
+import { incidentsForCorridor, GANTRIES } from './traffic.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
+// Past this many starting gantries, name none of them and say so instead.
+const MAX_NAMED_ORIGINS = 4;
 const FOOTER_LINKS = ['tvt', 'flat', 'taiLam'];
 
 const $ = (id) => document.getElementById(id);
@@ -346,14 +348,25 @@ function trafficChip(kind, id) {
 
   // Each direction stands on its own — one way can be jammed while the other
   // runs free, and a single colour for both would hide exactly that. They are
-  // stacked, one per line, so neither reads as the other.
+  // stacked, one per line, so neither reads as the other. The reading also says
+  // where it is measured from: the department times a route from a gantry, not
+  // from the tunnel mouth.
   const readings = sides.map(([direction, side]) => {
     const place = copy[DIRECTION_LABEL[direction]] || direction;
+    const origins = side.origins || [];
+    const names = origins.map((id) => (GANTRIES[id] ? GANTRIES[id][state.lang] : null));
+    // Name the gantries only when they are all known and few; otherwise say the
+    // reading comes from the district approaches.
+    const named = origins.length > 0 && origins.length <= MAX_NAMED_ORIGINS && names.every(Boolean);
+    const from = named
+      ? copy.trafficFrom.replace('{places}', names.join('、'))
+      : copy.trafficFromMany;
     const minutes = side.minutes > 0
       ? ` ${esc(copy.trafficMinutes.replace('{minutes}', String(side.minutes)))}`
       : '';
     return chip(side.state, `${esc(copy.trafficTowards.replace('{place}', place))} `
-      + `${esc(condition(side.state))}${minutes}`);
+      + `${esc(condition(side.state))}${minutes}`
+      + (origins.length ? ` · ${esc(from)}` : ''));
   });
   return readings.length === 1
     ? readings[0]
