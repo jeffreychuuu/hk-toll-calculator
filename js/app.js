@@ -125,6 +125,7 @@ function renderTime() {
   const mm = String(state.minutes % 60).padStart(2, '0');
   $('hour-select').value = hh;
   $('minute-select').value = mm;
+  $('time-slider').value = String(state.minutes);
   $('back-to-now').disabled = following;
 }
 
@@ -183,6 +184,13 @@ function init() {
   };
   $('hour-select').addEventListener('change', applyTimeSelects);
   $('minute-select').addEventListener('change', applyTimeSelects);
+  $('time-slider').addEventListener('input', (e) => {
+    following = false;
+    state.minutes = Number(e.target.value);
+    renderTime();
+    renderResult(currentTunnel());
+    renderChart();
+  });
   $('back-to-now').addEventListener('click', () => {
     following = true;
     state.minutes = nowMinutes();

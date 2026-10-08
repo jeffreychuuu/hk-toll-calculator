@@ -55,7 +55,7 @@ function mk(id) {
 }
 for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amount', 'next-hint',
   'now-date', 'now-time', 'chart-bar', 'chart-marker', 'legend', 'tunnel-select', 'vehicle-select',
-  'daytype-toggle', 'hour-select', 'minute-select', 'back-to-now', 'holiday-notice']) elements.set(id, mk(id));
+  'daytype-toggle', 'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice']) elements.set(id, mk(id));
 
 globalThis.document = { getElementById: (id) => elements.get(id) };
 let intervalCb = null;
@@ -117,6 +117,27 @@ test('the clock label always tracks real time, even when following is off', () =
   fakeNowMs = new RealDate(2026, 9, 8, 18, 5).getTime();
   intervalCb();
   assert.equal($('now-time').textContent, '18:05');
+});
+
+test('the slider and the hour/minute dropdowns stay in sync', () => {
+  $('time-slider').value = '450'; // 07:30
+  fire('time-slider', 'input');
+  assert.equal(shownTime(), '07:30');
+  assert.equal($('price-amount').textContent, '22.00');
+
+  setTime('19', '16');
+  assert.equal($('time-slider').value, '1156');
+  assert.equal($('price-amount').textContent, '22.00');
+});
+
+test('the back-to-now button resets the slider too', () => {
+  setTime('10', '30');
+  assert.equal($('time-slider').value, '630');
+
+  fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
+  fire('back-to-now', 'click');
+  assert.equal(shownTime(), '16:38');
+  assert.equal($('time-slider').value, '998');
 });
 
 test('the back-to-now button returns to the current time and resumes following', () => {
