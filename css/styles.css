@@ -154,21 +154,6 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
   line-height: 1.5;
 }
 
-/* Section tabs — one output section at a time */
-.view-tabs { display: flex; gap: 4px; background: #fff; border-radius: 999px; padding: 3px; }
-.view-tabs button {
-  flex: 1;
-  border: 0;
-  background: transparent;
-  border-radius: 999px;
-  padding: 8px;
-  font: inherit;
-  font-size: 0.85rem;
-  color: var(--muted);
-  cursor: pointer;
-}
-.view-tabs button[aria-selected="true"] { background: #e8f1ff; color: var(--focus); font-weight: 700; }
-
 /* Journey suggestion — a list of tunnel combinations with totals */
 .plan-result { margin-top: 12px; display: flex; flex-direction: column; gap: 4px; }
 .plan-note { margin: 0; color: var(--muted); font-size: 0.92rem; }
@@ -198,6 +183,7 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 .alt-caption { color: var(--muted); font-size: 0.8rem; }
 .alt .compare-list { margin-top: 8px; }
 .alt-others { margin-top: 10px; }
+.pick-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .alt-others .alt-caption { margin: 10px 0 2px; font-weight: 600; }
 .alt-others .compare-list { margin-top: 4px; }
 
@@ -404,8 +390,8 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
     grid-template-areas:
       "topbar topbar"
       "result form"
-      "tabs   form"
-      "panel  form"
+      "chart  form"
+      "plan   plan"
       "footer footer";
     align-items: start;
     gap: 14px;
@@ -413,8 +399,8 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
   }
   .topbar { grid-area: topbar; }
   #result-card { grid-area: result; }
-  #view-tabs { grid-area: tabs; }
-  .view-panel { grid-area: panel; }
+  #chart-card { grid-area: chart; }
   .form-card { grid-area: form; }
+  #plan-card { grid-area: plan; }
   .site-footer { grid-area: footer; }
 }

@@ -78,6 +78,7 @@ const CATEGORY_LABEL = {
 };
 
 let showOtherCategories = false;
+let otherCategoryId = null;
 
 function loadLang() {
   try {
@@ -101,7 +102,6 @@ function saveLang() {
 const initialDayType = defaultDayType();
 const state = {
   lang: 'tc',
-  view: 'journey',         // which output section is open
   fromId: '',              // journey suggestion — deliberately not persisted
   toId: '',
   mode: 'date',            // 'date' picks a calendar day; 'category' picks a schedule
@@ -213,9 +213,6 @@ function applyLanguage() {
   $('plan-title').textContent = copy.planTitle;
   $('label-from').textContent = copy.planFrom;
   $('label-to').textContent = copy.planTo;
-  for (const btn of $('view-tabs').querySelectorAll('button')) {
-    btn.textContent = { journey: copy.viewJourney, schedule: copy.viewSchedule }[btn.dataset.view];
-  }
   fillPlanSelects();
   renderPlan();
   $('label-tunnel').textContent = copy.labelTunnel;
@@ -265,13 +262,12 @@ function renderResult(tunnel) {
     .replace('{amount}', next.amount.toFixed(2));
 }
 
-function alternativeRows(group, canonical, excludeTunnelId) {
+function alternativeRows(group, canonical) {
   const copy = t();
   const options = [
     ...group.tunnels.map((id) => ({ kind: 'tunnel', id, name: nameOf(tunnelById(id)) })),
     ...group.roads.map((road) => ({ kind: 'road', id: `road:${road.en}`, name: road[state.lang] })),
   ]
-    .filter((option) => option.id !== excludeTunnelId)
     .map((option) => ({
       ...option,
       amount: option.kind === 'tunnel' ? priceTunnelFor(option.id, canonical) : 0,
@@ -280,10 +276,13 @@ function alternativeRows(group, canonical, excludeTunnelId) {
 
   const cheapest = options.length ? options[0].amount : 0;
   const rows = options.map((option) => {
-    const best = option.amount === cheapest;
+    const tags = [];
+    if (option.kind === 'tunnel' && option.id === state.tunnelId) tags.push(copy.compareCurrent);
+    if (option.amount === cheapest) tags.push(copy.planCheapest);
+    const best = tags.includes(copy.planCheapest);
     const content = `<span class="compare-name">${esc(option.name)}</span>`
       + `<span class="compare-price">HK$ ${option.amount.toFixed(2)}</span>`
-      + (best ? `<span class="compare-tag">${esc(copy.planCheapest)}</span>` : '');
+      + (tags.length ? `<span class="compare-tag">${esc(tags.join(' · '))}</span>` : '');
     // Roads are places, not choices: only tunnels switch the selector.
     return option.kind === 'tunnel'
       ? `<li><button type="button" class="compare-row${best ? ' cheapest' : ''}"`
@@ -308,9 +307,10 @@ function renderAlternatives() {
 
   const groups = compareGroups();
   const active = groups.find((group) => group.id === categoryId);
+  const others = groups.filter((group) => group.id !== categoryId);
   const vehicle = canonicalFor(state.tunnelId, state.vehicleId);
 
-  const main = alternativeRows(active, vehicle, state.tunnelId);
+  const main = alternativeRows(active, vehicle);
   $('alt-caption').textContent = copy[CATEGORY_LABEL[categoryId]];
   $('alt-list').innerHTML = main.rows;
   $('compare-note').hidden = !main.tied;
@@ -320,11 +320,19 @@ function renderAlternatives() {
 
   $('alt-toggle').setAttribute('aria-expanded', String(showOtherCategories));
   $('alt-others').hidden = !showOtherCategories;
-  $('alt-others').innerHTML = groups
-    .filter((group) => group.id !== categoryId)
-    .map((group) => `<p class="alt-caption">${esc(copy[CATEGORY_LABEL[group.id]])}</p>`
-      + `<ul class="compare-list">${alternativeRows(group, vehicle).rows}</ul>`)
-    .join('');
+  if (!showOtherCategories) return;
+
+  // Second step: name the other corridors first, then show the chosen one only.
+  if (!others.some((group) => group.id === otherCategoryId)) otherCategoryId = null;
+  $('alt-categories').innerHTML = others.map((group) => {
+    const on = group.id === otherCategoryId;
+    return `<button type="button" class="chip${on ? ' on' : ''}" data-group="${group.id}"`
+      + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]])}</button>`;
+  }).join('');
+
+  const browsed = others.find((group) => group.id === otherCategoryId);
+  $('alt-other-caption').textContent = browsed ? copy[CATEGORY_LABEL[browsed.id]] : '';
+  $('alt-other-list').innerHTML = browsed ? alternativeRows(browsed, vehicle).rows : '';
 }
 
 const tunnelById = (id) => TUNNELS.find((x) => x.id === id);
@@ -399,14 +407,6 @@ function renderPlan() {
   }).join('') + `<p class="plan-disclaimer">${esc(copy.planDisclaimer)}</p>`;
 }
 
-function renderTabs() {
-  for (const btn of $('view-tabs').querySelectorAll('button')) {
-    const active = btn.dataset.view === state.view;
-    btn.setAttribute('aria-selected', String(active));
-    $(`view-${btn.dataset.view}`).hidden = !active;
-  }
-}
-
 function renderChart() {
   const copy = t();
   const segs = getDaySegments(state);
@@ -451,7 +451,6 @@ function render() {
   renderDateType();
   renderTime();
   renderToll();
-  renderTabs();
   renderPlan();
 }
 
@@ -513,12 +512,6 @@ function init() {
     saveSelection();
     render();
   });
-  $('view-tabs').addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-view]');
-    if (!btn || btn.dataset.view === state.view) return;
-    state.view = btn.dataset.view;
-    renderTabs();
-  });
   $('from-select').addEventListener('change', (e) => {
     state.fromId = e.target.value;
     renderPlan();
@@ -535,15 +528,27 @@ function init() {
     const btn = e.target.closest('button[data-tunnel-id]');
     if (!btn) return;
     state.tunnelId = btn.dataset.tunnelId;
+    if (btn.dataset.tunnelId && categoryForTunnel(btn.dataset.tunnelId) === otherCategoryId) {
+      otherCategoryId = null;
+    }
     fillTunnelSelect();
     fillVehicleSelect();
     saveSelection();
     render();
   });
+  $('alt-categories').addEventListener('click', (e) => {
+    const chip = e.target.closest('button[data-group]');
+    if (!chip || chip.dataset.group === otherCategoryId) return;
+    otherCategoryId = chip.dataset.group;
+    renderAlternatives();
+  });
   $('alt-others').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-tunnel-id]');
     if (!btn) return;
     state.tunnelId = btn.dataset.tunnelId;
+    if (btn.dataset.tunnelId && categoryForTunnel(btn.dataset.tunnelId) === otherCategoryId) {
+      otherCategoryId = null;
+    }
     fillTunnelSelect();
     fillVehicleSelect();
     saveSelection();
