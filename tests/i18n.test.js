@@ -88,8 +88,3 @@ test('the language picker has an accessible label in every language', () => {
   assert.ok(UI.sc.langLabel.trim().length > 0);
   assert.equal(UI.en.langLabel, 'Language');
 });
-
-test('the time field is labelled 通行時間, without the cross-harbour wording', () => {
-  assert.equal(UI.tc.labelTime, '通行時間');
-  assert.equal(UI.sc.labelTime, '通行时间');
-});

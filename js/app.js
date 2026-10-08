@@ -44,9 +44,7 @@ function loadSelection() {
     if (!tunnel) return null;
     const options = vehiclesFor(tunnel.id);
     const vehicleId = options.some((v) => v.id === parsed.vehicleId) ? parsed.vehicleId : options[0].id;
-    const mode = ['date', 'category'].includes(parsed.mode) ? parsed.mode : undefined;
-    const category = ['weekday', 'weekend'].includes(parsed.category) ? parsed.category : undefined;
-    return { tunnelId: tunnel.id, vehicleId, mode, category };
+    return { tunnelId: tunnel.id, vehicleId };
   } catch {
     return null;
   }
@@ -57,7 +55,6 @@ function saveSelection() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       tunnelId: state.tunnelId,
       vehicleId: state.vehicleId,
-      mode: state.mode,
       category: state.category,
     }));
   } catch {
@@ -102,7 +99,6 @@ const state = {
   lang: 'tc',
   fromId: '',              // journey suggestion — deliberately not persisted
   toId: '',
-  mode: 'date',            // 'date' picks a calendar day; 'category' picks a schedule
   date: toDateKey(new Date()),
   category: 'weekday',
   tunnelId: 'cht',
@@ -127,50 +123,32 @@ let following = true;
 // Set when the user picks their own date. Kept separate from `following` so a
 // pinned date is neither reported as "showing now" nor rolled over by the clock.
 let datePinned = false;
+let dayTypePinned = false; // set when the visitor overrides the day type by hand
+let altCategory = null;   // which corridor the alternatives list is showing
 const currentTunnel = () => TUNNELS.find((x) => x.id === state.tunnelId);
 
 function fillTunnelSelect() {
   const copy = t();
   const groups = compareGroups();
-  const canonical = canonicalFor(state.tunnelId, state.vehicleId);
   const mapped = new Set(groups.flatMap((group) => group.tunnels));
   const orphans = TUNNELS.filter((tunnel) => !mapped.has(tunnel.id));
+  const option = (tunnel) => `<option value="${tunnel.id}">${esc(nameOf(tunnel))}</option>`;
 
-  const labelFor = (tunnel, amount, cheapest) => {
-    const tags = [];
-    if (tunnel.id === state.tunnelId) tags.push(copy.compareCurrent);
-    if (cheapest !== undefined && amount === cheapest) tags.push(copy.planCheapest);
-    return `${esc(nameOf(tunnel))} — HK$ ${amount.toFixed(2)}${tags.length ? ` · ${tags.join(' · ')}` : ''}`;
-  };
-
-  const corridorGroups = groups.map((group) => {
-    const tunnels = group.tunnels
-      .map((id) => tunnelById(id))
-      .map((tunnel) => ({ tunnel, amount: priceTunnelFor(tunnel.id, canonical) }))
-      .sort((a, b) => a.amount - b.amount);
-    // The free corridors are alternatives you cannot select (there is no
-    // schedule to chart), so they ride along as disabled options.
-    const roads = group.roads;
-    const amounts = [...tunnels.map((entry) => entry.amount), ...roads.map(() => 0)];
-    const cheapest = amounts.length > 1 ? Math.min(...amounts) : undefined;
-
-    const options = [
-      ...tunnels.map(({ tunnel, amount }) => `<option value="${tunnel.id}">${labelFor(tunnel, amount, cheapest)}</option>`),
-      ...roads.map((road) => `<option disabled value="">${esc(road[state.lang])} — HK$ 0.00`
-        + `${cheapest === 0 ? ` · ${copy.planCheapest}` : ''}</option>`),
-    ].join('');
-    return `<optgroup label="${esc(copy[CATEGORY_LABEL[group.id]])}">${options}</optgroup>`;
-  }).join('');
-
-  const otherGroup = orphans.length
-    ? `<optgroup label="${esc(copy.groupOther)}">`
-      + orphans.map((tunnel) => `<option value="${tunnel.id}">`
-        + `${labelFor(tunnel, priceTunnelFor(tunnel.id, canonical), undefined)}</option>`).join('')
-      + '</optgroup>'
-    : '';
-
-  $('tunnel-select').innerHTML = corridorGroups + otherGroup;
+  $('tunnel-select').innerHTML = groups
+    .map((group) => `<optgroup label="${esc(copy[CATEGORY_LABEL[group.id]])}">`
+      + group.tunnels.map((id) => option(tunnelById(id))).join('') + '</optgroup>')
+    .join('')
+    + (orphans.length
+      ? `<optgroup label="${esc(copy.groupOther)}">${orphans.map(option).join('')}</optgroup>`
+      : '');
   $('tunnel-select').value = state.tunnelId;
+}
+
+function fillDayTypeSelect() {
+  const copy = t();
+  $('daytype-select').innerHTML = `<option value="weekday">${esc(copy.dayWeekday)}</option>`
+    + `<option value="weekend">${esc(copy.dayWeekend)}</option>`;
+  $('daytype-select').value = state.dayType;
 }
 
 function fillVehicleSelect() {
@@ -184,28 +162,12 @@ function fillVehicleSelect() {
 
 function renderDateType() {
   const derived = deriveDayType(state.date);
-  state.dayType = state.mode === 'date' ? derived.dayType : state.category;
+  if (!dayTypePinned) state.dayType = derived.dayType;
   state.dataCurrent = derived.dataCurrent;
 
   $('date-input').value = state.date;
-  $('date-field').hidden = state.mode !== 'date';
-  $('category-field').hidden = state.mode !== 'category';
-  // the holiday-data caveat only matters when a concrete date is in play
-  $('holiday-notice').hidden = state.mode !== 'date' || state.dataCurrent;
-
-  for (const btn of $('mode-toggle').querySelectorAll('button')) {
-    btn.setAttribute('aria-pressed', String(btn.dataset.mode === state.mode));
-  }
-  for (const btn of $('daytype-toggle').querySelectorAll('button')) {
-    btn.setAttribute('aria-pressed', String(btn.dataset.daytype === state.category));
-  }
-}
-
-function labelDayTypeButtons() {
-  const labels = { weekday: t().dayWeekday, weekend: t().dayWeekend };
-  for (const btn of $('daytype-toggle').querySelectorAll('button')) {
-    btn.textContent = labels[btn.dataset.daytype];
-  }
+  $('daytype-select').value = state.dayType;
+  $('holiday-notice').hidden = state.dataCurrent;
 }
 
 function fillLangMenu() {
@@ -239,25 +201,21 @@ function applyLanguage() {
   document.documentElement.lang = lang.htmlLang;
   document.title = copy.pageTitle;
   $('chart-title').textContent = copy.chartTitle;
+  $('alt-title').textContent = copy.compareTitle;
   $('plan-title').textContent = copy.planTitle;
   $('label-from').textContent = copy.planFrom;
   $('label-to').textContent = copy.planTo;
   fillPlanSelects();
   renderPlan();
-  $('label-tunnel').textContent = copy.labelTunnel;
-  $('label-vehicle').textContent = copy.labelVehicle;
-  $('label-date').textContent = copy.labelDate;
-  $('label-category').textContent = copy.labelCategory;
-  for (const btn of $('mode-toggle').querySelectorAll('button')) {
-    btn.textContent = btn.dataset.mode === 'date' ? copy.modeDate : copy.modeCategory;
-  }
-  $('label-time').textContent = copy.labelTime;
+  $('tunnel-select').setAttribute('aria-label', copy.labelTunnel);
+  $('vehicle-select').setAttribute('aria-label', copy.labelVehicle);
+  $('date-input').setAttribute('aria-label', copy.labelDate);
+  $('daytype-select').setAttribute('aria-label', copy.labelCategory);
   $('back-to-now').textContent = copy.backToNow;
   $('holiday-notice').textContent = copy.notice;
   $('hour-select').setAttribute('aria-label', copy.timeHour);
   $('minute-select').setAttribute('aria-label', copy.timeMinute);
   $('time-slider').setAttribute('aria-label', copy.timeSlider);
-  labelDayTypeButtons();
   fillLangMenu();
   renderFooter();
 }
@@ -292,6 +250,72 @@ function renderResult(tunnel) {
 }
 
 const tunnelById = (id) => TUNNELS.find((x) => x.id === id);
+
+function alternativeRows(group, canonical) {
+  const copy = t();
+  const options = [
+    ...group.tunnels.map((id) => ({ kind: 'tunnel', id, name: nameOf(tunnelById(id)) })),
+    ...group.roads.map((road) => ({ kind: 'road', id: `road:${road.en}`, name: road[state.lang] })),
+  ]
+    .map((option) => ({
+      ...option,
+      amount: option.kind === 'tunnel' ? priceTunnelFor(option.id, canonical) : 0,
+    }))
+    .sort((a, b) => a.amount - b.amount);
+
+  const cheapest = options.length ? options[0].amount : 0;
+  const rows = options.map((option) => {
+    const tags = [];
+    if (option.kind === 'tunnel' && option.id === state.tunnelId) tags.push(copy.compareCurrent);
+    if (option.amount === cheapest) tags.push(copy.planCheapest);
+    const best = tags.includes(copy.planCheapest);
+    const content = `<span class="compare-name">${esc(option.name)}</span>`
+      + `<span class="compare-price">HK$ ${option.amount.toFixed(2)}</span>`
+      + (tags.length ? `<span class="compare-tag">${esc(tags.join(' · '))}</span>` : '');
+    // Roads are places, not choices: only tunnels switch the selector.
+    return option.kind === 'tunnel'
+      ? `<li><button type="button" class="compare-row${best ? ' cheapest' : ''}"`
+        + ` data-tunnel-id="${option.id}"${best ? ' aria-current="true"' : ''}>${content}</button></li>`
+      : `<li><div class="compare-row${best ? ' cheapest' : ''}">${content}</div></li>`;
+  }).join('');
+
+  const tied = options.length > 1 && options.every((option) => option.amount === cheapest);
+  return { rows, tied, cheapest };
+}
+
+function renderAlternatives() {
+  const copy = t();
+  const section = $('alternatives');
+  const tunnelCategory = categoryForTunnel(state.tunnelId);
+
+  if (!tunnelCategory) {
+    section.hidden = true;
+    return;
+  }
+  section.hidden = false;
+
+  const groups = compareGroups();
+  // The selector opens on the selected tunnel's own corridor; the visitor can
+  // switch to another corridor in one click without drilling down.
+  const activeId = groups.some((group) => group.id === altCategory) ? altCategory : tunnelCategory;
+  const active = groups.find((group) => group.id === activeId);
+  const vehicle = canonicalFor(state.tunnelId, state.vehicleId);
+
+  $('alt-categories').innerHTML = groups.map((group) => {
+    const on = group.id === activeId;
+    return `<button type="button" class="chip${on ? ' on' : ''}" data-group="${group.id}"`
+      + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]])}</button>`;
+  }).join('');
+
+  const rows = alternativeRows(active, vehicle);
+  $('alt-list').innerHTML = rows.rows;
+  $('compare-note').hidden = !rows.tied;
+  $('compare-note').textContent = rows.tied
+    ? copy.compareTie.replace('{amount}', rows.cheapest.toFixed(2))
+    : '';
+}
+
+
 
 // Other tunnels are priced through the canonical class, but the tunnel the
 // visitor actually picked keeps their exact class, so the comparison can never
@@ -382,7 +406,7 @@ function renderTime() {
   $('hour-select').value = String(Math.floor(state.minutes / 60)).padStart(2, '0');
   $('minute-select').value = String(state.minutes % 60).padStart(2, '0');
   $('time-slider').value = String(state.minutes);
-  $('back-to-now').disabled = following && !(state.mode === 'date' && datePinned);
+  $('back-to-now').disabled = following && !datePinned;
 }
 
 function fillTimeSelects() {
@@ -399,12 +423,14 @@ function renderClock() {
 
 function renderToll() {
   renderResult(currentTunnel());
+  renderAlternatives();
   renderChart();
 }
 
 function render() {
   fillVehicleSelect();
   fillTunnelSelect();
+  fillDayTypeSelect();
   renderDateType();
   renderTime();
   renderToll();
@@ -435,7 +461,6 @@ function init() {
   if (saved) {
     state.tunnelId = saved.tunnelId;
     state.vehicleId = saved.vehicleId;
-    if (saved.mode) state.mode = saved.mode;
     if (saved.category) state.category = saved.category;
   }
 
@@ -469,6 +494,23 @@ function init() {
   });
   $('tunnel-select').addEventListener('change', (e) => {
     state.tunnelId = e.target.value;
+    altCategory = null; // re-anchor the alternatives on the new corridor
+    saveSelection();
+    render();
+  });
+  $('alt-categories').addEventListener('click', (e) => {
+    const chip = e.target.closest('button[data-group]');
+    if (!chip || chip.dataset.group === altCategory) return;
+    altCategory = chip.dataset.group;
+    renderAlternatives();
+  });
+  $('alt-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-tunnel-id]');
+    if (!btn) return;
+    state.tunnelId = btn.dataset.tunnelId;
+    altCategory = null;
+    fillTunnelSelect();
+    fillVehicleSelect();
     saveSelection();
     render();
   });
@@ -477,18 +519,9 @@ function init() {
     saveSelection();
     render();
   });
-  $('mode-toggle').addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-mode]');
-    if (!btn || btn.dataset.mode === state.mode) return;
-    state.mode = btn.dataset.mode;
-    saveSelection();
-    render();
-  });
-  $('daytype-toggle').addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-daytype]');
-    if (!btn) return;
-    state.category = btn.dataset.daytype;
-    saveSelection();
+  $('daytype-select').addEventListener('change', (e) => {
+    state.dayType = e.target.value; // a deliberate override of the date's schedule
+    dayTypePinned = true;
     render();
   });
   $('date-input').addEventListener('change', (e) => {
@@ -499,6 +532,7 @@ function init() {
     }
     state.date = value;
     datePinned = true;
+    dayTypePinned = false;
     render();
   });
   $('hour-select').addEventListener('change', () => {
@@ -511,8 +545,9 @@ function init() {
   $('back-to-now').addEventListener('click', () => {
     following = true;
     datePinned = false;
+    dayTypePinned = false;
     state.minutes = nowMinutes();
-    if (state.mode === 'date') state.date = toDateKey(new Date());
+    state.date = toDateKey(new Date());
     render();
   });
 
@@ -524,7 +559,7 @@ function init() {
     const now = new Date();
     state.minutes = now.getHours() * 60 + now.getMinutes();
     const today = toDateKey(now);
-    if (state.mode === 'date' && !datePinned && today !== state.date) state.date = today;
+    if (!datePinned && today !== state.date) state.date = today;
     renderDateType();
     renderTime();
     renderToll();

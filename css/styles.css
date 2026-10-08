@@ -115,9 +115,54 @@ body {
   .lang-trigger { transition: none; }
 }
 
-/* Query card: the controls and the answer belong together */
-.controls { display: flex; flex-direction: column; gap: 14px; }
-.answer { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+/* The tunnel and vehicle are chosen where they are shown */
+.result-titles { min-width: 0; flex: 1 1 auto; }
+.title-select {
+  appearance: none;
+  width: 100%;
+  border: 0;
+  background: transparent url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round'/></svg>") no-repeat right 0 center;
+  padding: 0 26px 0 0;
+  font: inherit;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  cursor: pointer;
+}
+.title-select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+
+.subtitle { margin: 6px 0 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.subtitle .sep { color: var(--muted); }
+.inline-select {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: #fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6' fill='none' stroke='%239aa0a6' stroke-width='2' stroke-linecap='round'/></svg>") no-repeat right 8px center;
+  border-radius: 999px;
+  padding: 5px 26px 5px 12px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+/* The chart card carries the date and the time */
+.chart-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.chart-controls .date-input { width: auto; padding: 6px 10px; font-size: 0.85rem; }
+.chart-controls .time-selects select { width: auto; min-width: 4.6rem; padding: 6px 26px 6px 10px; font-size: 0.85rem; font-weight: 700; }
+.chart-controls .link-btn { font-size: 0.82rem; }
+
+/* The bar is the slider: an invisible range sits on top of it */
+.chart { position: relative; height: 34px; margin: 12px 0 0; }
+#time-slider {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
 
 /* Result card */
 .result-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
@@ -180,6 +225,48 @@ h1 { font-size: 1.35rem; margin: 0; letter-spacing: 0.01em; }
 .plan-disclaimer { margin: 6px 0 0; color: var(--muted); font-size: 0.78rem; }
 
 
+
+/* Same-trip alternatives: corridor chips over a priced list */
+.alt { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+.alt-title { font-size: 0.92rem; font-weight: 700; }
+.pick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chip {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+.chip.on { border-color: #bcd7ff; background: #e8f1ff; color: var(--focus); font-weight: 700; }
+.alt-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.compare-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  border-radius: 12px;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.compare-row:hover { background: var(--form); }
+.compare-row.cheapest { background: #e7f6ee; color: #157a4d; font-weight: 700; }
+.compare-name { flex: 1 1 auto; min-width: 0; }
+.compare-price { font-variant-numeric: tabular-nums; }
+.compare-tag { color: var(--muted); font-size: 0.78rem; font-weight: 700; }
+.compare-row.cheapest .compare-price,
+.compare-row.cheapest .compare-tag { color: #157a4d; }
+div.compare-row { cursor: default; }
+div.compare-row:hover { background: transparent; }
+.compare-note { margin: 8px 0 0; color: var(--muted); font-size: 0.88rem; font-weight: 600; }
 
 /* Chart card */
 .chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
@@ -254,7 +341,6 @@ select {
 }
 select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 
-.time-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .time-selects { display: flex; align-items: center; gap: 8px; }
 #hour-select, #minute-select {
   width: auto;
@@ -301,36 +387,9 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
   color: var(--ink);
 }
 /* Category control: auto / weekday / weekend (overrides the derived schedule) */
-.segmented {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  background: #fff;
-  border-radius: 999px;
-  padding: 3px;
-}
-.segmented button {
-  flex: 1 1 auto;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  border-radius: 999px;
-  padding: 8px;
-  font: inherit;
-  font-size: 0.78rem;
-  line-height: 1.3;
-  color: var(--muted);
-  cursor: pointer;
-  text-align: center;
-}
-.segmented button[aria-pressed="true"] { background: #e8f1ff; color: var(--focus); font-weight: 700; }
 @media (max-width: 560px) {
-  .segmented { flex-direction: column; border-radius: 16px; }
-  .segmented button { border-radius: 12px; padding: 10px 12px; text-align: left; }
-  /* the mode switch stays a single row whatever the width */
-  .mode-toggle { flex-direction: row; border-radius: 999px; }
-  .mode-toggle button { border-radius: 999px; padding: 9px 8px; text-align: center; }
-}
+      /* the mode switch stays a single row whatever the width */
+    }
 
 .notice { margin: 0; color: #a2650f; font-size: 0.85rem; }
 
