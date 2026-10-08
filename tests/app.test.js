@@ -75,7 +75,7 @@ for (const id of ['period-badge', 'next-hint',
   'chart-bar', 'chart-marker', 'legend', 'vehicle-select', 'chart-tunnel',
   'wrap', 'chart-card',
   'date-input', 'daytype-select', 'traffic-footnote',
-  'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
+  'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice', 'chart-controls',
   'chart-title', 'marker-label', 'lang-picker',
   'compare-note',
   'alt-card', 'alt-list', 'alt-categories', 'label-vehicle-class',
@@ -578,6 +578,41 @@ test('the chart carries its own picker, limited to its corridor', () => {
   assert.ok(showsTunnel('lrt', selectedName()), 'and the chart switches to it');
   assert.equal($('chart-tunnel').value, 'lrt');
   assert.ok($('alt-list').innerHTML.includes('大老山隧道'), 'the comparison stays on the corridor');
+});
+
+test('switching tunnel keeps the class of vehicle you picked', () => {
+  selectTunnel('cht');
+  $('vehicle-select').value = 'moto';
+  fire('vehicle-select', 'change');
+
+  selectTunnel('lrt'); // a flat tunnel names the classes the same way
+  assert.equal($('vehicle-select').value, 'moto', 'still the motorcycle');
+
+  selectTunnel('tct'); // Tate's Cairn calls it "mc"
+  assert.equal($('vehicle-select').value, 'mc');
+  assert.ok($('vehicle-select').selectedOptions[0].textContent.includes('電單車'));
+
+  selectTunnel('cht');
+  assert.equal($('vehicle-select').value, 'moto', 'and back again');
+});
+
+test('a flat-rate tunnel drops the schedule controls and returns to now', () => {
+  fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
+  selectTunnel('cht');
+  fire('back-to-now', 'click');
+  setTime('09', '00'); // a fixed time on a tunnel that varies
+  assert.equal(shownTime(), '09:00');
+  assert.equal($('chart-controls').hidden, false, 'the clock is there to pick with');
+
+  selectTunnel('lrt'); // flat all day: nothing to pick
+  assert.equal($('chart-controls').hidden, true);
+  assert.equal($('time-slider').hidden, true);
+  assert.equal($('chart-card').hidden, false, 'but the chart stays');
+  assert.equal(($('chart-bar').innerHTML.match(/class="seg flat/g) || []).length, 1);
+  assert.equal(shownTime(), '16:38', 'and the clock comes back to now');
+
+  selectTunnel('cht');
+  assert.equal($('chart-controls').hidden, false);
 });
 
 test('the chart always shows the chosen tunnel, flat all day or not', () => {
