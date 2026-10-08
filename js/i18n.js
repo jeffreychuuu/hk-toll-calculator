@@ -18,6 +18,7 @@ export const TD_PATHS = {
 export const UI = {
   tc: {
     pageTitle: '香港隧道收費計算器',
+    langLabel: '語言',
     chartTitle: '24小時收費時段分佈圖',
     labelTunnel: '選擇隧道',
     labelVehicle: '車輛類別',
@@ -57,6 +58,7 @@ export const UI = {
 
   sc: {
     pageTitle: '香港隧道收费计算器',
+    langLabel: '语言',
     chartTitle: '24小时收费时段分布图',
     labelTunnel: '选择隧道',
     labelVehicle: '车辆类别',
@@ -96,6 +98,7 @@ export const UI = {
 
   en: {
     pageTitle: 'HK Toll Calculator',
+    langLabel: 'Language',
     chartTitle: '24-hour toll period chart',
     labelTunnel: 'Tunnel',
     labelVehicle: 'Vehicle class',

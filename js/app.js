@@ -19,6 +19,18 @@ const LANG_KEY = 'hk-toll-calculator.lang';
 
 const t = () => UI[state.lang];
 
+// Browsers cache each module file separately, and these filenames are not
+// content-hashed, so a visitor can end up running a fresh app.js against a
+// cached pre-i18n data.js whose names are plain strings. Showing "undefined"
+// would be worse than falling back, so resolve names defensively.
+const nameOf = (entity) => {
+  const name = entity.name;
+  if (typeof name === 'string') return name;
+  return name?.[state.lang] ?? name?.tc ?? entity.id;
+};
+
+const groupOf = (group) => (typeof group === 'string' ? group : group?.[state.lang] ?? group?.tc ?? '');
+
 // Restore the last tunnel/vehicle pair, validated against the current data so a
 // stale or renamed id can never break the page. Day type is deliberately not
 // stored: it is derived from today's date.
@@ -83,9 +95,9 @@ function fillTunnelSelect() {
   const groups = [...new Set(TUNNELS.map((x) => x.group))];
   $('tunnel-select').innerHTML = groups.map((group) => {
     const opts = TUNNELS.filter((x) => x.group === group)
-      .map((x) => `<option value="${x.id}">${esc(x.name[state.lang])}</option>`)
+      .map((x) => `<option value="${x.id}">${esc(nameOf(x))}</option>`)
       .join('');
-    return `<optgroup label="${esc(group[state.lang])}">${opts}</optgroup>`;
+    return `<optgroup label="${esc(groupOf(group))}">${opts}</optgroup>`;
   }).join('');
   $('tunnel-select').value = state.tunnelId;
 }
@@ -94,7 +106,7 @@ function fillVehicleSelect() {
   const options = vehiclesFor(state.tunnelId);
   if (!options.some((v) => v.id === state.vehicleId)) state.vehicleId = options[0].id;
   $('vehicle-select').innerHTML = options
-    .map((v) => `<option value="${v.id}">${esc(v.name[state.lang])}</option>`)
+    .map((v) => `<option value="${v.id}">${esc(nameOf(v))}</option>`)
     .join('');
   $('vehicle-select').value = state.vehicleId;
 }
@@ -107,10 +119,22 @@ function fillDayTypeToggle() {
   }
 }
 
-function fillLangSwitch() {
-  for (const btn of $('lang-switch').querySelectorAll('button')) {
-    btn.setAttribute('aria-pressed', String(btn.dataset.lang === state.lang));
-  }
+function fillLangMenu() {
+  const current = LANGS.find((l) => l.id === state.lang);
+  $('lang-current').textContent = current.label;
+  $('lang-trigger').setAttribute('aria-label', t().langLabel);
+  $('lang-menu').innerHTML = LANGS.map((l) => `
+    <li role="option" aria-selected="${l.id === state.lang}">
+      <button type="button" data-lang="${l.id}">
+        <span class="lang-check" aria-hidden="true">${l.id === state.lang ? '✓' : ''}</span>
+        <span>${esc(l.label)}</span>
+      </button>
+    </li>`).join('');
+}
+
+function setLangMenuOpen(open) {
+  $('lang-menu').hidden = !open;
+  $('lang-trigger').setAttribute('aria-expanded', String(open));
 }
 
 function renderFooter() {
@@ -135,14 +159,14 @@ function applyLanguage() {
   $('hour-select').setAttribute('aria-label', copy.timeHour);
   $('minute-select').setAttribute('aria-label', copy.timeMinute);
   $('time-slider').setAttribute('aria-label', copy.timeSlider);
-  fillLangSwitch();
+  fillLangMenu();
   renderFooter();
 }
 
 function renderResult(tunnel) {
   const copy = t();
   const { amount, periodType } = getToll(state);
-  $('result-title').textContent = tunnel.name[state.lang];
+  $('result-title').textContent = nameOf(tunnel);
   $('result-subtitle').textContent =
     `${$('vehicle-select').selectedOptions[0].textContent} • ${
       state.dayType === 'weekend' ? copy.dayWeekend : copy.dayWeekday}`;
@@ -221,6 +245,17 @@ function selectTime(minutes) {
   renderToll();
 }
 
+function chooseLang(lang) {
+  setLangMenuOpen(false);
+  if (lang === state.lang) return;
+  state.lang = lang;
+  saveLang();
+  applyLanguage();
+  fillTunnelSelect();
+  fillVehicleSelect();
+  render();
+}
+
 function init() {
   state.lang = loadLang();
 
@@ -232,18 +267,24 @@ function init() {
 
   fillTimeSelects();
   applyLanguage();
+  setLangMenuOpen(false);
   fillTunnelSelect();
   fillVehicleSelect();
 
-  $('lang-switch').addEventListener('click', (e) => {
+  $('lang-trigger').addEventListener('click', () => setLangMenuOpen($('lang-menu').hidden));
+  $('lang-menu').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-lang]');
-    if (!btn || btn.dataset.lang === state.lang) return;
-    state.lang = btn.dataset.lang;
-    saveLang();
-    applyLanguage();
-    fillTunnelSelect();
-    fillVehicleSelect();
-    render();
+    if (btn) chooseLang(btn.dataset.lang);
+  });
+  document.addEventListener('click', (e) => {
+    if ($('lang-menu').hidden) return;
+    if (e.target.closest('.lang-picker')) return;
+    setLangMenuOpen(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || $('lang-menu').hidden) return;
+    setLangMenuOpen(false);
+    $('lang-trigger').focus();
   });
 
   $('tunnel-select').addEventListener('change', (e) => {

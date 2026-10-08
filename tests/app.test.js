@@ -43,18 +43,22 @@ const mkButton = (ds) => ({
   addEventListener() {}, closest() { return this; },
 });
 const daytypeButtons = ['weekday', 'weekend'].map((dt) => mkButton({ daytype: dt }));
-const langButtons = ['tc', 'sc', 'en'].map((lang) => mkButton({ lang }));
-const buttonsFor = { 'daytype-toggle': daytypeButtons, 'lang-switch': langButtons };
+const buttonsFor = { 'daytype-toggle': daytypeButtons };
 
 const elements = new Map();
 function mk(id) {
   return {
     id, _innerHTML: '', textContent: '', hidden: false, className: '', value: '', style: {}, disabled: false,
-    _handlers: {},
+    _handlers: {}, _attrs: {},
     addEventListener(t, h) { this._handlers[t] = h; },
-    setAttribute() {},
+    setAttribute(k, v) { this._attrs[k] = String(v); },
+    getAttribute(k) { return Object.prototype.hasOwnProperty.call(this._attrs, k) ? this._attrs[k] : null; },
+    focus() { this.focused = true; },
     querySelectorAll(sel) { return sel === 'button' ? (buttonsFor[id] || []) : []; },
-    closest() { return null; },
+    closest(sel) {
+      if (sel === '.lang-picker') return ['lang-picker', 'lang-trigger', 'lang-menu'].includes(id) ? this : null;
+      return null;
+    },
     get innerHTML() { return this._innerHTML; },
     set innerHTML(v) { this._innerHTML = v; },
     get selectedOptions() {
@@ -67,13 +71,15 @@ function mk(id) {
 for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amount', 'next-hint',
   'now-date', 'now-time', 'chart-bar', 'chart-marker', 'legend', 'tunnel-select', 'vehicle-select',
   'daytype-toggle', 'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
-  'chart-title', 'label-tunnel', 'label-vehicle', 'label-daytype', 'label-time', 'lang-switch',
-  'site-footer']) elements.set(id, mk(id));
+  'chart-title', 'label-tunnel', 'label-vehicle', 'label-daytype', 'label-time', 'lang-picker',
+  'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
 
 globalThis.document = {
   getElementById: (id) => elements.get(id),
   documentElement: { lang: '' },
   title: '',
+  _handlers: {},
+  addEventListener(t, h) { this._handlers[t] = h; },
 };
 let intervalCb = null;
 globalThis.setInterval = (fn) => { intervalCb = fn; return 1; };
@@ -84,6 +90,13 @@ const fire = (id, type, extra = {}) => {
   assert.ok(handler, `#${id} has a ${type} handler`);
   handler({ target: $(id), ...extra });
 };
+const fireDoc = (type, extra = {}) => {
+  const handler = document._handlers[type];
+  assert.ok(handler, `document has a ${type} handler`);
+  handler({ target: { closest: () => null }, ...extra });
+};
+const langOption = (lang) => ({ closest: () => ({ dataset: { lang } }) });
+const isOpen = () => $('lang-menu').hidden === false;
 const setTime = (hh, mm) => {
   $('hour-select').value = hh;
   $('minute-select').value = mm;
@@ -217,15 +230,59 @@ test('storage failures do not break rendering', async () => {
   storageFails = false;
 });
 
-test('the language switcher offers exactly three languages', () => {
-  assert.deepEqual(langButtons.map((b) => b.dataset.lang), ['tc', 'sc', 'en']);
+test('the language picker starts closed and shows the current language', () => {
+  assert.equal($('lang-menu').hidden, true);
+  assert.equal($('lang-trigger').getAttribute('aria-expanded'), 'false');
+  assert.equal($('lang-current').textContent, '繁體中文');
+  assert.equal($('lang-trigger').getAttribute('aria-label'), '語言');
+});
+
+test('the menu offers exactly the three languages from LANGS', () => {
+  const menu = $('lang-menu').innerHTML;
+  for (const label of ['繁體中文', '简体中文', 'English']) assert.ok(menu.includes(label), `missing ${label}`);
+  for (const lang of ['tc', 'sc', 'en']) assert.ok(menu.includes(`data-lang="${lang}"`), `missing ${lang}`);
+  assert.equal((menu.match(/data-lang=/g) || []).length, 3);
+  assert.ok(menu.includes('aria-selected="true"'), 'the current language should be marked');
+});
+
+test('the trigger opens and closes the menu', () => {
+  fire('lang-trigger', 'click');
+  assert.equal(isOpen(), true);
+  assert.equal($('lang-trigger').getAttribute('aria-expanded'), 'true');
+
+  fireDoc('click', { target: $('lang-trigger') }); // clicks inside the picker keep it open
+  assert.equal(isOpen(), true);
+
+  fire('lang-trigger', 'click');
+  assert.equal(isOpen(), false);
+  assert.equal($('lang-trigger').getAttribute('aria-expanded'), 'false');
+});
+
+test('Escape closes the menu and returns focus to the trigger', () => {
+  fire('lang-trigger', 'click');
+  assert.equal(isOpen(), true);
+
+  fireDoc('keydown', { key: 'Escape' });
+  assert.equal(isOpen(), false);
+  assert.equal($('lang-trigger').focused, true);
+});
+
+test('a click outside closes the menu', () => {
+  fire('lang-trigger', 'click');
+  assert.equal(isOpen(), true);
+
+  fireDoc('click', { target: { closest: () => null } });
+  assert.equal(isOpen(), false);
 });
 
 test('choosing English re-renders every label and the data names', () => {
-  fire('lang-switch', 'click', { target: langButtons[2] });
+  fire('lang-trigger', 'click');
+  fire('lang-menu', 'click', { target: langOption('en') });
 
+  assert.equal(isOpen(), false, 'the menu should close after choosing');
   assert.equal(document.documentElement.lang, 'en');
   assert.equal(document.title, 'HK Toll Calculator');
+  assert.equal($('lang-current').textContent, 'English');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
   assert.equal($('label-tunnel').textContent, 'Tunnel');
   assert.equal($('label-vehicle').textContent, 'Vehicle class');
@@ -238,7 +295,7 @@ test('choosing English re-renders every label and the data names', () => {
 });
 
 test('choosing Simplified Chinese re-renders the labels', () => {
-  fire('lang-switch', 'click', { target: langButtons[1] });
+  fire('lang-menu', 'click', { target: langOption('sc') });
   assert.equal(document.documentElement.lang, 'zh-Hans');
   assert.equal($('chart-title').textContent, '24小时收费时段分布图');
   assert.equal($('label-tunnel').textContent, '选择隧道');
@@ -246,7 +303,7 @@ test('choosing Simplified Chinese re-renders the labels', () => {
 });
 
 test('the chosen language is stored', () => {
-  fire('lang-switch', 'click', { target: langButtons[0] });
+  fire('lang-menu', 'click', { target: langOption('tc') });
   assert.equal(storage.get('hk-toll-calculator.lang'), 'tc');
 });
 
@@ -254,7 +311,8 @@ test('a saved language is restored on load', async () => {
   storage.set('hk-toll-calculator.lang', 'en');
   await import('../js/app.js?lang-en=1');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
-  assert.equal(langButtons[2].ariaPressed, 'true');
+  assert.equal($('lang-current').textContent, 'English');
+  assert.ok($('lang-menu').innerHTML.includes('aria-selected="true"'));
 });
 
 test('an unsupported saved language falls back to detection', async () => {
@@ -269,4 +327,27 @@ test('a non-Chinese browser language defaults to English', async () => {
   await import('../js/app.js?nav-en=1');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
   navigator.language = 'zh-TW';
+});
+
+test('a stale, string-named data module can never render undefined', async () => {
+  const data = await import('../js/data.js');
+  const tunnelName = data.TUNNELS[0].name;      // { tc, sc, en }
+  const vehicleName = data.TVT_VEHICLES[0].name;
+
+  // Simulate what a browser serves when it mixes a cached (pre-i18n) data.js
+  // with the current app.js: names are plain strings again.
+  data.TUNNELS[0].name = tunnelName.tc;
+  data.TVT_VEHICLES[0].name = vehicleName.tc;
+
+  storage.delete('hk-toll-calculator.selection');
+  storage.delete('hk-toll-calculator.lang');
+  navigator.language = 'zh-TW';
+  await import('../js/app.js?stale-data=1');
+
+  assert.ok(!$('tunnel-select').innerHTML.includes('undefined'), 'tunnel list showed undefined');
+  assert.ok(!$('vehicle-select').innerHTML.includes('undefined'), 'vehicle list showed undefined');
+  assert.equal($('result-title').textContent, '海底隧道（紅隧）');
+
+  data.TUNNELS[0].name = tunnelName;
+  data.TVT_VEHICLES[0].name = vehicleName;
 });
