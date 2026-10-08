@@ -712,7 +712,7 @@ test('live conditions from the transport department sit beside the tunnels', asy
   assert.ok(list.includes('擠塞'), 'the congested reading shows');
   assert.ok(list.includes('往港島 擠塞 18 分鐘'), 'the congested direction, towards the island');
   assert.ok(list.includes('往九龍 暢通 4 分鐘'), 'and the free one gets its own chip, not the worst shared');
-  assert.ok(list.includes('由各區入口起'), 'a reading from many gantries says so instead of naming them');
+  assert.ok(!list.includes('起'), 'the harbour crossings, timed from many points, name no gantry');
   assert.ok(list.includes('暢通'), 'the free-flowing one');
   assert.ok(list.includes('交通消息'), 'the incident block appears');
   assert.ok(list.includes('東區海底隧道(往柴灣方向)部分行車線封閉'));
