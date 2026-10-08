@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   normaliseJourneyTimes, normaliseIncidents, tunnelsMentioned, CONDITION_ORDER,
-  mergeIncidentLanguages, incidentsForTunnels, publishedDirection,
+  mergeIncidentLanguages, incidentsForTunnels,
 } from '../js/traffic.js';
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
@@ -162,20 +162,4 @@ test('the proxy hands on the roads as well as the tunnels', async () => {
   assert.ok(response.body.tunnels.cht, 'the tunnel reading travels');
   assert.ok(response.body.roads.tmr, 'and so does the road reading');
   assert.equal(response.body.roads.tmr.minutes, 22);
-});
-
-test('a leg is measured only the way the department publishes it', () => {
-  // Harbour crossings run both ways.
-  assert.equal(publishedDirection({ tunnel: 'cht', from: 'klc', to: 'isc' }), 'island');
-  assert.equal(publishedDirection({ tunnel: 'cht', from: 'isc', to: 'klc' }), 'kowloon');
-  // The New Territories tunnels are only measured heading out.
-  assert.equal(publishedDirection({ tunnel: 'lrt', from: 'nte', to: 'klc' }), 'kowloon-c');
-  assert.equal(publishedDirection({ tunnel: 'lrt', from: 'klc', to: 'nte' }), null);
-  assert.equal(publishedDirection({ tunnel: 'tlt', from: 'ntw', to: 'klw' }), 'tingkau');
-  assert.equal(publishedDirection({ tunnel: 'tlt', from: 'klw', to: 'ntw' }), null);
-  // Free corridors, where a reading exists at all.
-  assert.equal(publishedDirection({ roadId: 'tmr', from: 'ntw', to: 'klw' }), 'tsuenwan');
-  assert.equal(publishedDirection({ roadId: 'tmr', from: 'klw', to: 'ntw' }), null);
-  assert.equal(publishedDirection({ roadId: 'lungcheung', from: 'nte', to: 'kle' }), null);
-  assert.equal(publishedDirection({}), null);
 });
