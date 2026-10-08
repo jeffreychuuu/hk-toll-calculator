@@ -1,2 +1,4 @@
 .superpowers/
 docs/superpowers/plans/
+.DS_Store
+node_modules/
