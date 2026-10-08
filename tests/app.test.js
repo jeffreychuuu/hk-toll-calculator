@@ -120,7 +120,7 @@ const selectedRow = () => {
   const rows = $('alt-list').innerHTML.split('<li>');
   return rows.find((row) => row.includes('aria-current="true"')) || '';
 };
-const selectedName = () => $('chart-tunnel').textContent;
+const selectedName = () => ($('chart-tunnel').selectedOptions[0] || { textContent: '' }).textContent;
 const selectedPrice = () => (selectedRow().match(/HK\$ ([\d.]+)/) || ['', ''])[1];
 const setTime = (hh, mm) => {
   $('hour-select').value = hh;
@@ -565,6 +565,19 @@ test('the chart names the tunnel it is drawing', () => {
 
   selectTunnel('tlt');
   assert.ok(showsTunnel('tlt', selectedName()), 'and follows the choice');
+});
+
+test('the chart carries its own picker, limited to its corridor', () => {
+  selectTunnel('tct'); // kln-nte: Lion Rock, Tate's Cairn, Sha Tin Heights
+  const options = $('chart-tunnel').innerHTML;
+  assert.equal((options.match(/<option/g) || []).length, 3, 'the corridor’s tunnels only');
+  assert.equal($('chart-tunnel').value, 'tct', 'on the chosen one');
+
+  $('chart-tunnel').value = 'lrt'; // pick another tunnel of the same corridor
+  fire('chart-tunnel', 'change');
+  assert.ok(showsTunnel('lrt', selectedName()), 'and the chart switches to it');
+  assert.equal($('chart-tunnel').value, 'lrt');
+  assert.ok($('alt-list').innerHTML.includes('大老山隧道'), 'the comparison stays on the corridor');
 });
 
 test('the chart always shows the chosen tunnel, flat all day or not', () => {

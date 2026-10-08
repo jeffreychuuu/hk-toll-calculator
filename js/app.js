@@ -212,6 +212,7 @@ function applyLanguage() {
   $('chart-title').textContent = copy.chartTitle;
   $('label-vehicle-class').textContent = copy.compareVehicle;
   $('vehicle-select').setAttribute('aria-label', copy.labelVehicle);
+  $('chart-tunnel').setAttribute('aria-label', copy.labelTunnel);
   $('date-input').setAttribute('aria-label', copy.labelDate);
   $('daytype-select').setAttribute('aria-label', copy.labelCategory);
   $('holiday-notice').textContent = copy.notice;
@@ -225,8 +226,13 @@ function applyLanguage() {
 function renderResult() {
   const copy = t();
   const { amount, periodType } = getToll(state);
-  // Which tunnel the chart is drawing, stated right on the chart card.
-  $('chart-tunnel').textContent = nameOf(tunnelById(state.tunnelId));
+  // The chart's own picker: the tunnels of the corridor it is drawing.
+  const group = compareGroups().find((entry) => entry.id === categoryForTunnel(state.tunnelId));
+  const picker = $('chart-tunnel');
+  picker.innerHTML = (group ? group.tunnels : [])
+    .map((id) => `<option value="${id}">${esc(nameOf(tunnelById(id)))}</option>`)
+    .join('');
+  picker.value = state.tunnelId;
   const badge = $('period-badge');
   badge.textContent = copy.period[periodType];
   badge.className = `badge ${periodType}`;
@@ -552,6 +558,12 @@ function init() {
     $('lang-trigger').focus();
   });
 
+  $('chart-tunnel').addEventListener('change', (e) => {
+    state.tunnelId = e.target.value;
+    fillVehicleSelect();
+    saveSelection();
+    render();
+  });
   $('alt-categories').addEventListener('click', (e) => {
     const chip = e.target.closest('button[data-group]');
     if (!chip || chip.dataset.group === categoryForTunnel(state.tunnelId)) return;
