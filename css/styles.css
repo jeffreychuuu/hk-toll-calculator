@@ -153,20 +153,38 @@ body {
 .chart-controls .date-input { width: auto; min-width: 9rem; padding: 6px 10px; font-size: 0.85rem; }
 .time-selects .time-colon { color: var(--muted); font-weight: 700; }
 .chart-controls .link-btn { font-size: 0.82rem; }
-/* A live chip that appears only when the page is describing the present */
-.now-chip {
+/* The present moment and the way back share one pill, so the row never jumps */
+.now-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  padding: 3px 10px 3px 8px;
+  min-width: 6.5rem;
+  padding: 4px 11px;
+  border: 1px solid transparent;
   border-radius: 999px;
-  background: #e7f6ee;
+  background: none;
   color: #157a4d;
+  font: inherit;
   font-size: 0.8rem;
   font-weight: 700;
+  line-height: 1.4;
   white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
-.now-chip[hidden] { display: none; }
+.now-pill.is-now,
+.now-pill.is-now:disabled {
+  background: #e7f6ee;
+  color: #157a4d;
+  cursor: default;
+  opacity: 1;
+}
+.now-pill:not(.is-now) {
+  background: #fff;
+  border-color: #bfe3cf;
+}
+.now-pill:not(.is-now):hover { background: #e7f6ee; }
 .now-dot {
   width: 7px;
   height: 7px;
@@ -174,6 +192,7 @@ body {
   background: #1aa564;
   animation: now-pulse 1.7s ease-in-out infinite;
 }
+.now-arrow { flex: 0 0 auto; }
 @keyframes now-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.3; transform: scale(0.65); }

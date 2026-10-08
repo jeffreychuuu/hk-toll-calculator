@@ -74,7 +74,7 @@ for (const id of ['result-title', 'result-subtitle', 'period-badge', 'price-amou
   'now-date', 'now-time', 'chart-bar', 'chart-marker', 'legend', 'tunnel-select', 'vehicle-select',
   'date-input', 'daytype-select', 'live-traffic',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice',
-  'chart-title', 'now-chip', 'marker-label', 'lang-picker',
+  'chart-title', 'marker-label', 'lang-picker',
   'compare-note',
   'alt-card', 'alt-title', 'alt-list', 'alt-categories',
   'lang-trigger', 'lang-current', 'lang-menu', 'site-footer']) elements.set(id, mk(id));
@@ -284,7 +284,7 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal($('vehicle-select').getAttribute('aria-label'), 'Vehicle class');
   assert.equal($('daytype-select').getAttribute('aria-label'), 'Day type');
   assert.equal($('date-input').getAttribute('aria-label'), 'Date');
-  assert.equal($('back-to-now').textContent, 'Back to now');
+  assert.ok(/Now|Back to now/.test($('back-to-now').innerHTML), 'the way back speaks English');
   assert.ok($('daytype-select').innerHTML.includes('Mon–Sat (non-holiday)'));
   assert.ok($('tunnel-select').innerHTML.includes('Cross-Harbour Tunnel (Hung Hom)'));
   assert.ok($('tunnel-select').innerHTML.includes('Tai Lam Tunnel'));
@@ -383,27 +383,28 @@ test('a run of public holidays is skipped whole', () => {
   assert.equal($('date-input').value, '2026-02-20', 'past the three New Year days');
 });
 
-test('the page says out loud when it is describing the present', () => {
+test('the present moment and the way back share one pill', () => {
   fakeNowMs = new RealDate(2026, 9, 8, 12, 0).getTime(); // Thursday noon
   fire('back-to-now', 'click');
 
   const words = ['現在', '现在', 'Now'];
-  assert.equal($('now-chip').hidden, false, 'the chip shows at now');
-  assert.ok($('now-chip').innerHTML.includes('now-dot'), 'with a live dot');
-  assert.ok(words.some((word) => $('now-chip').innerHTML.includes(word)), 'and a word for it');
+  assert.equal($('back-to-now').disabled, true, 'at now the pill is the status');
+  assert.ok($('back-to-now').className.includes('is-now'), 'dressed as the status');
+  assert.ok($('back-to-now').innerHTML.includes('now-dot'), 'with a live dot');
+  assert.ok(words.some((word) => $('back-to-now').innerHTML.includes(word)), 'and a word for it');
   assert.equal($('marker-label').className, 'marker-label now', 'the marker reads as now too');
-  assert.equal($('back-to-now').hidden, true, 'and the way back is put away');
+  assert.ok(words.some((word) => $('marker-label').textContent === word));
 
   setTime('09', '30');
-  assert.equal($('now-chip').hidden, true, 'a chosen time hides the chip');
+  assert.equal($('back-to-now').disabled, false, 'a chosen time turns it into the button');
+  assert.ok(!$('back-to-now').className.includes('is-now'), 'no longer dressed as the status');
+  assert.ok($('back-to-now').innerHTML.includes('now-arrow'), 'with a way back rather than a dot');
   assert.equal($('marker-label').textContent, '09:30', 'and the marker names that time');
-  assert.equal($('marker-label').className, 'marker-label', 'no longer dressed as now');
-  assert.equal($('back-to-now').hidden, false, 'the way back takes the same slot instead');
+  assert.equal($('marker-label').className, 'marker-label');
 
   fire('back-to-now', 'click');
-  assert.equal($('now-chip').hidden, false, 'back to now brings the chip back');
+  assert.equal($('back-to-now').disabled, true, 'catching up to now restores the status');
   assert.equal($('marker-label').className, 'marker-label now');
-  assert.equal($('back-to-now').hidden, true);
 });
 
 test('back-to-now returns to today', () => {
@@ -417,7 +418,7 @@ test('back-to-now returns to today', () => {
   assert.equal($('date-input').value, '2026-10-08');
   assert.equal($('daytype-select').value, 'weekday', 'the date decides again');
   assert.equal(shownTime(), '16:38');
-  assert.equal($('back-to-now').hidden, true, 'and the way back is put away again');
+  assert.equal($('back-to-now').disabled, true, 'and the pill is the status again');
 });
 
 test('the notice appears only for dates outside the holiday data', () => {
@@ -447,7 +448,7 @@ test('a picked date is not overwritten by the clock tick', () => {
     $('date-input').value = '2026-10-19'; // a Monday public holiday
   fire('date-input', 'change');
   setTime('10', '30'); // weekend normal window, so the schedule is visible in the price
-  assert.equal($('back-to-now').hidden, false, 'a picked date must be releasable');
+  assert.equal($('back-to-now').disabled, false, 'a picked date must be releasable');
   assert.equal($('price-amount').textContent, '25.00');
 
   fakeNowMs = new RealDate(2026, 9, 20, 0, 5).getTime();

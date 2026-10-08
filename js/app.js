@@ -233,7 +233,6 @@ function applyLanguage() {
   $('vehicle-select').setAttribute('aria-label', copy.labelVehicle);
   $('date-input').setAttribute('aria-label', copy.labelDate);
   $('daytype-select').setAttribute('aria-label', copy.labelCategory);
-  $('back-to-now').textContent = copy.backToNow;
   $('holiday-notice').textContent = copy.notice;
   $('hour-select').setAttribute('aria-label', copy.timeHour);
   $('minute-select').setAttribute('aria-label', copy.timeMinute);
@@ -420,12 +419,17 @@ function renderMoment() {
   const copy = t();
   const now = isShowingNow();
 
-  const chip = $('now-chip');
-  chip.hidden = !now;
-  chip.innerHTML = `<span class="now-dot" aria-hidden="true"></span>${esc(copy.nowLabel)}`;
-  // The way back sits in the same slot as the status, and shows only when
-  // there is somewhere to go back from.
-  $('back-to-now').hidden = now;
+  // One pill, two states: the status while the view is the present, and the
+  // way back once it is not. Same box either way, so the row never jumps.
+  const pill = $('back-to-now');
+  pill.className = `now-pill${now ? ' is-now' : ''}`;
+  pill.disabled = now;
+  pill.innerHTML = now
+    ? `<span class="now-dot" aria-hidden="true"></span>${esc(copy.nowLabel)}`
+    : '<svg class="now-arrow" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">'
+      + '<path d="M11 5l-7 7 7 7M4 12h16" fill="none" stroke="currentColor" stroke-width="2.2" '
+      + 'stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      + esc(copy.backToNow);
 
   const label = $('marker-label');
   const position = (state.minutes / 1440) * 100;
