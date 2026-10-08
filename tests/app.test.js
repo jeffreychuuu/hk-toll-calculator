@@ -352,27 +352,32 @@ test('a public holiday that lands on a weekday uses the weekend schedule', () =>
   assert.equal($('price-amount').textContent, '25.00');
 });
 
-test('choosing a day type jumps to the next date that has it', () => {
+test('a day type jumps to the next date with that schedule, counted from today', () => {
   $('tunnel-select').value = 'cht';
   fire('tunnel-select', 'change');
-  setTime('12', '00');
-  $('date-input').value = '2026-10-11'; // Sunday -> weekend
-  fire('date-input', 'change');
+  setTime('09', '30'); // a manual time, so the return to now is visible
+  // fakeNow is Thursday 2026-10-08 12:00, a weekday
+
+  $('daytype-select').value = 'weekend';
+  fire('daytype-select', 'change');
+  assert.equal($('date-input').value, '2026-10-11', 'the coming Sunday');
   assert.equal($('daytype-select').value, 'weekend');
 
   $('daytype-select').value = 'weekday';
   fire('daytype-select', 'change');
-  assert.equal($('date-input').value, '2026-10-12', 'the Monday after the Sunday');
-  assert.equal($('daytype-select').value, 'weekday');
+  assert.equal($('date-input').value, '2026-10-08', 'today, not the Monday after the Sunday');
+  assert.equal(shownTime(), '12:00', 'and the clock is following the present again');
 
+  // the jump counts from today, whatever date is on screen
+  $('date-input').value = '2026-12-25'; // Christmas, a holiday
+  fire('date-input', 'change');
   $('daytype-select').value = 'weekend';
   fire('daytype-select', 'change');
-  assert.equal($('date-input').value, '2026-10-18', 'and the Sunday after that Monday');
+  assert.equal($('date-input').value, '2026-10-11', 'still the coming Sunday from today');
+});
 
-  // a run of public holidays is skipped whole
-  $('date-input').value = '2026-02-17'; // Lunar New Year day 1, a Tuesday
-  fire('date-input', 'change');
-  assert.equal($('daytype-select').value, 'weekend');
+test('a run of public holidays is skipped whole', () => {
+  fakeNowMs = new RealDate(2026, 1, 17, 10, 0).getTime(); // Lunar New Year day 1, a Tuesday
   $('daytype-select').value = 'weekday';
   fire('daytype-select', 'change');
   assert.equal($('date-input').value, '2026-02-20', 'past the three New Year days');

@@ -22,7 +22,7 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
 - **Flexible inputs**
   - Tunnel selector
   - Vehicle class selector (private car, motorcycle, taxi, goods vehicles, buses, etc.)
-  - A **date** and a **day type** (Mon–Sat non-holiday / Sunday and public holidays): the schedule follows the date, and picking a day type jumps the date forward to the next day that has it
+  - A **date** and a **day type** (Mon–Sat non-holiday / Sunday and public holidays): the schedule follows the date, and picking a day type jumps to the next day (counted from today) that has it — or straight back to now when today already does
   - Hour and minute dropdowns for any time of day, a slider, plus a **back-to-now** button — the date, the day type and the clock all sit on the 24-hour chart card
 - **Everything choosable is in one menu** — the tunnel dropdown groups every tunnel by the corridor it serves and puts the price in the label, with your current choice marked 現用 and the cheapest of each corridor marked 最平. The free corridors (Tuen Mun Road, Tai Po Road, Lung Cheung Road, West Kowloon Corridor) appear in their corridor as disabled options, so the comparison is still visible even though there is no schedule to chart for them
 - **One page** — the result card and the chart sit together
