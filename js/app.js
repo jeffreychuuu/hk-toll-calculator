@@ -486,7 +486,9 @@ function renderAlternatives() {
   // The list shows the chosen tunnel's own corridor: a tunnel belongs to exactly
   // one kind of trip, so its alternatives are the other ways to make that trip.
   const active = compareGroups().find((entry) => entry.id === categoryForTunnel(state.tunnelId));
-  $('compare-who').innerHTML = esc(copy.compareFor.replace('{name}', nameOf(tunnelById(state.tunnelId))));
+  // Headed by the kind of trip, not by one tunnel: the list is what else serves
+  // that trip, so a single tunnel's name at the top would read as the subject.
+  $('compare-who').innerHTML = active ? esc(copy[CATEGORY_LABEL[active.id]] ?? active.id) : '';
   if (!active) {
     $('alt-list').innerHTML = '';
     return;
