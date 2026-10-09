@@ -1,7 +1,7 @@
 // js/app.js
-import { TUNNELS, TVT_VEHICLES, vehiclesFor, CROSS_HARBOUR_IDS, canonicalFor, classIdFor } from './data.js';
+import { TUNNELS, vehiclesFor, canonicalFor, classIdFor } from './data.js';
 import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison } from './engine.js';
-import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
+import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange, holidayName } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 import { compareGroups, categoryForTunnel } from './regions.js';
 import { incidentsForCorridor, GANTRIES } from './traffic.js';
@@ -38,8 +38,6 @@ const fmtDuration = (minutes) => {
   if (mins || !hours) parts.push(`${mins}${copy.minuteUnit}`);
   return parts.join('').trim();
 };
-const WEEKDAY = ['日', '一', '二', '三', '四', '五', '六'];
-const fmtDate = (d) => `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${WEEKDAY[d.getDay()]}）`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 const STORAGE_KEY = 'hk-toll-calculator.selection';
@@ -98,8 +96,30 @@ const CATEGORY_LABEL = {
   'kln-ntw': 'cmpCatKlnNtw',
   'nte-ntw': 'cmpCatNteNtw',
   island: 'cmpCatIsland',
-  other: 'cmpCatOther',
 };
+
+// The two views of the tunnel lists: every tunnel, and the ways to make the
+// trip the chosen one belongs to. The chart card sits outside both, because
+// picking a tunnel or a time is what drives everything else on the page.
+const TABS = {
+  all: { button: 'tab-all', panel: 'all-panel' },
+  compare: { button: 'tab-compare', panel: 'compare-panel' },
+};
+
+let activeTab = 'all';
+
+function showTab(id) {
+  if (!TABS[id]) return;
+  activeTab = id;
+  for (const [key, { button, panel }] of Object.entries(TABS)) {
+    const on = key === id;
+    $(button).setAttribute('aria-selected', String(on));
+    $(panel).hidden = !on;
+  }
+  // The card and its clock are the same on both tabs; what the card draws is not.
+  renderChart();
+  renderResult();
+}
 
 
 function loadLang() {
@@ -203,6 +223,11 @@ function renderDateType() {
   $('date-input').value = state.date;
   $('daytype-select').value = state.dayType;
   $('holiday-notice').hidden = state.dataCurrent;
+  // A public holiday has a name, and the name is the useful part: it says why
+  // the weekend schedule is the one in force.
+  const holiday = holidayName(state.date);
+  $('holiday-name').hidden = !holiday;
+  $('holiday-name').textContent = holiday ? holiday[state.lang] : '';
 }
 
 function fillLangMenu() {
@@ -271,6 +296,8 @@ function applyLanguage() {
   $('github-link').setAttribute('aria-label', copy.github);
   $('github-link').setAttribute('title', copy.github);
   $('chart-title').textContent = copy.chartTitle;
+  $('tab-all').textContent = copy.tabAll;
+  $('tab-compare').textContent = copy.tabCompare;
   $('label-vehicle-class').textContent = copy.compareVehicle;
   $('vehicle-select').setAttribute('aria-label', copy.labelVehicle);
   $('chart-tunnel').setAttribute('aria-label', copy.labelTunnel);
@@ -301,7 +328,9 @@ function renderResult() {
 
   const hint = $('next-hint');
   const next = getNextTransition(state);
-  if (!next) {
+  // A next change is something to act on, and the directory does not set times:
+  // it is a fact about one tunnel's day, and it lives with that tunnel.
+  if (!next || activeTab === 'all') {
     hint.hidden = true;
     return;
   }
@@ -453,29 +482,18 @@ function trafficFootnote() {
 
 function renderAlternatives() {
   const copy = t();
-  const section = $('alt-card');
-  const tunnelCategory = categoryForTunnel(state.tunnelId);
-
-  if (!tunnelCategory) {
-    section.hidden = true;
+  $('alt-card').hidden = false;
+  // The list shows the chosen tunnel's own corridor: a tunnel belongs to exactly
+  // one kind of trip, so its alternatives are the other ways to make that trip.
+  const active = compareGroups().find((entry) => entry.id === categoryForTunnel(state.tunnelId));
+  // Headed by the kind of trip, not by one tunnel: the list is what else serves
+  // that trip, so a single tunnel's name at the top would read as the subject.
+  $('compare-who').innerHTML = active ? esc(copy[CATEGORY_LABEL[active.id]] ?? active.id) : '';
+  if (!active) {
+    $('alt-list').innerHTML = '';
     return;
   }
-  section.hidden = false;
-
-  const groups = compareGroups();
-  // The list shows the chosen tunnel's own corridor, so a chip that switches
-  // corridor also picks that corridor's first tunnel (see the click handler).
-  const activeId = tunnelCategory;
-  const active = groups.find((group) => group.id === activeId);
   const vehicle = canonicalFor(state.tunnelId, state.vehicleId);
-
-  $('alt-categories').innerHTML = groups.map((group) => {
-    const on = group.id === activeId;
-    const warn = corridorIncidents(group).length ? ' ⚠️' : '';
-    return `<button type="button" class="chip${on ? ' on' : ''}" data-group="${group.id}"`
-      + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]] ?? group.id)}${warn}</button>`;
-  }).join('');
-
   const rows = alternativeRows(active, vehicle);
   $('alt-list').innerHTML = rows.rows + incidentBlock(active);
   $('traffic-footnote').innerHTML = trafficFootnote();
@@ -483,6 +501,35 @@ function renderAlternatives() {
   $('compare-note').textContent = rows.tied
     ? copy.compareTie.replace('{amount}', rows.cheapest.toFixed(2))
     : '';
+}
+
+// The directory of every tolled tunnel, gathered by the trip it serves. It says
+// what a tunnel costs and what the traffic is doing, but never pretends two
+// corridors are alternatives: the free roads stay with their corridor (in the
+// comparison), and a row here opens that comparison.
+function renderAllTunnels() {
+  const copy = t();
+  const canonical = canonicalFor(state.tunnelId, state.vehicleId);
+  $('all-list').innerHTML = compareGroups().map((group) => {
+    const free = group.roads.length
+      ? `<span class="all-free">${esc(copy.hasFreeAlt)}</span>`
+      : '';
+    const warn = corridorIncidents(group).length ? ' ⚠️' : '';
+    const rows = group.tunnels.map((id) => {
+      // The reading describes a journey, not the toll, so it takes a line of its
+      // own under the name and the fare.
+      const reading = trafficChip('tunnel', id);
+      const content = `<span class="compare-name">${esc(nameOf(tunnelById(id)))}</span>`
+        + `<span class="compare-price">HK$ ${priceTunnelFor(id, canonical).toFixed(2)}</span>`
+        + (reading ? `<span class="compare-reading">${reading}</span>` : '');
+      const current = id === state.tunnelId ? ' aria-current="true"' : '';
+      return `<li><button type="button" class="compare-row" data-tunnel-id="${id}"${current}>`
+        + `${content}</button></li>`;
+    }).join('');
+    return '<section class="all-group">'
+      + `<h3 class="all-head">${esc(copy[CATEGORY_LABEL[group.id]] ?? group.id)}${warn}${free}</h3>`
+      + `<ul class="alt-list">${rows}</ul></section>`;
+  }).join('');
 }
 
 
@@ -499,6 +546,16 @@ const priceTunnelFor = (tunnelId, canonical) => getToll({
   dayType: state.dayType,
   minutes: state.minutes,
 }).amount;
+
+// A stored date is a plain YYYY-MM-DD, so build it at local midnight — the day
+// never shifts — and let Intl name it in the visitor's own language.
+const localeOf = () => (LANGS.find((l) => l.id === state.lang) || LANGS[0]).htmlLang;
+const fmtDateLong = (key) => {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Intl.DateTimeFormat(localeOf(), {
+    year: 'numeric', month: 'long', day: 'numeric', weekday: 'short',
+  }).format(new Date(y, m - 1, d));
+};
 
 // The moment the page is describing: a live chip only while it is the present,
 // and a label on the chart marker that names it — or the chosen time when not.
@@ -530,6 +587,21 @@ function renderMoment() {
   // keep the label inside the card at the ends of the day
   label.style.transform = position < 8 ? 'translateX(0)'
     : (position > 92 ? 'translateX(-100%)' : 'translateX(-50%)');
+
+  // The same moment, spelled out at the head of the directory: the chart, which
+  // owns the clock controls, is out of sight while the directory is on screen.
+  const at = `${hh}:${mm}`;
+  const moment = $('all-moment');
+  moment.className = `all-moment${now ? ' is-now' : ''}`;
+  // The clock is the point of the line, so it stands on its own and takes the
+  // weight; the label beside it says which moment it is — and which day, since
+  // "now" on its own does not say what day it is now.
+  const day = esc(fmtDateLong(state.date));
+  const when = now ? `${day} · ${esc(copy.nowLabel)}` : day;
+  const back = now ? ''
+    : `<button type="button" class="all-now" data-now>${esc(copy.backToNow)}</button>`;
+  moment.innerHTML = `<span class="all-when">${when}</span>`
+    + `<span class="all-time">${at}</span>${back}`;
 }
 
 // A tunnel that charges one rate, whatever the clock says — so the schedule
@@ -539,11 +611,18 @@ const isFlatDay = () => getDaySegments(state).every((seg) => seg.periodType === 
 function renderChart() {
   const copy = t();
   const segs = getDaySegments(state);
-  // A tunnel with one flat rate all day has no schedule to pick through, so the
-  // clock and date controls step aside; the badge and the flat band remain.
-  const flat = segs.every((seg) => seg.periodType === 'flat');
-  $('chart-controls').hidden = flat;
-  $('time-slider').hidden = flat;
+  // The directory holds every tunnel, so it owns none of them: the chart, its
+  // title, its label and its slider go, and the card keeps only the clock it is
+  // pricing at — a date and a time to set, always.
+  const directory = activeTab === 'all';
+  $('chart-title').hidden = directory;
+  $('period-badge').hidden = directory;
+  $('chart-tunnel').hidden = directory;
+  $('chart').hidden = directory;
+  $('chart-axis').hidden = directory;
+  $('legend').hidden = directory;
+  $('back-to-now').hidden = directory;
+  $('time-slider').hidden = directory;
   $('chart-bar').innerHTML = segs.map((seg) => {
     const width = ((seg.endMin - seg.startMin + 1) / 1440) * 100;
     return `<span class="seg ${seg.periodType}" style="width:${width.toFixed(4)}%"></span>`;
@@ -570,6 +649,7 @@ function fillTimeSelects() {
 function renderToll() {
   renderResult();
   renderAlternatives();
+  renderAllTunnels();
   renderChart();
   renderMoment();
 }
@@ -599,24 +679,13 @@ const vehicleIdFor = (tunnelId, canonical) => {
   return (hit || options[0]).id;
 };
 
-// Every tunnel names its vehicle classes, but some name them in a way of their
-// own (Discovery Bay has government / private car / ... instead of car / moto /
-// taxi / other). Those cannot hold the class you had, so it is remembered.
-const COMMON_VEHICLE_IDS = new Set(TVT_VEHICLES.map((vehicle) => vehicle.id));
-const ownVehicleClasses = (tunnelId) =>
-  !vehiclesFor(tunnelId).some((vehicle) => COMMON_VEHICLE_IDS.has(vehicle.id));
-let commonVehicle = 'car'; // the ordinary class the visitor is using
-
 // Switching tunnel keeps the kind of vehicle you picked, translating through the
 // canonical class rather than letting the picker fall back to the first option.
 function setTunnel(tunnelId) {
   if (tunnelId === state.tunnelId) return;
   const canonical = canonicalFor(state.tunnelId, state.vehicleId);
-  if (!ownVehicleClasses(state.tunnelId)) commonVehicle = canonical;
   state.tunnelId = tunnelId;
-  state.vehicleId = ownVehicleClasses(tunnelId)
-    ? vehicleIdFor(tunnelId, canonical)
-    : vehicleIdFor(tunnelId, commonVehicle);
+  state.vehicleId = vehicleIdFor(tunnelId, canonical);
   // A flat-rate tunnel has no schedule, so there is no other time to be at.
   if (isFlatDay()) goNow();
   saveSelection();
@@ -649,10 +718,10 @@ function init() {
     state.vehicleId = saved.vehicleId;
     if (saved.category) state.category = saved.category;
   }
-  commonVehicle = canonicalFor(state.tunnelId, state.vehicleId) || 'car';
 
   fillTimeSelects();
   applyLanguage();
+  showTab('all');
   setLangMenuOpen(false);
 
   $('lang-trigger').addEventListener('click', () => setLangMenuOpen($('lang-menu').hidden));
@@ -674,14 +743,20 @@ function init() {
   $('chart-tunnel').addEventListener('change', (e) => {
     setTunnel(e.target.value);
   });
-  $('alt-categories').addEventListener('click', (e) => {
-    const chip = e.target.closest('button[data-group]');
-    if (!chip || chip.dataset.group === categoryForTunnel(state.tunnelId)) return;
-    const group = compareGroups().find((entry) => entry.id === chip.dataset.group);
-    // Switching corridor picks that corridor's first tunnel, and the chart
-    // follows the choice.
-    if (!group || !group.tunnels.length) return;
-    setTunnel(group.tunnels[0]);
+  $('tab-all').addEventListener('click', () => showTab('all'));
+  $('tab-compare').addEventListener('click', () => showTab('compare'));
+  $('all-moment').addEventListener('click', (e) => {
+    if (!e.target.closest('[data-now]')) return;
+    goNow();
+    render();
+  });
+  $('all-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-tunnel-id]');
+    if (!btn) return;
+    // Picking a tunnel shows what else serves that trip, which is the whole
+    // point of choosing it.
+    setTunnel(btn.dataset.tunnelId);
+    showTab('compare');
   });
   $('alt-list').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-tunnel-id]');

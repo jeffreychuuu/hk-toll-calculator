@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>香港隧道實時收費｜紅隧 · 東隧 · 西隧 · 大欖 分時段收費</title>
-  <meta name="description" content="一頁睇晒香港全部收費隧道：紅隧、東隧、西隧、大欖、獅子山、城門、大老山、香港仔、沙田嶺／尖山、愉景灣。分時段收費、免費道路比較、運輸署實時行車時間同交通消息。">
+  <meta name="description" content="一頁睇晒香港全部收費隧道：紅隧、東隧、西隧、大欖、獅子山、城門、大老山、香港仔、沙田嶺／尖山。分時段收費、免費道路比較、運輸署實時行車時間同交通消息。">
   <link rel="canonical" href="https://hk-toll-calculator.jeffreychuuu.com/">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -54,7 +54,7 @@
         "name": "香港隧道收費點樣分時段？",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "三條過海隧道（紅隧、東隧、西隧）同大欖隧道採用分時段收費，分繁忙、一般同非繁忙三個時段，轉換時段每 2 分鐘逐步調整；其餘隧道（獅子山、城門、大老山、香港仔、沙田嶺／尖山、愉景灣）劃一收費。"
+          "text": "三條過海隧道（紅隧、東隧、西隧）同大欖隧道採用分時段收費，分繁忙、一般同非繁忙三個時段，轉換時段每 2 分鐘逐步調整；其餘隧道（獅子山、城門、大老山、香港仔、沙田嶺／尖山）劃一收費。"
         }
       },
       {
@@ -121,11 +121,23 @@
           <select id="vehicle-select" class="inline-select" aria-label="車輛類別"></select>
         </label>
       </div>
-      <div class="pick-chips" id="alt-categories"></div>
-      <ul class="alt-list" id="alt-list"></ul>
-      <p class="compare-note" id="compare-note" hidden></p>
-      <div id="traffic-footnote"></div>
-      <p class="notice" id="holiday-notice" hidden></p>
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab" id="tab-all" role="tab"
+                aria-selected="true" aria-controls="all-panel">全部隧道</button>
+        <button type="button" class="tab" id="tab-compare" role="tab"
+                aria-selected="false" aria-controls="compare-panel">同程比較</button>
+      </div>
+      <div class="tab-panel" id="all-panel" role="tabpanel" aria-labelledby="tab-all">
+        <p class="all-moment" id="all-moment"></p>
+        <div id="all-list"></div>
+      </div>
+      <div class="tab-panel" id="compare-panel" role="tabpanel" aria-labelledby="tab-compare" hidden>
+        <h3 class="compare-who" id="compare-who"></h3>
+        <ul class="alt-list" id="alt-list"></ul>
+        <p class="compare-note" id="compare-note" hidden></p>
+        <div id="traffic-footnote"></div>
+        <p class="notice" id="holiday-notice" hidden></p>
+      </div>
     </section>
 
     <section class="card" id="chart-card">
@@ -136,7 +148,8 @@
         <div class="chart-controls" id="chart-controls">
           <button type="button" class="now-pill" id="back-to-now">回到現在</button>
           <input id="date-input" class="date-input" type="date" aria-label="日期">
-          <span class="time-selects">
+          <span class="holiday-name" id="holiday-name" hidden></span>
+          <span class="time-selects" id="time-selects">
             <select id="hour-select" class="inline-select" aria-label="小時"></select>
             <span class="time-colon">:</span>
             <select id="minute-select" class="inline-select" aria-label="分鐘"></select>
@@ -150,7 +163,7 @@
         <div class="chart-marker" id="chart-marker"></div>
         <input id="time-slider" type="range" min="0" max="1439" step="1" value="0" aria-label="通行時間">
       </div>
-      <div class="chart-axis">
+      <div class="chart-axis" id="chart-axis">
         <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:59</span>
       </div>
       <ul class="legend" id="legend"></ul>
@@ -163,8 +176,8 @@
       <details id="reference">
         <summary>收費表 · 常見問題 · 車種說明</summary>
         <p>
-          一頁睇晒全港 10 條收費隧道——紅隧、東隧、西隧、大欖、獅子山、城門、大老山、香港仔、
-          沙田嶺／尖山／大圍、愉景灣。揀日期、車種同時間，即刻睇到分時段收費、免費道路替代，
+          一頁睇晒全港 9 條收費隧道——紅隧、東隧、西隧、大欖、獅子山、城門、大老山、香港仔、
+          沙田嶺／尖山／大圍。揀日期、車種同時間，即刻睇到分時段收費、免費道路替代，
           同運輸署實時行車時間同交通消息。
         </p>
         <p>
@@ -287,7 +300,6 @@
         <tr><td>獅子山隧道</td><td>$8</td></tr>
         <tr><td>沙田嶺／尖山／大圍隧道</td><td>$8</td></tr>
         <tr><td>大老山隧道</td><td>$20</td></tr>
-        <tr><td>愉景灣隧道</td><td>$250</td></tr>
         </tbody>
       </table>
         <!-- /toll tables -->
@@ -296,7 +308,7 @@
           <dt>香港隧道收費點樣分時段？</dt>
           <dd>
             三條過海隧道（紅隧、東隧、西隧）同大欖隧道採用分時段收費，分繁忙、一般同非繁忙三個時段，
-            轉換時段每 2 分鐘逐步調整。其餘隧道（獅子山、城門、大老山、香港仔、沙田嶺／尖山、愉景灣）劃一收費。
+            轉換時段每 2 分鐘逐步調整。其餘隧道（獅子山、城門、大老山、香港仔、沙田嶺／尖山）劃一收費。
           </dd>
           <dt>星期日同公眾假期隧道收費唔同嗎？</dt>
           <dd>唔同。三條過海隧道喺星期日及公眾假期用另一套收費表，一般全日同價；大欖隧道亦全日劃一。</dd>

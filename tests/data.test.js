@@ -3,13 +3,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   TUNNELS, FLAT_TOLLS, TVT_FIXED, vehiclesFor, classIdFor, canonicalFor,
-  TVT_VEHICLES, FLAT8_VEHICLES, TCT_VEHICLES, DBT_VEHICLES,
+  TVT_VEHICLES, FLAT8_VEHICLES, TCT_VEHICLES,
 } from '../js/data.js';
 
-test('tunnel registry covers all ten paid tunnels', () => {
+test('tunnel registry covers all nine paid tunnels', () => {
   assert.deepEqual(
     TUNNELS.map((t) => t.id),
-    ['cht', 'ehc', 'whc', 'tlt', 'abt', 'smt', 'lrt', 'stg', 'tct', 'dbt'],
+    ['cht', 'ehc', 'whc', 'tlt', 'abt', 'smt', 'lrt', 'stg', 'tct'],
   );
   assert.equal(TUNNELS.find((t) => t.id === 'whc').pricing, 'tvt');
   assert.equal(TUNNELS.find((t) => t.id === 'abt').pricing, 'flat');
@@ -21,7 +21,6 @@ test('vehicle options depend on the tunnel', () => {
   assert.deepEqual(vehiclesFor('abt').map((v) => v.id), ['car', 'moto', 'taxi', 'other'],
     'the flat-rate tunnels name the four classes so the vehicle is never guessed');
   assert.deepEqual(vehiclesFor('tct'), TCT_VEHICLES);
-  assert.deepEqual(vehiclesFor('dbt'), DBT_VEHICLES);
   assert.throws(() => vehiclesFor('nope'));
 });
 
@@ -39,8 +38,6 @@ test('flat toll tables hold the published rates', () => {
   assert.equal(FLAT_TOLLS.stg.all, 8);
   assert.equal(FLAT_TOLLS.tct.dbus, 35); // double-deck bus, Tate's Cross
   assert.equal(FLAT_TOLLS.tct.mc, 15); // motorcycle, Tate's Cross
-  assert.equal(FLAT_TOLLS.dbt.c6, 250); // heavy goods vehicle, Discovery Bay
-  assert.equal(FLAT_TOLLS.dbt.c4, 120); // light goods vehicle, Discovery Bay
 });
 
 test('fixed time-varying vehicles carry per-tunnel rates', () => {
@@ -61,7 +58,7 @@ test('every tunnel and vehicle name exists in all three languages', () => {
     }
     if (t.note) for (const lang of langs) checkName(t.note, `${t.id}.note`, lang);
   }
-  for (const list of [TVT_VEHICLES, FLAT8_VEHICLES, TCT_VEHICLES, DBT_VEHICLES]) {
+  for (const list of [TVT_VEHICLES, FLAT8_VEHICLES, TCT_VEHICLES]) {
     for (const v of list) for (const lang of langs) checkName(v.name, v.id, lang);
   }
 });

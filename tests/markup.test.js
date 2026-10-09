@@ -46,13 +46,14 @@ test('the static toll tables still match the data they were generated from', asy
 
 test('every control lives with what it belongs to', () => {
   const chart = section('chart-card');
-  for (const id of ['date-input', 'daytype-select', 'hour-select', 'minute-select',
-    'time-slider', 'back-to-now', 'period-badge', 'next-hint', 'chart-bar', 'chart-tunnel']) {
+  for (const id of ['date-input', 'holiday-name', 'daytype-select', 'hour-select', 'minute-select',
+    'time-selects', 'time-slider', 'back-to-now', 'period-badge', 'next-hint', 'chart-bar', 'chart-tunnel']) {
     assert.ok(chart.includes(`id="${id}"`), `#${id} should sit with the 24-hour chart`);
   }
 
   const alt = section('alt-card');
-  for (const id of ['vehicle-select', 'label-vehicle-class', 'alt-list', 'alt-categories',
+  for (const id of ['vehicle-select', 'label-vehicle-class', 'tab-all', 'tab-compare',
+    'all-panel', 'all-list', 'all-moment', 'compare-panel', 'compare-who', 'alt-list',
     'holiday-notice', 'traffic-footnote']) {
     assert.ok(alt.includes(`id="${id}"`), `#${id} belongs with the comparison`);
   }

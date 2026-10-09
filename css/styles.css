@@ -229,25 +229,82 @@ body {
   line-height: 1.5;
 }
 
-/* Same-trip alternatives: corridor chips over a priced list */
+/* Same-trip alternatives: the tunnel lists, split into two views */
 .alt-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; }
 .alt-vehicle { display: inline-flex; align-items: center; gap: 6px; }
 /* A fixed width, so the control never shifts as the classes change length */
 .alt-vehicle select { width: 22rem; max-width: 100%; }
 .alt-vehicle-label { color: var(--muted); font-size: 0.85rem; font-weight: 600; }
-.pick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.chip {
-  border: 1px solid var(--line);
-  background: #fff;
-  border-radius: 999px;
-  padding: 5px 10px;
+/* Two views of the same lists: every tunnel, and the chosen tunnel's trip. */
+.tabs { display: flex; gap: 4px; margin-top: 12px; border-bottom: 1px solid var(--line); }
+.tab {
+  border: 0;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 7px 12px;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   color: var(--muted);
   cursor: pointer;
 }
-.chip.on { border-color: #bcd7ff; background: #e8f1ff; color: var(--focus); font-weight: 700; }
-.alt-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--focus); border-bottom-color: var(--focus); font-weight: 700; }
+.tab-panel { margin-top: 4px; }
+/* The moment the directory is pricing — the chart card, which owns the clock
+   controls, is hidden while the directory is on screen. */
+.all-moment { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 2px; font-size: 0.82rem; color: var(--muted); }
+.all-moment.is-now .all-when { color: #157a4d; font-weight: 600; }
+/* The clock is the point of the line: bigger than everything around it. */
+.all-moment .all-time { font-size: 1.35rem; font-weight: 700; line-height: 1.05; color: var(--ink); font-variant-numeric: tabular-nums; }
+.all-moment.is-now .all-time { color: #157a4d; }
+/* Which holiday it is — the reason the weekend schedule is the one in force. */
+.holiday-name {
+  border: 1px solid #f0dfb8;
+  background: #fdf7e8;
+  color: #8a5a12;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.all-now {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--focus);
+  cursor: pointer;
+}
+/* The all-tunnels directory reads as a table: one line per tunnel, a rule
+   between them, and a heading that heads. Every rule here is scoped to
+   .all-group so the comparison rows keep their own two-line look. */
+.all-group .alt-list { gap: 0; margin-top: 2px; border-top: 1px solid var(--line); }
+.all-group .alt-list li + li { border-top: 1px solid var(--line); }
+.all-group .compare-row { align-items: baseline; padding: 7px 8px; border-radius: 0; }
+.all-group .compare-name { flex: 0 1 auto; }
+.all-group .compare-price { font-weight: 600; }
+/* The live reading is about the journey, so it drops to its own line. */
+.all-group .compare-reading { flex: 1 1 100%; }
+/* Where you are, as an accent down the side — never a price colour. */
+.all-group button.compare-row[aria-current="true"] { box-shadow: inset 3px 0 0 var(--focus); font-weight: 700; }
+.all-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0 8px;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+.all-free { font-size: 0.78rem; font-weight: 700; color: #157a4d; }
+/* The comparison says whose trip it is. */
+.compare-who { margin: 0 0 2px; font-size: 0.95rem; color: var(--ink); }
+.alt-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .compare-row {
   display: flex;
   flex-wrap: wrap;

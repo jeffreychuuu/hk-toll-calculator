@@ -71,17 +71,6 @@ export const TUNNELS = [
     pricing: 'flat',
     group: GROUP_FLAT,
   },
-  {
-    id: 'dbt',
-    name: { tc: '愉景灣隧道', sc: '愉景湾隧道', en: 'Discovery Bay Tunnel' },
-    pricing: 'flat',
-    group: GROUP_FLAT,
-    note: {
-      tc: '僅向往愉景灣方向嘅車輛收取，的士免費',
-      sc: '仅向往愉景湾方向的车辆收取，的士免费',
-      en: 'Charged only towards Discovery Bay; taxis are not charged',
-    },
-  },
 ];
 
 export const TVT_VEHICLES = [
@@ -116,23 +105,6 @@ export const TCT_VEHICLES = [
   { id: 'dbus', name: { tc: '公共及私家雙層巴士', sc: '公共及私家双层巴士', en: 'Public & private double-deck bus' } },
 ];
 
-export const DBT_VEHICLES = [
-  {
-    id: 'c1',
-    name: {
-      tc: '政府／救護／消防／警務／海關／懲教車輛',
-      sc: '政府／救护／消防／警务／海关／惩教车辆',
-      en: 'Government, ambulance, fire, police, customs or correctional services vehicle',
-    },
-  },
-  { id: 'c2', name: { tc: '私家小型巴士', sc: '私家小型巴士', en: 'Private minibus' } },
-  { id: 'c3', name: { tc: '公共及私家巴士', sc: '公共及私家巴士', en: 'Public & private bus' } },
-  { id: 'c4', name: { tc: '輕型貨車（≤5.5 公噸）', sc: '轻型货车（≤5.5 公吨）', en: 'Light goods vehicle (≤5.5 t)' } },
-  { id: 'c5', name: { tc: '中型貨車（5.5–24 公噸）', sc: '中型货车（5.5–24 公吨）', en: 'Medium goods vehicle (5.5–24 t)' } },
-  { id: 'c6', name: { tc: '重型貨車（>24 公噸）', sc: '重型货车（>24 公吨）', en: 'Heavy goods vehicle (>24 t)' } },
-  { id: 'c7', name: { tc: '其他車輛（的士除外）', sc: '其他车辆（的士除外）', en: 'Other vehicles (except taxis)' } },
-];
-
 const FLAT8 = ['abt', 'smt', 'lrt', 'stg'];
 
 // A journey route mixes tunnels that classify vehicles differently, so routes
@@ -146,7 +118,6 @@ export const CANONICAL_FOR_TUNNEL = {
   cht: CANONICAL, ehc: CANONICAL, whc: CANONICAL, tlt: CANONICAL,
   abt: ALL_CLASSES, smt: ALL_CLASSES, lrt: ALL_CLASSES, stg: ALL_CLASSES,
   tct: { car: 'pc', moto: 'mc', taxi: 'taxi', other: 'lgv' },
-  dbt: { car: 'c7', moto: 'c7', taxi: 'c7', other: 'c7' },
 };
 
 export const classIdFor = (tunnelId, canonical) => CANONICAL_FOR_TUNNEL[tunnelId]?.[canonical];
@@ -170,7 +141,6 @@ export const FLAT_TOLLS = {
     mc: 15, pc: 20, taxi: 20, pmb: 23, pvmb: 23,
     lgv: 24, mgv: 28, hgv: 28, sbus: 32, dbus: 35,
   },
-  dbt: { c1: 50, c2: 50, c3: 50, c4: 120, c5: 160, c6: 250, c7: 250 },
 };
 
 export const TVT_FIXED = {
