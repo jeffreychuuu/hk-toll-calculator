@@ -47,7 +47,7 @@ test('the static toll tables still match the data they were generated from', asy
 test('every control lives with what it belongs to', () => {
   const chart = section('chart-card');
   for (const id of ['date-input', 'holiday-name', 'daytype-select', 'hour-select', 'minute-select',
-    'time-slider', 'back-to-now', 'period-badge', 'next-hint', 'chart-bar', 'chart-tunnel']) {
+    'time-selects', 'time-slider', 'back-to-now', 'period-badge', 'next-hint', 'chart-bar', 'chart-tunnel']) {
     assert.ok(chart.includes(`id="${id}"`), `#${id} should sit with the 24-hour chart`);
   }
 

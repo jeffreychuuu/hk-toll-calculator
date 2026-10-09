@@ -610,7 +610,8 @@ function renderChart() {
   const copy = t();
   const segs = getDaySegments(state);
   // A tunnel with one flat rate all day has no schedule to pick through, so the
-  // clock and date controls step aside; the badge and the flat band remain.
+  // hours step aside — but never the date: a flat weekend (Tai Lam) must not
+  // leave a visitor unable to change the day they are on.
   const flat = segs.every((seg) => seg.periodType === 'flat');
   // The directory holds every tunnel, so it owns none of them: the chart, its
   // title, its label and its slider go, and the card keeps only the clock it is
@@ -623,7 +624,7 @@ function renderChart() {
   $('chart-axis').hidden = directory;
   $('legend').hidden = directory;
   $('back-to-now').hidden = directory;
-  $('chart-controls').hidden = flat;
+  $('time-selects').hidden = flat;
   $('time-slider').hidden = flat || directory;
   $('chart-bar').innerHTML = segs.map((seg) => {
     const width = ((seg.endMin - seg.startMin + 1) / 1440) * 100;

@@ -76,7 +76,7 @@ for (const id of ['period-badge', 'next-hint',
   'wrap', 'chart-card',
   'date-input', 'daytype-select', 'traffic-footnote',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice', 'chart-controls',
-  'chart-axis', 'holiday-name',
+  'chart-axis', 'holiday-name', 'time-selects',
   'chart-title', 'marker-label', 'site-name', 'github-link', 'lang-picker',
   'compare-note',
   'alt-card', 'alt-list', 'label-vehicle-class',
@@ -692,23 +692,37 @@ test('switching tunnel keeps the class of vehicle you picked', () => {
   assert.equal($('vehicle-select').value, 'moto', 'and back again');
 });
 
-test('a flat-rate tunnel drops the schedule controls and returns to now', () => {
+test('a flat-rate tunnel drops the time, but never the date', () => {
   fakeNowMs = new RealDate(2026, 9, 8, 16, 38).getTime();
   selectTunnel('cht');
   fire('back-to-now', 'click');
   setTime('09', '00'); // a fixed time on a tunnel that varies
   assert.equal(shownTime(), '09:00');
-  assert.equal($('chart-controls').hidden, false, 'the clock is there to pick with');
+  assert.equal($('time-selects').hidden, false, 'the clock is there to pick with');
 
   selectTunnel('lrt'); // flat all day: nothing to pick
-  assert.equal($('chart-controls').hidden, true);
+  assert.equal($('time-selects').hidden, true, 'the time steps aside');
   assert.equal($('time-slider').hidden, true);
-  assert.equal($('chart-card').hidden, false, 'but the chart stays');
+  assert.equal($('chart-controls').hidden, false, 'but the date is always there to change');
+  assert.equal($('chart-card').hidden, false, 'and the chart stays');
   assert.equal(($('chart-bar').innerHTML.match(/class="seg flat/g) || []).length, 1);
   assert.equal(shownTime(), '16:38', 'and the clock comes back to now');
 
   selectTunnel('cht');
-  assert.equal($('chart-controls').hidden, false);
+  assert.equal($('time-selects').hidden, false);
+});
+
+test('Tai Lam charges one rate on a holiday, but you can still change the date', () => {
+  selectTunnel('tlt');
+  $('date-input').value = '2026-10-11'; // the coming Sunday: one rate all day
+  fire('date-input', 'change');
+  assert.equal($('time-selects').hidden, true, 'there is no time to pick on a flat day');
+  assert.equal($('chart-controls').hidden, false, 'but the date stays adjustable');
+  assert.equal($('date-input').value, '2026-10-11');
+
+  fire('back-to-now', 'click');
+  assert.equal($('date-input').value, '2026-10-08', 'and the way back to today is open');
+  selectTunnel('cht');
 });
 
 test('a next change more than an hour away is told in hours and minutes', () => {
