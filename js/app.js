@@ -38,8 +38,6 @@ const fmtDuration = (minutes) => {
   if (mins || !hours) parts.push(`${mins}${copy.minuteUnit}`);
   return parts.join('').trim();
 };
-const WEEKDAY = ['日', '一', '二', '三', '四', '五', '六'];
-const fmtDate = (d) => `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${WEEKDAY[d.getDay()]}）`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 const STORAGE_KEY = 'hk-toll-calculator.selection';
@@ -116,6 +114,9 @@ function showTab(id) {
     $(button).setAttribute('aria-selected', String(on));
     $(panel).hidden = !on;
   }
+  // The 24-hour chart is one tunnel's day, so it has no place beside the whole
+  // directory: it comes back with the comparison.
+  $('chart-card').hidden = id === 'all';
 }
 
 
@@ -476,6 +477,7 @@ function renderAlternatives() {
   // The list shows the chosen tunnel's own corridor: a tunnel belongs to exactly
   // one kind of trip, so its alternatives are the other ways to make that trip.
   const active = compareGroups().find((entry) => entry.id === categoryForTunnel(state.tunnelId));
+  $('compare-who').innerHTML = esc(copy.compareFor.replace('{name}', nameOf(tunnelById(state.tunnelId))));
   if (!active) {
     $('alt-list').innerHTML = '';
     return;
@@ -531,6 +533,16 @@ const priceTunnelFor = (tunnelId, canonical) => getToll({
   minutes: state.minutes,
 }).amount;
 
+// A stored date is a plain YYYY-MM-DD, so build it at local midnight — the day
+// never shifts — and let Intl name it in the visitor's own language.
+const localeOf = () => (LANGS.find((l) => l.id === state.lang) || LANGS[0]).htmlLang;
+const fmtDateLong = (key) => {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Intl.DateTimeFormat(localeOf(), {
+    year: 'numeric', month: 'long', day: 'numeric', weekday: 'short',
+  }).format(new Date(y, m - 1, d));
+};
+
 // The moment the page is describing: a live chip only while it is the present,
 // and a label on the chart marker that names it — or the chosen time when not.
 function renderMoment() {
@@ -561,6 +573,16 @@ function renderMoment() {
   // keep the label inside the card at the ends of the day
   label.style.transform = position < 8 ? 'translateX(0)'
     : (position > 92 ? 'translateX(-100%)' : 'translateX(-50%)');
+
+  // The same moment, spelled out at the head of the directory: the chart, which
+  // owns the clock controls, is out of sight while the directory is on screen.
+  const at = `${hh}:${mm}`;
+  const moment = $('all-moment');
+  moment.className = `all-moment${now ? ' is-now' : ''}`;
+  moment.innerHTML = now
+    ? `${esc(copy.nowLabel)} ${at}`
+    : `${esc(fmtDateLong(state.date))} ${at}`
+      + `<button type="button" class="all-now" data-now>${esc(copy.backToNow)}</button>`;
 }
 
 // A tunnel that charges one rate, whatever the clock says — so the schedule
@@ -709,6 +731,11 @@ function init() {
   });
   $('tab-all').addEventListener('click', () => showTab('all'));
   $('tab-compare').addEventListener('click', () => showTab('compare'));
+  $('all-moment').addEventListener('click', (e) => {
+    if (!e.target.closest('[data-now]')) return;
+    goNow();
+    render();
+  });
   $('all-list').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-tunnel-id]');
     if (!btn) return;
