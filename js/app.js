@@ -505,9 +505,12 @@ function renderAllTunnels() {
       : '';
     const warn = corridorIncidents(group).length ? ' ⚠️' : '';
     const rows = group.tunnels.map((id) => {
+      // The reading describes a journey, not the toll, so it takes a line of its
+      // own under the name and the fare.
+      const reading = trafficChip('tunnel', id);
       const content = `<span class="compare-name">${esc(nameOf(tunnelById(id)))}</span>`
-        + trafficChip('tunnel', id)
-        + `<span class="compare-price">HK$ ${priceTunnelFor(id, canonical).toFixed(2)}</span>`;
+        + `<span class="compare-price">HK$ ${priceTunnelFor(id, canonical).toFixed(2)}</span>`
+        + (reading ? `<span class="compare-reading">${reading}</span>` : '');
       const current = id === state.tunnelId ? ' aria-current="true"' : '';
       return `<li><button type="button" class="compare-row" data-tunnel-id="${id}"${current}>`
         + `${content}</button></li>`;

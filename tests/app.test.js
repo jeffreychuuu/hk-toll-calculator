@@ -799,6 +799,8 @@ test('live conditions from the transport department sit beside the tunnels', asy
   assert.ok($('all-list').innerHTML.includes('⚠️'), 'the affected corridor is flagged');
   assert.ok($('alt-list').innerHTML.includes('往港島 擠塞 18 分鐘'),
     'the chosen tunnel\'s directions show in its comparison row');
+  assert.ok($('all-list').innerHTML.includes('class="compare-reading"'),
+    'the directory keeps the reading on a line of its own');
 
   // a free corridor is measured too, when its row is on screen
   selectTunnel('tlt'); // the Kowloon to West NT corridor
