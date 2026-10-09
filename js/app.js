@@ -300,7 +300,6 @@ function applyLanguage() {
   $('tab-compare').textContent = copy.tabCompare;
   $('label-vehicle-class').textContent = copy.compareVehicle;
   $('vehicle-select').setAttribute('aria-label', copy.labelVehicle);
-  $('chart-tunnel').setAttribute('aria-label', copy.labelTunnel);
   $('date-input').setAttribute('aria-label', copy.labelDate);
   $('daytype-select').setAttribute('aria-label', copy.labelCategory);
   $('holiday-notice').textContent = copy.notice;
@@ -315,13 +314,6 @@ function applyLanguage() {
 function renderResult() {
   const copy = t();
   const { amount, periodType } = getToll(state);
-  // The chart's own picker: the tunnels of the corridor it is drawing.
-  const group = compareGroups().find((entry) => entry.id === categoryForTunnel(state.tunnelId));
-  const picker = $('chart-tunnel');
-  picker.innerHTML = (group ? group.tunnels : [])
-    .map((id) => `<option value="${id}">${esc(nameOf(tunnelById(id)))}</option>`)
-    .join('');
-  picker.value = state.tunnelId;
   const badge = $('period-badge');
   badge.textContent = copy.period[periodType];
   badge.className = `badge ${periodType}`;
@@ -611,18 +603,18 @@ const isFlatDay = () => getDaySegments(state).every((seg) => seg.periodType === 
 function renderChart() {
   const copy = t();
   const segs = getDaySegments(state);
-  // The directory holds every tunnel, so it owns none of them: the chart, its
-  // title, its label and its slider go, and the card keeps only the clock it is
-  // pricing at — a date and a time to set, always.
+  // The directory holds every tunnel, so it owns none of them: no title, badge,
+  // legend or segments claim one. The timeline, the slider and the now status
+  // stay, so a visitor can still scrub the hours and watch the fares move.
   const directory = activeTab === 'all';
   $('chart-title').hidden = directory;
   $('period-badge').hidden = directory;
-  $('chart-tunnel').hidden = directory;
-  $('chart').hidden = directory;
-  $('chart-axis').hidden = directory;
   $('legend').hidden = directory;
-  $('back-to-now').hidden = directory;
-  $('time-slider').hidden = directory;
+  $('chart-bar').hidden = directory;
+  $('chart').hidden = false;
+  $('chart-axis').hidden = false;
+  $('back-to-now').hidden = false;
+  $('time-slider').hidden = false;
   $('chart-bar').innerHTML = segs.map((seg) => {
     const width = ((seg.endMin - seg.startMin + 1) / 1440) * 100;
     return `<span class="seg ${seg.periodType}" style="width:${width.toFixed(4)}%"></span>`;
@@ -740,9 +732,6 @@ function init() {
     $('lang-trigger').focus();
   });
 
-  $('chart-tunnel').addEventListener('change', (e) => {
-    setTunnel(e.target.value);
-  });
   $('tab-all').addEventListener('click', () => showTab('all'));
   $('tab-compare').addEventListener('click', () => showTab('compare'));
   $('all-moment').addEventListener('click', (e) => {
