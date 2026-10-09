@@ -273,6 +273,8 @@ body {
 .all-group .compare-row { align-items: baseline; padding: 7px 8px; border-radius: 0; }
 .all-group .compare-name { flex: 0 1 auto; }
 .all-group .compare-price { font-weight: 600; }
+/* The live reading is about the journey, so it drops to its own line. */
+.all-group .compare-reading { flex: 1 1 100%; }
 /* Where you are, as an accent down the side — never a price colour. */
 .all-group button.compare-row[aria-current="true"] { box-shadow: inset 3px 0 0 var(--focus); font-weight: 700; }
 .all-head {
