@@ -216,11 +216,14 @@ test('the all-tunnels view says which moment the fares are for', () => {
   assert.ok($('all-moment').className.includes('is-now'), 'and the way back works');
 });
 
-test('the comparison names the tunnel whose trip it is', () => {
-  selectTunnel('tct');
-  assert.ok(showsTunnel('tct', $('compare-who').innerHTML), 'the heading names the tunnel');
-  assert.ok($('compare-who').innerHTML.includes('同程比較'), 'and says what it is');
-  selectTunnel('cht');
+test('the comparison is headed by the kind of trip, not one tunnel', () => {
+  selectTunnel('tct'); // the Kowloon to East NT corridor
+  assert.ok($('compare-who').innerHTML.includes('九龍 ↔ 新界東'), 'the corridor is named');
+  assert.ok(!showsTunnel('tct', $('compare-who').innerHTML), 'and no single tunnel is');
+
+  selectTunnel('cht'); // the harbour crossings
+  assert.ok($('compare-who').innerHTML.includes('過海'), 'another corridor, another heading');
+  assert.ok(!showsTunnel('cht', $('compare-who').innerHTML));
 });
 
 test('the toll follows the clock while the page sits open', () => {
