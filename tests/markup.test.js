@@ -44,6 +44,25 @@ test('the static toll tables still match the data they were generated from', asy
     'index.html tables are stale — run: node scripts/print-toll-tables.mjs');
 });
 
+test('every tunnel has its own anchored block in the reference', async () => {
+  const { TUNNELS } = await import('../js/data.js');
+  for (const tunnel of TUNNELS) {
+    assert.ok(html.includes(`id="toll-${tunnel.id}"`), `#toll-${tunnel.id} is missing`);
+  }
+});
+
+test('the FAQ markup and the FAQ structured data agree', async () => {
+  const { UI } = await import('../js/i18n.js');
+  const faq = UI.tc.reference.faq;
+  const ld = html.slice(html.indexOf('"@type": "FAQPage"'));
+  assert.equal((ld.match(/"@type": "Question"/g) || []).length, faq.length,
+    'one JSON-LD question per question on the page');
+  const visible = html.slice(html.indexOf('<dl class="faq">'));
+  for (const { q } of faq) {
+    assert.ok(visible.includes(q), `the page is missing the question: ${q}`);
+  }
+});
+
 test('every control lives with what it belongs to', () => {
   const chart = section('chart-card');
   for (const id of ['date-input', 'holiday-name', 'daytype-select', 'hour-select', 'minute-select',

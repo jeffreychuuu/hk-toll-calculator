@@ -498,6 +498,11 @@ select:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible
 .site-footer h3 { margin: 14px 0 4px; font-size: 0.84rem; color: var(--ink); }
 .site-footer h4 { margin: 10px 0 2px; font-size: 0.8rem; color: var(--ink); }
 .site-footer .tbl-day { margin: 6px 0 2px; font-weight: 600; color: var(--ink); }
+/* One block per tunnel, anchored as #toll-<id>: its name, the fares in a line,
+   then the tables. */
+.site-footer .toll-block { margin-top: 12px; }
+.site-footer .toll-block h4 { margin-top: 0; }
+.site-footer .toll-line { margin: 2px 0 4px; color: var(--muted); font-size: 0.78rem; }
 .site-footer .faq { margin: 0; }
 .site-footer .faq dt { margin-top: 10px; color: var(--ink); font-weight: 600; }
 .site-footer .faq dd { margin: 3px 0 0; }
