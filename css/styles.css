@@ -258,6 +258,9 @@ body {
 /* The clock is the point of the line: bigger than everything around it. */
 .all-moment .all-time { font-size: 1.35rem; font-weight: 700; line-height: 1.05; color: var(--ink); font-variant-numeric: tabular-nums; }
 .all-moment.is-now .all-time { color: #157a4d; }
+/* Which tunnel the chart belongs to. It takes a line of its own, so it lands in
+   the same place whichever tunnel it is — a long name moves nothing. */
+.chart-who { flex: 1 1 100%; font-size: 0.9rem; font-weight: 700; color: var(--ink); }
 /* Which holiday it is — the reason the weekend schedule is the one in force. */
 .holiday-name {
   border: 1px solid #f0dfb8;

@@ -72,12 +72,12 @@ function mk(id) {
   };
 }
 for (const id of ['period-badge', 'next-hint',
-  'chart-bar', 'chart-marker', 'legend', 'chart', 'vehicle-select', 'chart-tunnel',
+  'chart-bar', 'chart-marker', 'legend', 'chart', 'vehicle-select',
   'wrap', 'chart-card',
   'date-input', 'daytype-select', 'traffic-footnote',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice', 'chart-controls',
   'chart-axis', 'holiday-name', 'time-selects',
-  'chart-title', 'marker-label', 'site-name', 'github-link', 'lang-picker',
+  'chart-title', 'chart-who', 'marker-label', 'site-name', 'github-link', 'lang-picker',
   'compare-note',
   'alt-card', 'alt-list', 'label-vehicle-class',
   'tab-all', 'tab-compare', 'all-panel', 'all-list', 'compare-panel',
@@ -123,7 +123,11 @@ const selectedRow = () => {
   const rows = $('alt-list').innerHTML.split('<li>');
   return rows.find((row) => row.includes('aria-current="true"')) || '';
 };
-const selectedName = () => ($('chart-tunnel').selectedOptions[0] || { textContent: '' }).textContent;
+// The chosen tunnel is the row flagged aria-current in the comparison list.
+const selectedName = () => {
+  const row = selectedRow();
+  return (row.match(/<span class="compare-name">([^<]*)<\/span>/) || ['', ''])[1];
+};
 const selectedPrice = () => (selectedRow().match(/HK\$ ([\d.]+)/) || ['', ''])[1];
 const setTime = (hh, mm) => {
   $('hour-select').value = hh;
@@ -180,24 +184,27 @@ test('picking a tunnel in the all list opens its comparison', () => {
   selectTunnel('cht');
 });
 
-test('the directory keeps only the clock, the comparison brings the chart back', () => {
-  assert.equal($('chart-card').hidden, false, 'the card stays: it holds the date and time');
-  assert.equal($('chart-controls').hidden, false, 'which are there to set');
-  assert.equal($('chart').hidden, true, 'the chart itself is not drawn');
-  assert.equal($('chart-axis').hidden, true, 'nor its axis');
-  assert.equal($('legend').hidden, true, 'nor its legend');
-  assert.equal($('chart-title').hidden, true, 'nor its title');
-  assert.equal($('chart-tunnel').hidden, true, 'nor the tunnel it would have drawn');
-  assert.equal($('time-slider').hidden, true, 'nor the slider to scrub with');
-  assert.equal($('next-hint').hidden, true, 'nor the next change to act on');
+test('the directory scrubs time under a timeline of its own, with no tunnel in it', () => {
+  assert.equal($('chart-card').hidden, false, 'the card stays: it holds the clock');
+  assert.equal($('chart-controls').hidden, false, 'the date and time are there to set');
+  assert.equal($('time-slider').hidden, false, 'and the slider is there to scrub with');
+  assert.equal($('back-to-now').hidden, false, 'and the now status is on show');
+  assert.equal($('chart').hidden, false, 'the timeline shows');
+  assert.equal($('chart-axis').hidden, false, 'with its hours');
+  assert.equal($('chart-bar').hidden, true, 'but no tunnel\u2019s segments');
+  assert.equal($('chart-who').hidden, true, 'and no tunnel named');
+  assert.equal($('legend').hidden, true, 'so no legend to read them by');
+  assert.equal($('chart-title').hidden, true, 'and no title claiming one');
+  assert.equal($('next-hint').hidden, true, 'nor a next change to act on');
 
   fire('tab-compare', 'click');
-  assert.equal($('chart').hidden, false, 'the comparison gets its chart back');
+  assert.equal($('chart-bar').hidden, false, 'the comparison gets its chart back');
   assert.equal($('chart-title').hidden, false);
-  assert.equal($('chart-tunnel').hidden, false);
+  assert.equal($('chart-who').hidden, false, 'and names the tunnel it draws');
+  assert.equal($('legend').hidden, false);
   assert.equal($('time-slider').hidden, false);
   fire('tab-all', 'click');
-  assert.equal($('chart-bar').hidden, false, 'the bar element is still there, just not shown');
+  assert.equal($('chart-bar').hidden, true, 'and the directory clears it again');
 });
 
 test('the all-tunnels view says which moment the fares are for', () => {
@@ -658,25 +665,27 @@ test('the result and the schedule sit on the same page', () => {
   assert.equal($('chart-marker') !== undefined, true, 'the chart is on screen too');
 });
 
-test('the chart names the tunnel it is drawing', () => {
-  selectTunnel('cht');
-  assert.ok(showsTunnel('cht', selectedName()), 'the chart says which tunnel it belongs to');
+test('the chart names the tunnel it draws, but the directory names none', () => {
+  fire('tab-compare', 'click');
+  selectTunnel('lrt'); // flat all day: named just the same as any other
+  assert.ok(showsTunnel('lrt', $('chart-who').textContent), 'the chart names its tunnel');
+  assert.equal($('chart-who').hidden, false, 'and shows it');
 
-  selectTunnel('tlt');
-  assert.ok(showsTunnel('tlt', selectedName()), 'and follows the choice');
+  selectTunnel('tct');
+  assert.ok(showsTunnel('tct', $('chart-who').textContent), 'whichever tunnel it is');
+
+  fire('tab-all', 'click');
+  assert.equal($('chart-who').hidden, true, 'but the directory belongs to no tunnel');
 });
 
-test('the chart carries its own picker, limited to its corridor', () => {
-  selectTunnel('tct'); // kln-nte: Lion Rock, Tate's Cairn, Sha Tin Heights
-  const options = $('chart-tunnel').innerHTML;
-  assert.equal((options.match(/<option/g) || []).length, 3, 'the corridor’s tunnels only');
-  assert.equal($('chart-tunnel').value, 'tct', 'on the chosen one');
+test('the chart follows the tunnel you pick, with no picker of its own', () => {
+  fire('tab-compare', 'click'); // the chart only draws on this tab
+  selectTunnel('tlt'); // Tai Lam varies through a weekday
+  assert.ok(($('chart-bar').innerHTML.match(/class="seg/g) || []).length > 1, 'so it has segments');
 
-  $('chart-tunnel').value = 'lrt'; // pick another tunnel of the same corridor
-  fire('chart-tunnel', 'change');
-  assert.ok(showsTunnel('lrt', selectedName()), 'and the chart switches to it');
-  assert.equal($('chart-tunnel').value, 'lrt');
-  assert.ok($('alt-list').innerHTML.includes('大老山隧道'), 'the comparison stays on the corridor');
+  selectTunnel('lrt'); // flat all day: one band covers the day
+  assert.equal(($('chart-bar').innerHTML.match(/class="seg flat/g) || []).length, 1);
+  fire('tab-all', 'click');
 });
 
 test('switching tunnel keeps the class of vehicle you picked', () => {
@@ -724,6 +733,7 @@ test('a holiday that flattens a tunnel keeps the hours on screen', () => {
 
 test('a next change more than an hour away is told in hours and minutes', () => {
   fakeNowMs = new RealDate(2026, 9, 8, 1, 0).getTime(); // 01:00
+  fire('tab-compare', 'click'); // a next change belongs with the tunnel's own chart
   selectTunnel('cht');
   fire('back-to-now', 'click');
 
@@ -731,6 +741,7 @@ test('a next change more than an hour away is told in hours and minutes', () => 
   assert.equal(hint.hidden, false);
   assert.ok(hint.textContent.includes('6小時30分鐘'), '6 hours 30 minutes, not 390 minutes');
   assert.ok(hint.textContent.includes('07:30'), 'and the clock time as usual');
+  fire('tab-all', 'click');
 });
 
 test('the chart always shows the chosen tunnel, flat all day or not', () => {
