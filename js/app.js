@@ -609,13 +609,9 @@ const isFlatDay = () => getDaySegments(state).every((seg) => seg.periodType === 
 function renderChart() {
   const copy = t();
   const segs = getDaySegments(state);
-  // A tunnel with one flat rate all day has no schedule to pick through, so the
-  // hours step aside — but never the date: a flat weekend (Tai Lam) must not
-  // leave a visitor unable to change the day they are on.
-  const flat = segs.every((seg) => seg.periodType === 'flat');
   // The directory holds every tunnel, so it owns none of them: the chart, its
   // title, its label and its slider go, and the card keeps only the clock it is
-  // pricing at — a date and a time to set.
+  // pricing at — a date and a time to set, always.
   const directory = activeTab === 'all';
   $('chart-title').hidden = directory;
   $('period-badge').hidden = directory;
@@ -624,8 +620,7 @@ function renderChart() {
   $('chart-axis').hidden = directory;
   $('legend').hidden = directory;
   $('back-to-now').hidden = directory;
-  $('time-selects').hidden = flat;
-  $('time-slider').hidden = flat || directory;
+  $('time-slider').hidden = directory;
   $('chart-bar').innerHTML = segs.map((seg) => {
     const width = ((seg.endMin - seg.startMin + 1) / 1440) * 100;
     return `<span class="seg ${seg.periodType}" style="width:${width.toFixed(4)}%"></span>`;
