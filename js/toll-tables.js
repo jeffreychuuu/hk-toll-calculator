@@ -1,17 +1,16 @@
 // js/toll-tables.js
-// The toll tables shown in the folded footer block. They are rendered into
+// The reference tables in the folded footer block. They are rendered into
 // index.html as static text (so search engines read them without running any
 // script) and this same function is what a test uses to keep that copy honest —
 // change the rates and the test fails until the page is regenerated:
 //
 //   node scripts/print-toll-tables.mjs
 //
+// Each tunnel gets a section of its own, anchored as #toll-<id>, with a line of
+// prose above its tables: the corridor, the weekday range and the holiday rate.
 // The app also calls it at run time with the chosen language's labels.
 import { TUNNELS, classIdFor } from './data.js';
-import { getDaySegments, getToll } from './engine.js';
-
-// Only these four vary with the clock; the rest charge one rate all day.
-const TVT = ['cht', 'ehc', 'whc', 'tlt'];
+import { getDaySegments } from './engine.js';
 
 // The Traditional Chinese labels: what gets generated into index.html, and the
 // default for a caller that passes nothing.
@@ -26,10 +25,11 @@ export const TC_LABELS = {
   colPeriod: '時段',
   colTime: '時間',
   colCar: '私家車',
-  colTunnel: '隧道',
   dayWeekday: '平日（星期一至六，非公眾假期）',
   dayWeekend: '星期日及公眾假期',
-  flatTitle: '劃一收費隧道（全日同價）',
+  tollWeekday: '平日私家車 {range}',
+  tollWeekend: '假日 {range}',
+  tollAllDay: '全日劃一 {amount}',
   // The four timed tunnels are headed with the short name people use.
   titles: {
     cht: '紅隧（海底隧道）',
@@ -53,44 +53,39 @@ const rows = (segments, labels) => segments
     + `<td>${range(seg)}</td></tr>`)
   .join('\n');
 
-const table = (segments, labels) => `      <table>
-        <thead><tr><th>${labels.colPeriod}</th><th>${labels.colTime}</th>`
-  + `<th>${labels.colCar}</th></tr></thead>
-        <tbody>
-${rows(segments, labels)}
-        </tbody>
-      </table>`;
+const table = (segments, labels) => `      <table>\n        <thead><tr><th>${labels.colPeriod}</th><th>${labels.colTime}</th>`
+  + `<th>${labels.colCar}</th></tr></thead>\n        <tbody>\n${rows(segments, labels)}\n        </tbody>\n      </table>`;
 
-const tvtBlock = (id, labels) => {
-  const days = ['weekday', 'weekend']
-    .map((day) => `      <p class="tbl-day">${labels[day === 'weekday' ? 'dayWeekday' : 'dayWeekend']}</p>\n`
-      + table(getDaySegments({ tunnelId: id, vehicleId: 'car', dayType: day }), labels))
-    .join('\n');
-  return `      <h4>${labels.titles[id]}</h4>\n${days}`;
+// The whole day's car fares as one figure or a span, which is the shape a
+// search result wants: "$8" or "$20 – $40".
+const spread = (segments) => {
+  const amounts = segments.flatMap((seg) => [seg.firstAmount, seg.lastAmount]);
+  const low = Math.min(...amounts);
+  const high = Math.max(...amounts);
+  return low === high ? money(low) : `${money(low)} – ${money(high)}`;
 };
 
-const flatBlock = (labels) => {
-  const lines = TUNNELS
-    .filter((tunnel) => tunnel.pricing === 'flat')
-    .map((tunnel) => {
-      const amount = getToll({
-        tunnelId: tunnel.id,
-        vehicleId: classIdFor(tunnel.id, 'car'),
-        dayType: 'weekday',
-        minutes: 0,
-      }).amount;
-      return `        <tr><td>${labels.names[tunnel.id]}</td><td>${money(amount)}</td></tr>`;
-    })
-    .join('\n');
-  return `      <h4>${labels.flatTitle}</h4>
-      <table>
-        <thead><tr><th>${labels.colTunnel}</th><th>${labels.colCar}</th></tr></thead>
-        <tbody>
-${lines}
-        </tbody>
-      </table>`;
+const tunnelBlock = (tunnel, labels) => {
+  const id = tunnel.id;
+  const carId = classIdFor(id, 'car');
+  const weekday = getDaySegments({ tunnelId: id, vehicleId: carId, dayType: 'weekday' });
+  const weekend = getDaySegments({ tunnelId: id, vehicleId: carId, dayType: 'weekend' });
+  // A tunnel that charges one rate whenever you drive needs no clock picked out.
+  const flat = [...weekday, ...weekend].every((seg) => seg.periodType === 'flat');
+  const line = flat
+    ? labels.tollAllDay.replace('{amount}', money(weekday[0].firstAmount))
+    : `${labels.tollWeekday.replace('{range}', spread(weekday))}`
+      + ` · ${labels.tollWeekend.replace('{range}', spread(weekend))}`;
+  const days = flat
+    ? table(weekday, labels)
+    : `      <p class="tbl-day">${labels.dayWeekday}</p>\n${table(weekday, labels)}\n`
+      + `      <p class="tbl-day">${labels.dayWeekend}</p>\n${table(weekend, labels)}`;
+  return `    <section class="toll-block" id="toll-${id}">\n`
+    + `      <h4>${labels.titles[id] ?? labels.names[id]}</h4>\n`
+    + `      <p class="toll-line">${line}</p>\n`
+    + `${days}\n    </section>`;
 };
 
-// The whole set, in the order it appears in index.html.
+// The whole set, in the order index.html lists the tunnels.
 export const tollTableBlocks = (labels = TC_LABELS) =>
-  [...TVT.map((id) => tvtBlock(id, labels)), flatBlock(labels)].join('\n');
+  TUNNELS.map((tunnel) => tunnelBlock(tunnel, labels)).join('\n');

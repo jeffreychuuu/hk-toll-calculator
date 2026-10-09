@@ -268,10 +268,11 @@ function renderReference() {
     colPeriod: ref.colPeriod,
     colTime: ref.colTime,
     colCar: ref.colCar,
-    colTunnel: ref.colTunnel,
     dayWeekday: ref.dayWeekday,
     dayWeekend: ref.dayWeekend,
-    flatTitle: ref.flatTitle,
+    tollWeekday: ref.tollWeekday,
+    tollWeekend: ref.tollWeekend,
+    tollAllDay: ref.tollAllDay,
     titles: ref.titles,
     names,
   });
