@@ -155,10 +155,10 @@ test('the tabs switch which list is on screen', () => {
 test('the all-tunnels list gathers every tunnel under its corridor', () => {
   const list = $('all-list').innerHTML;
   for (const label of ['過海（九龍 ↔ 港島）', '九龍 ↔ 新界東', '九龍 ↔ 新界西',
-    '新界東 ↔ 新界西', '港島市內', '其他隧道']) {
+    '新界東 ↔ 新界西', '港島市內']) {
     assert.ok(list.includes(label), `missing the ${label} group`);
   }
-  assert.equal((list.match(/compare-row/g) || []).length, 10, 'all ten tunnels are listed');
+  assert.equal((list.match(/compare-row/g) || []).length, 9, 'all nine tunnels are listed');
 });
 
 test('the corridors with a free road say so once, on the heading', () => {
@@ -190,6 +190,8 @@ test('the all-tunnels view hides the chart, the comparison brings it back', () =
 test('the all-tunnels view says which moment the fares are for', () => {
   assert.ok($('all-moment').className.includes('is-now'), 'it says now while it is now');
   assert.ok($('all-moment').innerHTML.includes('07:29'), 'naming the time');
+  assert.ok($('all-moment').innerHTML.includes('class="all-time"'),
+    'the clock is set apart, so it can be read at a glance');
 
   setTime('12', '00'); // a time you picked is not the present
   assert.ok(!$('all-moment').className.includes('is-now'), 'a chosen time is never called now');
@@ -617,7 +619,7 @@ test('the all list opens the corridor of the tunnel you pick', () => {
 test('every corridor has a heading in the all-tunnels list', () => {
   const list = $('all-list').innerHTML;
   assert.ok(!list.includes('undefined'), 'no corridor label is missing');
-  for (const label of ['過海', '港島市內', '其他隧道']) {
+  for (const label of ['過海', '港島市內', '九龍 ↔ 新界西']) {
     assert.ok(list.includes(label), `missing ${label}`);
   }
 });
@@ -625,17 +627,6 @@ test('every corridor has a heading in the all-tunnels list', () => {
 test('the result and the schedule sit on the same page', () => {
   assert.equal($('alt-card').hidden, false, 'the alternatives card is shown');
   assert.equal($('chart-marker') !== undefined, true, 'the chart is on screen too');
-});
-
-test('a tunnel off the macro map still gets a corridor of its own', () => {
-  selectTunnel('dbt'); // Discovery Bay stands alone
-  assert.equal($('alt-card').hidden, false, 'the comparison still shows');
-  assert.equal((($('alt-list').innerHTML.match(/compare-row/g)) || []).length, 1,
-    'listing the tunnel on its own');
-  assert.ok($('all-list').innerHTML.includes('其他隧道'), 'in an 其他 corridor');
-
-  selectTunnel('cht');
-  assert.equal($('alt-card').hidden, false);
 });
 
 test('the chart names the tunnel it is drawing', () => {
@@ -673,19 +664,6 @@ test('switching tunnel keeps the class of vehicle you picked', () => {
 
   selectTunnel('cht');
   assert.equal($('vehicle-select').value, 'moto', 'and back again');
-});
-
-test('a tunnel with its own classes hands the old vehicle back', () => {
-  selectTunnel('cht');
-  $('vehicle-select').value = 'moto';
-  fire('vehicle-select', 'change');
-
-  selectTunnel('dbt'); // Discovery Bay names its classes its own way
-  assert.ok(!['car', 'moto', 'taxi', 'other'].includes($('vehicle-select').value),
-    'a class of its own while you are there');
-
-  selectTunnel('cht');
-  assert.equal($('vehicle-select').value, 'moto', 'and the motorcycle is back');
 });
 
 test('a flat-rate tunnel drops the schedule controls and returns to now', () => {
