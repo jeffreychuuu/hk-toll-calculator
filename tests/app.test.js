@@ -192,7 +192,7 @@ test('the directory scrubs time under a timeline of its own, with no tunnel in i
   assert.equal($('chart').hidden, false, 'the timeline shows');
   assert.equal($('chart-axis').hidden, false, 'with its hours');
   assert.equal($('chart-bar').hidden, true, 'but no tunnel\u2019s segments');
-  assert.equal($('chart-who').hidden, false, 'though it still names the tunnel you are on');
+  assert.equal($('chart-who').hidden, true, 'and no tunnel named');
   assert.equal($('legend').hidden, true, 'so no legend to read them by');
   assert.equal($('chart-title').hidden, true, 'and no title claiming one');
   assert.equal($('next-hint').hidden, true, 'nor a next change to act on');
@@ -665,18 +665,17 @@ test('the result and the schedule sit on the same page', () => {
   assert.equal($('chart-marker') !== undefined, true, 'the chart is on screen too');
 });
 
-test('the chart says which tunnel it is drawing, on either tab', () => {
-  selectTunnel('cht');
-  assert.ok(showsTunnel('cht', $('chart-who').textContent), 'the harbour tunnel is named');
-
-  selectTunnel('lrt'); // flat all day: named just the same
-  assert.ok(showsTunnel('lrt', $('chart-who').textContent), 'and so is a flat one');
-  assert.equal($('chart-who').hidden, false, 'on the directory it is named too');
-
+test('the chart names the tunnel it draws, but the directory names none', () => {
   fire('tab-compare', 'click');
-  assert.ok(showsTunnel('lrt', $('chart-who').textContent), 'and the name stays on the comparison');
+  selectTunnel('lrt'); // flat all day: named just the same as any other
+  assert.ok(showsTunnel('lrt', $('chart-who').textContent), 'the chart names its tunnel');
+  assert.equal($('chart-who').hidden, false, 'and shows it');
+
+  selectTunnel('tct');
+  assert.ok(showsTunnel('tct', $('chart-who').textContent), 'whichever tunnel it is');
+
   fire('tab-all', 'click');
-  assert.ok(showsTunnel('lrt', $('chart-who').textContent), 'and back again');
+  assert.equal($('chart-who').hidden, true, 'but the directory belongs to no tunnel');
 });
 
 test('the chart follows the tunnel you pick, with no picker of its own', () => {
