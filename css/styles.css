@@ -258,6 +258,17 @@ body {
 /* The clock is the point of the line: bigger than everything around it. */
 .all-moment .all-time { font-size: 1.35rem; font-weight: 700; line-height: 1.05; color: var(--ink); font-variant-numeric: tabular-nums; }
 .all-moment.is-now .all-time { color: #157a4d; }
+/* Which holiday it is — the reason the weekend schedule is the one in force. */
+.holiday-name {
+  border: 1px solid #f0dfb8;
+  background: #fdf7e8;
+  color: #8a5a12;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
 .all-now {
   border: 1px solid var(--line);
   background: #fff;

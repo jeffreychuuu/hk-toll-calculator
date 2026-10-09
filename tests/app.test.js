@@ -76,7 +76,7 @@ for (const id of ['period-badge', 'next-hint',
   'wrap', 'chart-card',
   'date-input', 'daytype-select', 'traffic-footnote',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice', 'chart-controls',
-  'chart-axis',
+  'chart-axis', 'holiday-name',
   'chart-title', 'marker-label', 'site-name', 'github-link', 'lang-picker',
   'compare-note',
   'alt-card', 'alt-list', 'label-vehicle-class',
@@ -202,6 +202,7 @@ test('the directory keeps only the clock, the comparison brings the chart back',
 
 test('the all-tunnels view says which moment the fares are for', () => {
   assert.ok($('all-moment').className.includes('is-now'), 'it says now while it is now');
+  assert.ok($('all-moment').innerHTML.includes('2026年10月8日'), 'naming the day it belongs to');
   assert.ok($('all-moment').innerHTML.includes('07:29'), 'naming the time');
   assert.ok($('all-moment').innerHTML.includes('class="all-time"'),
     'the clock is set apart, so it can be read at a glance');
@@ -540,6 +541,18 @@ test('the notice appears only for dates outside the holiday data', () => {
   $('date-input').value = '2026-10-09';
   fire('date-input', 'change');
   assert.equal($('holiday-notice').hidden, true);
+});
+
+test('a public holiday says which holiday it is', () => {
+  $('date-input').value = '2026-10-01'; // National Day
+  fire('date-input', 'change');
+  assert.equal($('holiday-name').hidden, false, 'the day is named');
+  assert.ok(['國慶日', '国庆日', 'National Day'].includes($('holiday-name').textContent),
+    `named as the gazette names it (got ${$('holiday-name').textContent})`);
+
+  $('date-input').value = '2026-10-09'; // an ordinary Friday
+  fire('date-input', 'change');
+  assert.equal($('holiday-name').hidden, true, 'and an ordinary day is not');
 });
 
 test('the clock tick rolls the date over', () => {
