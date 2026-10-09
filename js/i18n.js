@@ -22,7 +22,7 @@ export const UI = {
     github: 'GitHub 原始碼',
     reference: {
       summary: '收費表 · 常見問題 · 車種說明',
-      intro: '一頁睇晒全港 10 條收費隧道——紅隧、東隧、西隧、大欖、獅子山、城門、大老山、香港仔、沙田嶺／尖山／大圍、愉景灣。揀日期、車種同時間，即刻睇到分時段收費、免費道路替代，同運輸署實時行車時間同交通消息。',
+      intro: '一頁睇晒全港 9 條收費隧道——紅隧、東隧、西隧、大欖、獅子山、城門、大老山、香港仔、沙田嶺／尖山／大圍。揀日期、車種同時間，即刻睇到分時段收費、免費道路替代，同運輸署實時行車時間同交通消息。',
       classes: '三條過海隧道（紅隧、東隧、西隧）同大欖隧道採用分時段收費；其餘隧道全日劃一。電單車收費為私家車嘅四成；的士喺過海隧道全日劃一 $25，商用車輛（貨車、小巴、巴士）$50，大欖隧道分別為 $28 同 $43。收費以運輸署公布為準。',
       tablesTitle: '收費時段表（私家車）',
       faqTitle: '常見問題',
@@ -40,7 +40,7 @@ export const UI = {
         tlt: '大欖隧道',
       },
       faq: [
-        { q: '香港隧道收費點樣分時段？', a: '三條過海隧道（紅隧、東隧、西隧）同大欖隧道採用分時段收費，分繁忙、一般同非繁忙三個時段，轉換時段每 2 分鐘逐步調整。其餘隧道（獅子山、城門、大老山、香港仔、沙田嶺／尖山、愉景灣）劃一收費。' },
+        { q: '香港隧道收費點樣分時段？', a: '三條過海隧道（紅隧、東隧、西隧）同大欖隧道採用分時段收費，分繁忙、一般同非繁忙三個時段，轉換時段每 2 分鐘逐步調整。其餘隧道（獅子山、城門、大老山、香港仔、沙田嶺／尖山）劃一收費。' },
         { q: '星期日同公眾假期隧道收費唔同嗎？', a: '唔同。三條過海隧道喺星期日及公眾假期用另一套收費表，一般全日同價；大欖隧道亦全日劃一。' },
         { q: '有冇免費道路可以代替隧道？', a: '有。屯門公路、大埔道、林錦公路／青山公路都免費，會同隧道一齊列出，連車費同實時行車時間一齊比較。' },
         { q: '實時行車時間係由邊度量起？', a: '讀數嚟自運輸署「行車時間顯示器」，係由指定分流點量到目的地（例如獅子山由沙田馬場起、大埔道往九龍由青沙公路起），唔係隧道管道內嘅時間，而且只喺揀「現在」時顯示。' },
@@ -75,7 +75,6 @@ export const UI = {
     cmpCatKlnNtw: '九龍 ↔ 新界西',
     cmpCatNteNtw: '新界東 ↔ 新界西',
     cmpCatIsland: '港島市內',
-    cmpCatOther: '其他隧道',
     tabAll: '全部隧道',
     tabCompare: '同程比較',
     compareFor: '{name}的同程比較',
@@ -128,7 +127,7 @@ export const UI = {
     github: 'GitHub 源码',
     reference: {
       summary: '收费表 · 常见问题 · 车种说明',
-      intro: '一页看遍全港 10 条收费隧道——红隧、东隧、西隧、大榄、狮子山、城门、大老山、香港仔、沙田岭／尖山／大围、愉景湾。选择日期、车种和时间，即可看到分时段收费、免费道路替代，以及运输署实时行车时间和交通消息。',
+      intro: '一页看遍全港 9 条收费隧道——红隧、东隧、西隧、大榄、狮子山、城门、大老山、香港仔、沙田岭／尖山／大围。选择日期、车种和时间，即可看到分时段收费、免费道路替代，以及运输署实时行车时间和交通消息。',
       classes: '三条过海隧道（红隧、东隧、西隧）和大榄隧道采用分时段收费；其余隧道全日划一。电单车收费为私家车的四成；的士在过海隧道全日划一 $25，商用车辆（货车、小巴、巴士）$50，大榄隧道分别为 $28 和 $43。收费以运输署公布为准。',
       tablesTitle: '收费时段表（私家车）',
       faqTitle: '常见问题',
@@ -146,7 +145,7 @@ export const UI = {
         tlt: '大榄隧道',
       },
       faq: [
-        { q: '香港隧道收费怎样分时段？', a: '三条过海隧道（红隧、东隧、西隧）和大榄隧道采用分时段收费，分繁忙、一般和非繁忙三个时段，转换时段每 2 分钟逐步调整。其余隧道（狮子山、城门、大老山、香港仔、沙田岭／尖山、愉景湾）划一收费。' },
+        { q: '香港隧道收费怎样分时段？', a: '三条过海隧道（红隧、东隧、西隧）和大榄隧道采用分时段收费，分繁忙、一般和非繁忙三个时段，转换时段每 2 分钟逐步调整。其余隧道（狮子山、城门、大老山、香港仔、沙田岭／尖山）划一收费。' },
         { q: '星期日和公众假期隧道收费不一样吗？', a: '不一样。三条过海隧道在星期日及公众假期用另一套收费表，一般全日同价；大榄隧道也全日划一。' },
         { q: '有没有免费道路可以代替隧道？', a: '有。屯门公路、大埔道、林锦公路／青山公路都免费，会和隧道一起列出，连车费和实时行车时间一起比较。' },
         { q: '实时行车时间是由哪里开始计算？', a: '读数据来自运输署「行车时间显示器」，是由指定分流点计到目的地（例如狮子山由沙田马场起、大埔道往九龙由青沙公路起），不是隧道管道内的时间，而且只在选择「现在」时显示。' },
@@ -181,7 +180,6 @@ export const UI = {
     cmpCatKlnNtw: '九龙 ↔ 新界西',
     cmpCatNteNtw: '新界东 ↔ 新界西',
     cmpCatIsland: '港岛市内',
-    cmpCatOther: '其他隧道',
     tabAll: '全部隧道',
     tabCompare: '同程比较',
     compareFor: '{name}的同程比较',
@@ -234,7 +232,7 @@ export const UI = {
     github: 'Source on GitHub',
     reference: {
       summary: 'Toll tables · FAQ · vehicle classes',
-      intro: 'Every Hong Kong toll tunnel on one page — Cross-Harbour, Eastern Harbour, Western Harbour, Tai Lam, Lion Rock, Shing Mun, Tate’s Cairn, Aberdeen, Sha Tin Heights / Eagle’s Nest / Tai Wai and Discovery Bay. Pick a date, vehicle and time to see the time-of-day toll, the free road alternatives, and the Transport Department’s live journey times and traffic news.',
+      intro: 'Every Hong Kong toll tunnel on one page — Cross-Harbour, Eastern Harbour, Western Harbour, Tai Lam, Lion Rock, Shing Mun, Tate’s Cairn, Aberdeen, and Sha Tin Heights / Eagle’s Nest / Tai Wai. Pick a date, vehicle and time to see the time-of-day toll, the free road alternatives, and the Transport Department’s live journey times and traffic news.',
       classes: 'The three harbour crossings and Tai Lam charge by time of day; every other tunnel charges one rate all day. A motorcycle pays 40% of the private car; on the harbour crossings a taxi pays a flat $25 and a commercial vehicle (goods vehicle, minibus, bus) $50, and $28 and $43 respectively at Tai Lam. Tolls are as published by the Transport Department.',
       tablesTitle: 'Toll periods (private car)',
       faqTitle: 'Common questions',
@@ -252,7 +250,7 @@ export const UI = {
         tlt: 'Tai Lam Tunnel',
       },
       faq: [
-        { q: 'How is the toll split by time of day?', a: 'The three harbour crossings (Cross-Harbour, Eastern Harbour, Western Harbour) and Tai Lam charge by time of day, in peak, normal and non-peak periods, stepping by $2 every 2 minutes through the transitions. Every other tunnel (Lion Rock, Shing Mun, Tate’s Cairn, Aberdeen, Sha Tin Heights / Eagle’s Nest, Discovery Bay) charges one rate.' },
+        { q: 'How is the toll split by time of day?', a: 'The three harbour crossings (Cross-Harbour, Eastern Harbour, Western Harbour) and Tai Lam charge by time of day, in peak, normal and non-peak periods, stepping by $2 every 2 minutes through the transitions. Every other tunnel (Lion Rock, Shing Mun, Tate’s Cairn, Aberdeen, Sha Tin Heights / Eagle’s Nest) charges one rate.' },
         { q: 'Is the toll different on Sundays and public holidays?', a: 'Yes. The three harbour crossings use a separate table on Sundays and public holidays, usually one rate all day; Tai Lam is flat all day too.' },
         { q: 'Are there free roads instead of a tunnel?', a: 'Yes. Tuen Mun Road, Tai Po Road and Lam Kam Road / Castle Peak Road are free; they are listed beside the tunnels so the time and the fare can be compared together.' },
         { q: 'Where does the live journey time start?', a: 'The readings come from the Transport Department’s journey-time indicators and run from a gantry to the destination (Lion Rock from Sha Tin Racecourse, Tai Po Road towards Kowloon from the Tsing Sha Highway) — not the time inside the tunnel — and they show only while “now” is selected.' },
@@ -287,7 +285,6 @@ export const UI = {
     cmpCatKlnNtw: 'Kowloon ↔ West NT',
     cmpCatNteNtw: 'East NT ↔ West NT',
     cmpCatIsland: 'Hong Kong Island',
-    cmpCatOther: 'Other tunnels',
     tabAll: 'All tunnels',
     tabCompare: 'Same-trip comparison',
     compareFor: 'Same trip as {name}',

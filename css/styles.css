@@ -253,8 +253,11 @@ body {
 .tab-panel { margin-top: 4px; }
 /* The moment the directory is pricing — the chart card, which owns the clock
    controls, is hidden while the directory is on screen. */
-.all-moment { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-size: 0.82rem; color: var(--muted); }
-.all-moment.is-now { color: #157a4d; font-weight: 600; }
+.all-moment { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 2px; font-size: 0.82rem; color: var(--muted); }
+.all-moment.is-now .all-when { color: #157a4d; font-weight: 600; }
+/* The clock is the point of the line: bigger than everything around it. */
+.all-moment .all-time { font-size: 1.35rem; font-weight: 700; line-height: 1.05; color: var(--ink); font-variant-numeric: tabular-nums; }
+.all-moment.is-now .all-time { color: #157a4d; }
 .all-now {
   border: 1px solid var(--line);
   background: #fff;

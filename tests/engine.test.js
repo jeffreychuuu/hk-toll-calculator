@@ -76,7 +76,6 @@ test('flat tunnels and per-class tables', () => {
   assert.deepEqual(toll('abt', 'all', 'weekday', '12:00'), { amount: 8, periodType: 'flat' });
   assert.equal(toll('tct', 'dbus', 'weekday', '12:00').amount, 35);
   assert.equal(toll('tct', 'mc', 'weekend', '00:00').amount, 15);
-  assert.equal(toll('dbt', 'c6', 'weekday', '12:00').amount, 250);
 });
 
 test('extreme minutes resolve without error', () => {

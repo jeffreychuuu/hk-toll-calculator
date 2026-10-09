@@ -16,13 +16,13 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
 
 - **All paid tunnels in Hong Kong**
   - Time-varying toll: Cross-Harbour Tunnel (Hung Hom), Eastern Harbour Crossing, Western Harbour Crossing, Tai Lam Tunnel
-  - Flat-rate tunnels: Aberdeen, Shing Mun, Lion Rock, Sha Tin Pass / Tsuen Shin / Tai Wai, Tate's Cross, Discovery Bay Tunnel
+  - Flat-rate tunnels: Aberdeen, Shing Mun, Lion Rock, Sha Tin Pass / Tsuen Shin / Tai Wai, Tate's Cross
 - **The chart picks its own tunnel** — the 24-hour chart card carries its own picker, listing just the tunnels of the corridor shown above, so what it draws is never ambiguous
 - **Live conditions, shown only while it is now** — the Transport Department's journey times sit beside each tunnel and free corridor, one chip per direction (往…), each naming the gantry it is measured from — the department times a route from a gantry, not from the tunnel mouth, so 大埔道 往九龍 starts on the Tsing Sha Highway and 獅子山 at Sha Tin Racecourse. The harbour crossings are timed from many points and so name none. Also the corridor's traffic news, whether the news names a tunnel or the road itself
 - **A corridor at a glance** — the comparison carries the 車種 selector and lists, corridor by corridor, every tunnel and free road that serves the trip, each with its live reading and its toll (the cheapest tunnel marked 最平 in blue, the free corridors — Tuen Mun Road, Tai Po Road, Lam Kam Road / Castle Peak Road — reading 免費 in green). Picking a corridor picks its first tunnel, so the chart follows; every tunnel is a chip away, including one off the macro map
 - **24-hour toll-period chart** — the current period badge, colour-coded periods, the date / day-type / clock controls, a marker labelled 現在 while the view is the present moment (or the time you picked), one pill that reads 現在 at now and becomes the 回到現在 button once you leave, and the next-period hint. A tunnel that charges one flat rate all day (and Tai Lam on a Sunday) simply shows a single band across the day, and its schedule controls step aside — there is nothing to pick
 - **Flexible inputs**
-  - Vehicle class selector (private car, motorcycle, taxi, goods vehicles, buses, etc.), on the comparison card because it changes every price there — and it keeps the same class of vehicle when you switch tunnels, even though each names its classes differently (a tunnel with a scheme of its own, like Discovery Bay's, hands the old class back when you leave)
+  - Vehicle class selector (private car, motorcycle, taxi, goods vehicles, buses, etc.), on the comparison card because it changes every price there — and it keeps the same class of vehicle when you switch tunnels, even though each tunnel names its classes differently
   - A **date** and a **day type** (Mon–Sat non-holiday / Sunday and public holidays): the schedule follows the date, and picking a day type jumps to the next day (counted from today) that has it — or straight back to now when today already does
   - Hour and minute dropdowns for any time of day, a slider, plus a **back-to-now** button
 - **One page** — the comparison and the chart sit together
