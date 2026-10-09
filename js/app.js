@@ -106,16 +106,19 @@ const TABS = {
   compare: { button: 'tab-compare', panel: 'compare-panel' },
 };
 
+let activeTab = 'all';
+
 function showTab(id) {
   if (!TABS[id]) return;
+  activeTab = id;
   for (const [key, { button, panel }] of Object.entries(TABS)) {
     const on = key === id;
     $(button).setAttribute('aria-selected', String(on));
     $(panel).hidden = !on;
   }
-  // The 24-hour chart is one tunnel's day, so it has no place beside the whole
-  // directory: it comes back with the comparison.
-  $('chart-card').hidden = id === 'all';
+  // The card and its clock are the same on both tabs; what the card draws is not.
+  renderChart();
+  renderResult();
 }
 
 
@@ -320,7 +323,9 @@ function renderResult() {
 
   const hint = $('next-hint');
   const next = getNextTransition(state);
-  if (!next) {
+  // A next change is something to act on, and the directory does not set times:
+  // it is a fact about one tunnel's day, and it lives with that tunnel.
+  if (!next || activeTab === 'all') {
     hint.hidden = true;
     return;
   }
@@ -600,8 +605,19 @@ function renderChart() {
   // A tunnel with one flat rate all day has no schedule to pick through, so the
   // clock and date controls step aside; the badge and the flat band remain.
   const flat = segs.every((seg) => seg.periodType === 'flat');
+  // The directory holds every tunnel, so it owns none of them: the chart, its
+  // title, its label and its slider go, and the card keeps only the clock it is
+  // pricing at — a date and a time to set.
+  const directory = activeTab === 'all';
+  $('chart-title').hidden = directory;
+  $('period-badge').hidden = directory;
+  $('chart-tunnel').hidden = directory;
+  $('chart').hidden = directory;
+  $('chart-axis').hidden = directory;
+  $('legend').hidden = directory;
+  $('back-to-now').hidden = directory;
   $('chart-controls').hidden = flat;
-  $('time-slider').hidden = flat;
+  $('time-slider').hidden = flat || directory;
   $('chart-bar').innerHTML = segs.map((seg) => {
     const width = ((seg.endMin - seg.startMin + 1) / 1440) * 100;
     return `<span class="seg ${seg.periodType}" style="width:${width.toFixed(4)}%"></span>`;

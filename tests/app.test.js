@@ -72,10 +72,11 @@ function mk(id) {
   };
 }
 for (const id of ['period-badge', 'next-hint',
-  'chart-bar', 'chart-marker', 'legend', 'vehicle-select', 'chart-tunnel',
+  'chart-bar', 'chart-marker', 'legend', 'chart', 'vehicle-select', 'chart-tunnel',
   'wrap', 'chart-card',
   'date-input', 'daytype-select', 'traffic-footnote',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice', 'chart-controls',
+  'chart-axis',
   'chart-title', 'marker-label', 'site-name', 'github-link', 'lang-picker',
   'compare-note',
   'alt-card', 'alt-list', 'label-vehicle-class',
@@ -179,12 +180,24 @@ test('picking a tunnel in the all list opens its comparison', () => {
   selectTunnel('cht');
 });
 
-test('the all-tunnels view hides the chart, the comparison brings it back', () => {
-  assert.equal($('chart-card').hidden, true, 'the chart is out of the way while browsing');
+test('the directory keeps only the clock, the comparison brings the chart back', () => {
+  assert.equal($('chart-card').hidden, false, 'the card stays: it holds the date and time');
+  assert.equal($('chart-controls').hidden, false, 'which are there to set');
+  assert.equal($('chart').hidden, true, 'the chart itself is not drawn');
+  assert.equal($('chart-axis').hidden, true, 'nor its axis');
+  assert.equal($('legend').hidden, true, 'nor its legend');
+  assert.equal($('chart-title').hidden, true, 'nor its title');
+  assert.equal($('chart-tunnel').hidden, true, 'nor the tunnel it would have drawn');
+  assert.equal($('time-slider').hidden, true, 'nor the slider to scrub with');
+  assert.equal($('next-hint').hidden, true, 'nor the next change to act on');
+
   fire('tab-compare', 'click');
-  assert.equal($('chart-card').hidden, false, 'and returns with the comparison');
+  assert.equal($('chart').hidden, false, 'the comparison gets its chart back');
+  assert.equal($('chart-title').hidden, false);
+  assert.equal($('chart-tunnel').hidden, false);
+  assert.equal($('time-slider').hidden, false);
   fire('tab-all', 'click');
-  assert.equal($('chart-card').hidden, true);
+  assert.equal($('chart-bar').hidden, false, 'the bar element is still there, just not shown');
 });
 
 test('the all-tunnels view says which moment the fares are for', () => {
