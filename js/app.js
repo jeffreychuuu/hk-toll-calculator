@@ -314,6 +314,9 @@ function applyLanguage() {
 function renderResult() {
   const copy = t();
   const { amount, periodType } = getToll(state);
+  // The chart has no picker of its own: the tunnel it draws is the one the rows
+  // above chose, so the card names it instead.
+  $('chart-who').textContent = nameOf(tunnelById(state.tunnelId));
   const badge = $('period-badge');
   badge.textContent = copy.period[periodType];
   badge.className = `badge ${periodType}`;
@@ -609,6 +612,7 @@ function renderChart() {
   const directory = activeTab === 'all';
   $('chart-title').hidden = directory;
   $('period-badge').hidden = directory;
+  $('chart-who').hidden = directory;
   $('legend').hidden = directory;
   $('chart-bar').hidden = directory;
   $('chart').hidden = false;
