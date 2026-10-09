@@ -77,7 +77,7 @@ for (const id of ['period-badge', 'next-hint',
   'date-input', 'daytype-select', 'traffic-footnote',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice', 'chart-controls',
   'chart-axis', 'holiday-name', 'time-selects',
-  'chart-title', 'marker-label', 'site-name', 'github-link', 'lang-picker',
+  'chart-title', 'chart-who', 'marker-label', 'site-name', 'github-link', 'lang-picker',
   'compare-note',
   'alt-card', 'alt-list', 'label-vehicle-class',
   'tab-all', 'tab-compare', 'all-panel', 'all-list', 'compare-panel',
@@ -192,6 +192,7 @@ test('the directory scrubs time under a timeline of its own, with no tunnel in i
   assert.equal($('chart').hidden, false, 'the timeline shows');
   assert.equal($('chart-axis').hidden, false, 'with its hours');
   assert.equal($('chart-bar').hidden, true, 'but no tunnel\u2019s segments');
+  assert.equal($('chart-who').hidden, true, 'and no tunnel named');
   assert.equal($('legend').hidden, true, 'so no legend to read them by');
   assert.equal($('chart-title').hidden, true, 'and no title claiming one');
   assert.equal($('next-hint').hidden, true, 'nor a next change to act on');
@@ -199,6 +200,7 @@ test('the directory scrubs time under a timeline of its own, with no tunnel in i
   fire('tab-compare', 'click');
   assert.equal($('chart-bar').hidden, false, 'the comparison gets its chart back');
   assert.equal($('chart-title').hidden, false);
+  assert.equal($('chart-who').hidden, false, 'and names the tunnel it draws');
   assert.equal($('legend').hidden, false);
   assert.equal($('time-slider').hidden, false);
   fire('tab-all', 'click');
@@ -663,12 +665,12 @@ test('the result and the schedule sit on the same page', () => {
   assert.equal($('chart-marker') !== undefined, true, 'the chart is on screen too');
 });
 
-test('the chart names the tunnel it is drawing', () => {
+test('the chart says which tunnel it is drawing', () => {
   selectTunnel('cht');
-  assert.ok(showsTunnel('cht', selectedName()), 'the chart says which tunnel it belongs to');
+  assert.ok(showsTunnel('cht', $('chart-who').textContent), 'the chart names its tunnel');
 
   selectTunnel('tlt');
-  assert.ok(showsTunnel('tlt', selectedName()), 'and follows the choice');
+  assert.ok(showsTunnel('tlt', $('chart-who').textContent), 'and follows the choice');
 });
 
 test('the chart follows the tunnel you pick, with no picker of its own', () => {
