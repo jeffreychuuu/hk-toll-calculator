@@ -612,9 +612,9 @@ function renderChart() {
   const directory = activeTab === 'all';
   $('chart-title').hidden = directory;
   $('period-badge').hidden = directory;
-  // The name of the tunnel stays on both tabs: on the comparison it says whose
-  // day the chart draws, and on the directory it says whose row you are on.
-  $('chart-who').hidden = false;
+  // The name belongs to the comparison, where the chart draws one tunnel's day.
+  // The directory is every tunnel, so it names none of them.
+  $('chart-who').hidden = directory;
   $('legend').hidden = directory;
   $('chart-bar').hidden = directory;
   $('chart').hidden = false;
