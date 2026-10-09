@@ -1,7 +1,7 @@
 // js/app.js
 import { TUNNELS, vehiclesFor, canonicalFor, classIdFor } from './data.js';
 import { getToll, getDaySegments, getNextTransition, getCrossHarbourComparison } from './engine.js';
-import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange } from './holidays.js';
+import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange, holidayName } from './holidays.js';
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 import { compareGroups, categoryForTunnel } from './regions.js';
 import { incidentsForCorridor, GANTRIES } from './traffic.js';
@@ -223,6 +223,11 @@ function renderDateType() {
   $('date-input').value = state.date;
   $('daytype-select').value = state.dayType;
   $('holiday-notice').hidden = state.dataCurrent;
+  // A public holiday has a name, and the name is the useful part: it says why
+  // the weekend schedule is the one in force.
+  const holiday = holidayName(state.date);
+  $('holiday-name').hidden = !holiday;
+  $('holiday-name').textContent = holiday ? holiday[state.lang] : '';
 }
 
 function fillLangMenu() {
@@ -587,8 +592,10 @@ function renderMoment() {
   const moment = $('all-moment');
   moment.className = `all-moment${now ? ' is-now' : ''}`;
   // The clock is the point of the line, so it stands on its own and takes the
-  // weight; the label beside it says which moment it is.
-  const when = now ? esc(copy.nowLabel) : esc(fmtDateLong(state.date));
+  // weight; the label beside it says which moment it is — and which day, since
+  // "now" on its own does not say what day it is now.
+  const day = esc(fmtDateLong(state.date));
+  const when = now ? `${day} · ${esc(copy.nowLabel)}` : day;
   const back = now ? ''
     : `<button type="button" class="all-now" data-now>${esc(copy.backToNow)}</button>`;
   moment.innerHTML = `<span class="all-when">${when}</span>`

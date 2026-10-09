@@ -13,6 +13,24 @@ test('gazetted holidays are present for all three years', () => {
   assert.ok(HOLIDAYS.has('2027-12-27')); // first weekday after Christmas 2027
 });
 
+test('every holiday is gazetted under a name in all three languages', () => {
+  assert.equal(HOLIDAYS.size, 51, 'three gazetted years of holidays');
+  for (const [key, name] of HOLIDAYS) {
+    for (const lang of ['tc', 'sc', 'en']) {
+      assert.equal(typeof name[lang], 'string', `${key}.${lang} missing`);
+      assert.ok(name[lang].trim().length > 0, `${key}.${lang} empty`);
+    }
+  }
+});
+
+test('the names are the ones the government gazettes', () => {
+  assert.equal(HOLIDAYS.get('2026-10-01').tc, '國慶日');
+  assert.equal(HOLIDAYS.get('2026-10-01').en, 'National Day');
+  assert.equal(HOLIDAYS.get('2026-02-17').tc, '農曆年初一');
+  assert.equal(HOLIDAYS.get('2026-04-07').en, 'The day following Easter Monday');
+  assert.equal(HOLIDAYS.get('2027-02-09').tc, '農曆年初四');
+});
+
 test('ordinary weekday is not a holiday', () => {
   assert.equal(isPublicHoliday(new Date(2026, 9, 8)), false); // Thu 2026-10-08
   assert.equal(toDateKey(new Date(2026, 9, 8)), '2026-10-08');
