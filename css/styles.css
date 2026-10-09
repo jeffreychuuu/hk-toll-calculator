@@ -251,18 +251,43 @@ body {
 .tab:hover { color: var(--ink); }
 .tab[aria-selected="true"] { color: var(--focus); border-bottom-color: var(--focus); font-weight: 700; }
 .tab-panel { margin-top: 4px; }
-/* The all-tunnels directory: one heading per corridor, its tunnels under it. */
+/* The moment the directory is pricing — the chart card, which owns the clock
+   controls, is hidden while the directory is on screen. */
+.all-moment { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-size: 0.82rem; color: var(--muted); }
+.all-moment.is-now { color: #157a4d; font-weight: 600; }
+.all-now {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--focus);
+  cursor: pointer;
+}
+/* The all-tunnels directory reads as a table: one line per tunnel, a rule
+   between them, and a heading that heads. Every rule here is scoped to
+   .all-group so the comparison rows keep their own two-line look. */
+.all-group .alt-list { gap: 0; margin-top: 2px; border-top: 1px solid var(--line); }
+.all-group .alt-list li + li { border-top: 1px solid var(--line); }
+.all-group .compare-row { align-items: baseline; padding: 7px 8px; border-radius: 0; }
+.all-group .compare-name { flex: 0 1 auto; }
+.all-group .compare-price { font-weight: 600; }
+/* Where you are, as an accent down the side — never a price colour. */
+.all-group button.compare-row[aria-current="true"] { box-shadow: inset 3px 0 0 var(--focus); font-weight: 700; }
 .all-head {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px;
-  margin: 14px 0 0;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--muted);
+  margin: 16px 0 0;
+  padding: 0 8px;
+  font-size: 0.95rem;
+  color: var(--ink);
 }
-.all-free { color: #157a4d; }
+.all-free { font-size: 0.78rem; font-weight: 700; color: #157a4d; }
+/* The comparison says whose trip it is. */
+.compare-who { margin: 0 0 2px; font-size: 0.95rem; color: var(--ink); }
 .alt-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .compare-row {
   display: flex;

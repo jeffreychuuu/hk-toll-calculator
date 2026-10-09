@@ -53,7 +53,7 @@ test('every control lives with what it belongs to', () => {
 
   const alt = section('alt-card');
   for (const id of ['vehicle-select', 'label-vehicle-class', 'tab-all', 'tab-compare',
-    'all-panel', 'all-list', 'compare-panel', 'alt-list',
+    'all-panel', 'all-list', 'all-moment', 'compare-panel', 'compare-who', 'alt-list',
     'holiday-notice', 'traffic-footnote']) {
     assert.ok(alt.includes(`id="${id}"`), `#${id} belongs with the comparison`);
   }

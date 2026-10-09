@@ -80,6 +80,7 @@ for (const id of ['period-badge', 'next-hint',
   'compare-note',
   'alt-card', 'alt-list', 'label-vehicle-class',
   'tab-all', 'tab-compare', 'all-panel', 'all-list', 'compare-panel',
+  'all-moment', 'compare-who',
   'lang-trigger', 'lang-current', 'lang-menu', 'footer-source', 'site-footer', 'reference']) elements.set(id, mk(id));
 
 globalThis.document = {
@@ -175,6 +176,34 @@ test('picking a tunnel in the all list opens its comparison', () => {
   assert.ok($('alt-list').innerHTML.includes('大老山隧道'), 'showing the same-trip alternatives');
   // Leave the page as we found it for the tests that follow.
   fire('tab-all', 'click');
+  selectTunnel('cht');
+});
+
+test('the all-tunnels view hides the chart, the comparison brings it back', () => {
+  assert.equal($('chart-card').hidden, true, 'the chart is out of the way while browsing');
+  fire('tab-compare', 'click');
+  assert.equal($('chart-card').hidden, false, 'and returns with the comparison');
+  fire('tab-all', 'click');
+  assert.equal($('chart-card').hidden, true);
+});
+
+test('the all-tunnels view says which moment the fares are for', () => {
+  assert.ok($('all-moment').className.includes('is-now'), 'it says now while it is now');
+  assert.ok($('all-moment').innerHTML.includes('07:29'), 'naming the time');
+
+  setTime('12', '00'); // a time you picked is not the present
+  assert.ok(!$('all-moment').className.includes('is-now'), 'a chosen time is never called now');
+  assert.ok($('all-moment').innerHTML.includes('12:00'), 'but the time is named');
+  assert.ok($('all-moment').innerHTML.includes('回到現在'), 'with a way back to the present');
+
+  fire('all-moment', 'click', { target: { closest: () => ({ dataset: {} }) } });
+  assert.ok($('all-moment').className.includes('is-now'), 'and the way back works');
+});
+
+test('the comparison names the tunnel whose trip it is', () => {
+  selectTunnel('tct');
+  assert.ok(showsTunnel('tct', $('compare-who').innerHTML), 'the heading names the tunnel');
+  assert.ok($('compare-who').innerHTML.includes('同程比較'), 'and says what it is');
   selectTunnel('cht');
 });
 
