@@ -76,6 +76,9 @@ export const UI = {
     cmpCatNteNtw: '新界東 ↔ 新界西',
     cmpCatIsland: '港島市內',
     cmpCatOther: '其他隧道',
+    tabAll: '全部隧道',
+    tabCompare: '同程比較',
+    hasFreeAlt: '有免費道路可選',
     planCheapest: '最平',
     compareFree: '免費',
 
@@ -178,6 +181,9 @@ export const UI = {
     cmpCatNteNtw: '新界东 ↔ 新界西',
     cmpCatIsland: '港岛市内',
     cmpCatOther: '其他隧道',
+    tabAll: '全部隧道',
+    tabCompare: '同程比较',
+    hasFreeAlt: '有免费道路可选',
     planCheapest: '最平',
     compareFree: '免费',
 
@@ -280,6 +286,9 @@ export const UI = {
     cmpCatNteNtw: 'East NT ↔ West NT',
     cmpCatIsland: 'Hong Kong Island',
     cmpCatOther: 'Other tunnels',
+    tabAll: 'All tunnels',
+    tabCompare: 'Same-trip comparison',
+    hasFreeAlt: 'Free road alternative',
     planCheapest: 'Cheapest',
     compareFree: 'Free',
 

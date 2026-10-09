@@ -101,6 +101,23 @@ const CATEGORY_LABEL = {
   other: 'cmpCatOther',
 };
 
+// The two views of the tunnel lists: every tunnel, and the ways to make the
+// trip the chosen one belongs to. The chart card sits outside both, because
+// picking a tunnel or a time is what drives everything else on the page.
+const TABS = {
+  all: { button: 'tab-all', panel: 'all-panel' },
+  compare: { button: 'tab-compare', panel: 'compare-panel' },
+};
+
+function showTab(id) {
+  if (!TABS[id]) return;
+  for (const [key, { button, panel }] of Object.entries(TABS)) {
+    const on = key === id;
+    $(button).setAttribute('aria-selected', String(on));
+    $(panel).hidden = !on;
+  }
+}
+
 
 function loadLang() {
   try {
@@ -271,6 +288,8 @@ function applyLanguage() {
   $('github-link').setAttribute('aria-label', copy.github);
   $('github-link').setAttribute('title', copy.github);
   $('chart-title').textContent = copy.chartTitle;
+  $('tab-all').textContent = copy.tabAll;
+  $('tab-compare').textContent = copy.tabCompare;
   $('label-vehicle-class').textContent = copy.compareVehicle;
   $('vehicle-select').setAttribute('aria-label', copy.labelVehicle);
   $('chart-tunnel').setAttribute('aria-label', copy.labelTunnel);
@@ -453,29 +472,15 @@ function trafficFootnote() {
 
 function renderAlternatives() {
   const copy = t();
-  const section = $('alt-card');
-  const tunnelCategory = categoryForTunnel(state.tunnelId);
-
-  if (!tunnelCategory) {
-    section.hidden = true;
+  $('alt-card').hidden = false;
+  // The list shows the chosen tunnel's own corridor: a tunnel belongs to exactly
+  // one kind of trip, so its alternatives are the other ways to make that trip.
+  const active = compareGroups().find((entry) => entry.id === categoryForTunnel(state.tunnelId));
+  if (!active) {
+    $('alt-list').innerHTML = '';
     return;
   }
-  section.hidden = false;
-
-  const groups = compareGroups();
-  // The list shows the chosen tunnel's own corridor, so a chip that switches
-  // corridor also picks that corridor's first tunnel (see the click handler).
-  const activeId = tunnelCategory;
-  const active = groups.find((group) => group.id === activeId);
   const vehicle = canonicalFor(state.tunnelId, state.vehicleId);
-
-  $('alt-categories').innerHTML = groups.map((group) => {
-    const on = group.id === activeId;
-    const warn = corridorIncidents(group).length ? ' ⚠️' : '';
-    return `<button type="button" class="chip${on ? ' on' : ''}" data-group="${group.id}"`
-      + ` aria-pressed="${on}">${esc(copy[CATEGORY_LABEL[group.id]] ?? group.id)}${warn}</button>`;
-  }).join('');
-
   const rows = alternativeRows(active, vehicle);
   $('alt-list').innerHTML = rows.rows + incidentBlock(active);
   $('traffic-footnote').innerHTML = trafficFootnote();
@@ -483,6 +488,32 @@ function renderAlternatives() {
   $('compare-note').textContent = rows.tied
     ? copy.compareTie.replace('{amount}', rows.cheapest.toFixed(2))
     : '';
+}
+
+// The directory of every tolled tunnel, gathered by the trip it serves. It says
+// what a tunnel costs and what the traffic is doing, but never pretends two
+// corridors are alternatives: the free roads stay with their corridor (in the
+// comparison), and a row here opens that comparison.
+function renderAllTunnels() {
+  const copy = t();
+  const canonical = canonicalFor(state.tunnelId, state.vehicleId);
+  $('all-list').innerHTML = compareGroups().map((group) => {
+    const free = group.roads.length
+      ? `<span class="all-free">${esc(copy.hasFreeAlt)}</span>`
+      : '';
+    const warn = corridorIncidents(group).length ? ' ⚠️' : '';
+    const rows = group.tunnels.map((id) => {
+      const content = `<span class="compare-name">${esc(nameOf(tunnelById(id)))}</span>`
+        + trafficChip('tunnel', id)
+        + `<span class="compare-price">HK$ ${priceTunnelFor(id, canonical).toFixed(2)}</span>`;
+      const current = id === state.tunnelId ? ' aria-current="true"' : '';
+      return `<li><button type="button" class="compare-row" data-tunnel-id="${id}"${current}>`
+        + `${content}</button></li>`;
+    }).join('');
+    return '<section class="all-group">'
+      + `<h3 class="all-head">${esc(copy[CATEGORY_LABEL[group.id]] ?? group.id)}${warn}${free}</h3>`
+      + `<ul class="alt-list">${rows}</ul></section>`;
+  }).join('');
 }
 
 
@@ -570,6 +601,7 @@ function fillTimeSelects() {
 function renderToll() {
   renderResult();
   renderAlternatives();
+  renderAllTunnels();
   renderChart();
   renderMoment();
 }
@@ -653,6 +685,7 @@ function init() {
 
   fillTimeSelects();
   applyLanguage();
+  showTab('all');
   setLangMenuOpen(false);
 
   $('lang-trigger').addEventListener('click', () => setLangMenuOpen($('lang-menu').hidden));
@@ -674,14 +707,15 @@ function init() {
   $('chart-tunnel').addEventListener('change', (e) => {
     setTunnel(e.target.value);
   });
-  $('alt-categories').addEventListener('click', (e) => {
-    const chip = e.target.closest('button[data-group]');
-    if (!chip || chip.dataset.group === categoryForTunnel(state.tunnelId)) return;
-    const group = compareGroups().find((entry) => entry.id === chip.dataset.group);
-    // Switching corridor picks that corridor's first tunnel, and the chart
-    // follows the choice.
-    if (!group || !group.tunnels.length) return;
-    setTunnel(group.tunnels[0]);
+  $('tab-all').addEventListener('click', () => showTab('all'));
+  $('tab-compare').addEventListener('click', () => showTab('compare'));
+  $('all-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-tunnel-id]');
+    if (!btn) return;
+    // Picking a tunnel shows what else serves that trip, which is the whole
+    // point of choosing it.
+    setTunnel(btn.dataset.tunnelId);
+    showTab('compare');
   });
   $('alt-list').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-tunnel-id]');
