@@ -229,25 +229,41 @@ body {
   line-height: 1.5;
 }
 
-/* Same-trip alternatives: corridor chips over a priced list */
+/* Same-trip alternatives: the tunnel lists, split into two views */
 .alt-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; }
 .alt-vehicle { display: inline-flex; align-items: center; gap: 6px; }
 /* A fixed width, so the control never shifts as the classes change length */
 .alt-vehicle select { width: 22rem; max-width: 100%; }
 .alt-vehicle-label { color: var(--muted); font-size: 0.85rem; font-weight: 600; }
-.pick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.chip {
-  border: 1px solid var(--line);
-  background: #fff;
-  border-radius: 999px;
-  padding: 5px 10px;
+/* Two views of the same lists: every tunnel, and the chosen tunnel's trip. */
+.tabs { display: flex; gap: 4px; margin-top: 12px; border-bottom: 1px solid var(--line); }
+.tab {
+  border: 0;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 7px 12px;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   color: var(--muted);
   cursor: pointer;
 }
-.chip.on { border-color: #bcd7ff; background: #e8f1ff; color: var(--focus); font-weight: 700; }
-.alt-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--focus); border-bottom-color: var(--focus); font-weight: 700; }
+.tab-panel { margin-top: 4px; }
+/* The all-tunnels directory: one heading per corridor, its tunnels under it. */
+.all-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 14px 0 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.all-free { color: #157a4d; }
+.alt-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .compare-row {
   display: flex;
   flex-wrap: wrap;
