@@ -599,28 +599,31 @@ select:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible
 .notice { margin: 0; color: var(--amber-ink); font-size: 0.85rem; }
 
 .site-footer { color: var(--muted); font-size: 0.78rem; line-height: 1.65; padding: 0 4px; }
-.site-footer a { color: var(--focus); }
+.site-footer a, .ref-page a { color: var(--focus); }
 /* The reference copy folded into the footer — real text for search engines, but
    fine print rather than a section of its own */
 .site-footer p { margin: 0; }
 .site-footer .credit { margin: 8px 0 0; }
-.site-footer summary { cursor: pointer; }
-.site-footer details[open] > summary { color: var(--focus); }
+.reference-stack { display: flex; flex-direction: column; gap: 14px; }
+.reference-stack summary { cursor: pointer; font-weight: 600; }
+.reference-stack details[open] > summary { color: var(--focus); }
+/* Nine tunnel tabs need to wrap in the reference card */
+.ref-tabs { flex-wrap: wrap; margin-top: 4px; }
 .site-footer h3 { margin: 14px 0 4px; font-size: 0.84rem; color: var(--ink); }
 .site-footer h4 { margin: 10px 0 2px; font-size: 0.8rem; color: var(--ink); }
-.site-footer .tbl-day { margin: 6px 0 2px; font-weight: 600; color: var(--ink); }
+.site-footer .tbl-day, .ref-page .tbl-day { margin: 6px 0 2px; font-weight: 600; color: var(--ink); }
 /* One block per tunnel, anchored as #toll-<id>: its name, the fares in a line,
    then the tables. */
-.site-footer .toll-block { margin-top: 12px; }
-.site-footer .toll-block h4 { margin-top: 0; }
-.site-footer .toll-line { margin: 2px 0 4px; color: var(--muted); font-size: 0.78rem; }
-.site-footer .faq { margin: 0; }
-.site-footer .faq dt { margin-top: 10px; color: var(--ink); font-weight: 600; }
-.site-footer .faq dd { margin: 3px 0 0; }
-.site-footer table { width: 100%; border-collapse: collapse; margin: 3px 0 10px; font-size: 0.76rem; }
-.site-footer th, .site-footer td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: left; }
-.site-footer th { color: var(--muted); font-weight: 600; }
-.site-footer th:last-child, .site-footer td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.site-footer .toll-block, .ref-page .toll-block { margin-top: 12px; }
+.site-footer .toll-block h4, .ref-page .toll-block h3 { margin-top: 0; }
+.site-footer .toll-line, .ref-page .toll-line { margin: 2px 0 4px; color: var(--muted); font-size: 0.78rem; }
+.site-footer .faq, .ref-page .faq { margin: 0; }
+.site-footer .faq dt, .ref-page .faq dt { margin-top: 10px; color: var(--ink); font-weight: 600; }
+.site-footer .faq dd, .ref-page .faq dd { margin: 3px 0 0; }
+.site-footer table, .ref-page table { width: 100%; border-collapse: collapse; margin: 3px 0 10px; font-size: 0.76rem; }
+.site-footer th, .site-footer td, .ref-page th, .ref-page td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+.site-footer th, .ref-page th { color: var(--muted); font-weight: 600; }
+.site-footer th:last-child, .site-footer td:last-child, .ref-page th:last-child, .ref-page td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Wide screens: the comparison left, the chart right */
 @media (min-width: 900px) {
@@ -630,6 +633,7 @@ select:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible
     grid-template-areas:
       "topbar  topbar"
       "alt     chart"
+      "ref     ref"
       "footer  footer";
     align-items: start;
     gap: 14px;
@@ -638,5 +642,29 @@ select:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible
   .topbar { grid-area: topbar; }
   #alt-card { grid-area: alt; }
   #chart-card { grid-area: chart; }
+  .reference-stack { grid-area: ref; }
   .site-footer { grid-area: footer; }
 }
+
+/* Per-tunnel landing pages (/toll/<id>/): a reading column, with the reference
+   structures above re-sized for a page rather than footer fine print. */
+.page-wrap { max-width: 860px; margin: 0 auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 14px; }
+.site-name a { color: inherit; text-decoration: none; }
+.lang-links { display: flex; gap: 6px; }
+.lang-links a {
+  color: var(--muted);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.lang-links a[aria-current="page"] { color: var(--focus); }
+.ref-page h1 { margin: 0 0 6px; font-size: 1.45rem; }
+.ref-page h2 { margin: 20px 0 6px; font-size: 1.05rem; color: var(--ink); }
+.ref-page h3 { margin: 12px 0 4px; font-size: 0.95rem; color: var(--ink); }
+.ref-page table { font-size: 0.88rem; }
+.ref-page .toll-line { font-size: 0.9rem; }
+.ref-page .faq dt { font-size: 0.95rem; }
+.ref-page .cta { margin-top: 14px; font-weight: 600; }

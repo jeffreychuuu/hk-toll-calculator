@@ -22,12 +22,13 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
 - **A corridor at a glance** — the comparison carries the 車種 selector and lists, corridor by corridor, every tunnel and free road that serves the trip, each with its live reading and its toll (the cheapest tunnel marked 最平 in blue, the free corridors — Tuen Mun Road, Tai Po Road, Lam Kam Road / Castle Peak Road — reading 免費 in green). Picking a corridor picks its first tunnel, so the chart follows; every tunnel is a chip away, including one off the macro map
 - **24-hour toll-period chart** — the current period badge, colour-coded periods, the date / day-type / clock controls, a marker labelled 現在 while the view is the present moment (or the time you picked), one pill that reads 現在 at now and becomes the 回到現在 button once you leave, and the next-period hint. A tunnel that charges one flat rate all day (and Tai Lam on a Sunday) simply shows a single band across the day, and its schedule controls step aside — there is nothing to pick
 - **The whole network as a directory** — the All tunnels tab lists every tolled tunnel under its corridor heading, each row carrying its fare and live reading; picking a row opens that corridor's comparison
+- **A page for every tunnel** — each tolled tunnel has a landing page of its own (`/toll/<id>/`) in all three languages, with its fares by vehicle class, the time-of-day table, the free-road alternatives and its own FAQ — the pages that answer 紅隧收費 / 西隧價錢 searches directly
 - **Flexible inputs**
   - Vehicle class selector (private car, motorcycle, taxi, goods vehicles, buses, etc.), on the comparison card because it changes every price there — and it keeps the same class of vehicle when you switch tunnels, even though each tunnel names its classes differently
   - A **date** and a **day type** (Mon–Sat non-holiday / Sunday and public holidays): the schedule follows the date, and picking a day type jumps to the next day (counted from today) that has it — or straight back to now when today already does
   - Hour and minute dropdowns for any time of day, a slider, plus a **back-to-now** button
 - **One page** — the comparison and the chart sit together
-- **A reference you can open, not read past** — the toll-period table for every tunnel, the FAQ and the vehicle-class notes sit folded into the footer behind one line, so the tool stays first while search engines and curious readers still get the detail. The block is in Traditional Chinese in the page itself, and follows the language picker like everything else
+- **A reference you can open, not read past** — three folded cards above the footer: the toll tables with a tab bar to switch tunnel, the FAQ (which follows the tunnel you picked in the tool) and the vehicle-class notes. The tool stays first while search engines and curious readers still get the detail; the static copy is in Traditional Chinese and follows the language picker like everything else
 - **An icon of its own** — a tunnel mouth, as an SVG favicon and a 180px touch icon
 - **Remembers your choice** — the last tunnel and vehicle class are restored on the next visit (localStorage)
 - **Three languages** — 繁體中文 / 简体中文 / English, picked automatically from the browser language and remembered once chosen
@@ -65,10 +66,14 @@ hk-toll-calculator/
 │   ├── i18n.js         # UI copy + bundle language detection
 │   ├── traffic.js      # TD journey-time and traffic-news parsing
 │   ├── toll-tables.js  # renders the toll tables embedded in index.html
+│   ├── tunnel-pages.js # content + template for the per-tunnel pages
+│   ├── paths.js        # the /toll/<id>/ URL scheme, single owner
 │   ├── engine.js       # pure toll calculation functions
 │   └── app.js          # UI wiring & rendering
+├── toll/               # generated: one page per tunnel per language
 ├── scripts/
-│   └── print-toll-tables.mjs   # node scripts/print-toll-tables.mjs
+│   ├── print-toll-tables.mjs   # node scripts/print-toll-tables.mjs
+│   └── build-tunnel-pages.mjs  # npm run build:pages (writes toll/ + sitemap.xml)
 ├── api/
 │   └── traffic.js      # the one serverless function (live traffic)
 ├── tests/              # Node test runner suites
@@ -104,5 +109,7 @@ Or connect the GitHub repository in the Vercel dashboard — no build command, o
 ## Notes
 
 - Toll rates reflect TD publications as of **October 2026**. Rates may change; always verify against official TD sources for actual tolls.
+- After any toll-data change, regenerate both outputs — `node scripts/print-toll-tables.mjs` (paste the block into `index.html`) and `npm run build:pages` (the `/toll/` pages and `sitemap.xml`); `npm test` fails until both are done.
+- The per-tunnel page titles carry the year, so `npm run build:pages` is part of the yearly refresh too.
 - Embedded public holiday data must be refreshed each year.
 - This project is an unofficial reference tool and is not affiliated with the Transport Department.

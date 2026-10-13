@@ -57,7 +57,7 @@ test('the FAQ markup and the FAQ structured data agree', async () => {
   const ld = html.slice(html.indexOf('"@type": "FAQPage"'));
   assert.equal((ld.match(/"@type": "Question"/g) || []).length, faq.length,
     'one JSON-LD question per question on the page');
-  const visible = html.slice(html.indexOf('<dl class="faq">'));
+  const visible = html.slice(html.indexOf('<dl class="faq'));
   for (const { q } of faq) {
     assert.ok(visible.includes(q), `the page is missing the question: ${q}`);
   }
