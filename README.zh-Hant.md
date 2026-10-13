@@ -22,6 +22,7 @@
 - **只喺「現在」顯示嘅實時路況** — 運輸署行車時間顯示喺每條隧道同免費走廊旁邊，每個方向一粒 chip（「往…」），每粒都寫明**由邊個分流點起計** —— TD 係由 gantry 量起，唔係由隧道口，所以「大埔道 往九龍」係由青沙公路起、「獅子山」係由沙田馬場起。過海隧道由好多點量起，就唔標。連同該走廊嘅交通消息 —— 唔論消息係講隧道定係條路本身
 - **24 小時收費時段圖** — 現時時段 badge、按時段上色、日期／日期類型／時間控制、marker（「現在」／揀咗嘅時間）、一粒 pill（現在↔回到現在）、同下一時段提示。劃一收費嘅隧道（連大欖隧道星期日）就淨係一條帶到尾，時間／日期控制會收起 —— 冇嘢好揀
 - **全網絡目錄** — 「全部隧道」分頁將所有收費隧道按走廊分組列出，每行帶隧道費同實時讀數；揀一行即開嗰個走廊嘅同程比較
+- **每條隧道一版** — 每條收費隧道都有自己嘅 landing page（`/toll/<id>/`），三種語言齊備，有各車種收費、時段表、免費替代同該隧道嘅 FAQ——直接答「紅隧收費」「西隧價錢」呢類搜尋
 - **彈性輸入**
   - 車輛類別選擇器（私家車、電單車、的士、貨車、巴士等）—— 放喺行程比較卡，因為佢決定嗰度每個價；轉隧道時會保留同一類車，即使每條隧道嘅分類名唔同
   - **日期**同**日期類型**（星期一至六非假期／星期日及公眾假期）：時程跟住日期，揀日期類型會跳去由今日起下一個有嗰個時程嘅日子；如果今日已經係，就直接返去現在
@@ -65,10 +66,14 @@ hk-toll-calculator/
 │   ├── i18n.js         # 三語文案 + 瀏覽器語言偵測
 │   ├── traffic.js      # 運輸署行車時間／交通消息解析
 │   ├── toll-tables.js  # 產生嵌入 index.html 嘅收費表
+│   ├── tunnel-pages.js # 隧道 landing page 嘅內容同模板
+│   ├── paths.js        # /toll/<id>/ URL 方案，單一來源
 │   ├── engine.js       # 純收費計算函數
 │   └── app.js          # UI 綁定同渲染
+├── toll/               # 生成物：每條隧道每種語言一版
 ├── scripts/
-│   └── print-toll-tables.mjs   # node scripts/print-toll-tables.mjs
+│   ├── print-toll-tables.mjs   # node scripts/print-toll-tables.mjs
+│   └── build-tunnel-pages.mjs  # npm run build:pages（寫 toll/ + sitemap.xml）
 ├── api/
 │   └── traffic.js      # 唯一嘅 serverless function（實時路況）
 ├── tests/              # Node 測試套件
@@ -103,5 +108,7 @@ vercel                   # 跟提示做；靜態站用預設設定就得
 ## 注意
 
 - 收費按運輸署 **2026 年 10 月**公布資料編製。收費可能調整，實際收費請以運輸署官方資料為準。
+- 改咗收費數據之後，兩個生成物都要重跑——`node scripts/print-toll-tables.mjs`（貼返入 `index.html`）同 `npm run build:pages`（`/toll/` 頁面同 `sitemap.xml`）；`npm test` 唔跑齊會 fail。
+- Landing page 標題帶年份，所以每年更新時 `npm run build:pages` 亦係例行步驟。
 - 內嵌公眾假期資料需每年更新。
 - 本專案為非官方參考工具，與運輸署無關。

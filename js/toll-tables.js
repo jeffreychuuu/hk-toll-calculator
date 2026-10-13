@@ -11,6 +11,8 @@
 // The app also calls it at run time with the chosen language's labels.
 import { TUNNELS, classIdFor } from './data.js';
 import { getDaySegments } from './engine.js';
+import { UI } from './i18n.js';
+import { pagePath } from './paths.js';
 
 // The Traditional Chinese labels: what gets generated into index.html, and the
 // default for a caller that passes nothing.
@@ -38,11 +40,14 @@ export const TC_LABELS = {
     tlt: '大欖隧道',
   },
   names: Object.fromEntries(TUNNELS.map((tunnel) => [tunnel.id, tunnel.name.tc])),
+  // Each heading links to the tunnel's own page, which is how a crawler finds
+  // them without the sitemap.
+  hrefs: Object.fromEntries(TUNNELS.map((tunnel) => [tunnel.id, pagePath('tc', tunnel.id)])),
 };
 
 const pad = (n) => String(n).padStart(2, '0');
 const clock = (minutes) => `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
-const money = (amount) => `$${Number.isInteger(amount) ? amount : amount.toFixed(1)}`;
+export const money = (amount) => `$${Number.isInteger(amount) ? amount : amount.toFixed(1)}`;
 const range = (segment) => (segment.firstAmount === segment.lastAmount
   ? money(segment.firstAmount)
   : `${money(segment.firstAmount)} – ${money(segment.lastAmount)}`);
@@ -58,7 +63,7 @@ const table = (segments, labels) => `      <table>\n        <thead><tr><th>${lab
 
 // The whole day's car fares as one figure or a span, which is the shape a
 // search result wants: "$8" or "$20 – $40".
-const spread = (segments) => {
+export const spread = (segments) => {
   const amounts = segments.flatMap((seg) => [seg.firstAmount, seg.lastAmount]);
   const low = Math.min(...amounts);
   const high = Math.max(...amounts);
@@ -80,8 +85,16 @@ const tunnelBlock = (tunnel, labels) => {
     ? table(weekday, labels)
     : `      <p class="tbl-day">${labels.dayWeekday}</p>\n${table(weekday, labels)}\n`
       + `      <p class="tbl-day">${labels.dayWeekend}</p>\n${table(weekend, labels)}`;
+  // The heading tag and whether it links out are a caller's choice: the footer
+  // block links to the tunnel's page, the page itself is plain.
+  const heading = labels.heading ?? 'h4';
+  const title = labels.titles[id] ?? labels.names[id];
+  const url = labels.hrefs?.[id];
+  const headingHtml = url
+    ? `<${heading}><a href="${url}">${title}</a></${heading}>`
+    : `<${heading}>${title}</${heading}>`;
   return `    <section class="toll-block" id="toll-${id}">\n`
-    + `      <h4>${labels.titles[id] ?? labels.names[id]}</h4>\n`
+    + `      ${headingHtml}\n`
     + `      <p class="toll-line">${line}</p>\n`
     + `${days}\n    </section>`;
 };
@@ -89,3 +102,36 @@ const tunnelBlock = (tunnel, labels) => {
 // The whole set, in the order index.html lists the tunnels.
 export const tollTableBlocks = (labels = TC_LABELS) =>
   TUNNELS.map((tunnel) => tunnelBlock(tunnel, labels)).join('\n');
+
+// One tunnel's block — the landing pages show a single corridor, not all nine.
+export const tollTableBlock = (tunnelId, labels = TC_LABELS) => {
+  const tunnel = TUNNELS.find((t) => t.id === tunnelId);
+  if (!tunnel) throw new Error(`unknown tunnel: ${tunnelId}`);
+  return tunnelBlock(tunnel, labels);
+};
+
+// The labels for one language, shared by the app's runtime render and the
+// landing-page generator so the two can never drift. Names resolve defensively
+// for the stale-cache case (a cached pre-i18n data.js).
+export function labelsFor(lang) {
+  const ref = UI[lang].reference;
+  const nameOf = (tunnel) => {
+    const name = tunnel.name;
+    if (typeof name === 'string') return name;
+    return name?.[lang] ?? name?.tc ?? tunnel.id;
+  };
+  return {
+    period: UI[lang].period,
+    colPeriod: ref.colPeriod,
+    colTime: ref.colTime,
+    colCar: ref.colCar,
+    dayWeekday: ref.dayWeekday,
+    dayWeekend: ref.dayWeekend,
+    tollWeekday: ref.tollWeekday,
+    tollWeekend: ref.tollWeekend,
+    tollAllDay: ref.tollAllDay,
+    titles: ref.titles,
+    names: Object.fromEntries(TUNNELS.map((tunnel) => [tunnel.id, nameOf(tunnel)])),
+    hrefs: Object.fromEntries(TUNNELS.map((tunnel) => [tunnel.id, pagePath(lang, tunnel.id)])),
+  };
+}
