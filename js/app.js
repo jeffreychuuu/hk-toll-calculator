@@ -42,6 +42,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 
 const STORAGE_KEY = 'hk-toll-calculator.selection';
 const LANG_KEY = 'hk-toll-calculator.lang';
+const THEME_KEY = 'hk-toll-calculator.theme';
 
 const t = () => UI[state.lang];
 
@@ -141,9 +142,34 @@ function saveLang() {
   }
 }
 
+// The visitor's theme once they have toggled: 'dark' or 'light'. Null until
+// then, so the system preference governs the first visit.
+function loadTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'dark' || saved === 'light') return saved;
+  } catch {
+    // storage disabled — the system preference stands in
+  }
+  return null;
+}
+
+function saveTheme() {
+  try {
+    localStorage.setItem(THEME_KEY, state.theme);
+  } catch {
+    // ignore
+  }
+}
+
+// What the page is actually showing: the stored choice, or the system's.
+const currentTheme = () => state.theme
+  ?? (typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
 const initialDayType = defaultDayType();
 const state = {
   lang: 'tc',
+  theme: null,
   date: toDateKey(new Date()),
   category: 'weekday',
   tunnelId: 'cht',
@@ -288,6 +314,31 @@ function renderReference() {
   ].join('\n');
 }
 
+// The html attribute drives the stylesheet; without a stored choice it stays
+// off so the CSS media query follows the system. The browser chrome colour
+// follows the theme too.
+function applyTheme() {
+  const root = document.documentElement;
+  if (state.theme) root.dataset.theme = state.theme;
+  else delete root.dataset.theme;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', currentTheme() === 'dark' ? '#0f1115' : '#22a06b');
+  renderThemeToggle();
+}
+
+// The icon and the label both name the mode the button would switch TO.
+function renderThemeToggle() {
+  const copy = t();
+  const dark = currentTheme() === 'dark';
+  const label = dark ? copy.themeToLight : copy.themeToDark;
+  const toggle = $('theme-toggle');
+  toggle.setAttribute('aria-label', label);
+  toggle.setAttribute('title', label);
+  // SVG elements have no `hidden` IDL property, so toggle the attribute.
+  $('theme-icon-moon').toggleAttribute('hidden', dark);
+  $('theme-icon-sun').toggleAttribute('hidden', !dark);
+}
+
 function applyLanguage() {
   const copy = t();
   const lang = LANGS.find((l) => l.id === state.lang);
@@ -296,6 +347,7 @@ function applyLanguage() {
   $('site-name').textContent = copy.siteName;
   $('github-link').setAttribute('aria-label', copy.github);
   $('github-link').setAttribute('title', copy.github);
+  renderThemeToggle();
   $('chart-title').textContent = copy.chartTitle;
   $('tab-all').textContent = copy.tabAll;
   $('tab-compare').textContent = copy.tabCompare;
@@ -709,6 +761,7 @@ function chooseLang(lang) {
 
 function init() {
   state.lang = loadLang();
+  state.theme = loadTheme();
 
 
   const saved = loadSelection();
@@ -720,6 +773,7 @@ function init() {
 
   fillTimeSelects();
   applyLanguage();
+  applyTheme();
   showTab('all');
   setLangMenuOpen(false);
 
@@ -738,6 +792,21 @@ function init() {
     setLangMenuOpen(false);
     $('lang-trigger').focus();
   });
+
+  $('theme-toggle').addEventListener('click', () => {
+    state.theme = currentTheme() === 'dark' ? 'light' : 'dark';
+    saveTheme();
+    applyTheme();
+  });
+  // With no stored choice the page follows the system live: the CSS media
+  // query repaints by itself, and this keeps the icon, label and browser
+  // chrome in step. Once the visitor has chosen, their choice is final.
+  if (typeof matchMedia === 'function') {
+    const query = matchMedia('(prefers-color-scheme: dark)');
+    const onSystemChange = () => { if (!state.theme) applyTheme(); };
+    if (query.addEventListener) query.addEventListener('change', onSystemChange);
+    else query.addListener(onSystemChange); // Safari < 14
+  }
 
   $('tab-all').addEventListener('click', () => showTab('all'));
   $('tab-compare').addEventListener('click', () => showTab('compare'));

@@ -20,6 +20,8 @@ export const UI = {
     pageTitle: '香港隧道實時收費｜紅隧 · 東隧 · 西隧 · 大欖 分時段收費',
     siteName: '香港隧道實時收費',
     github: 'GitHub 原始碼',
+    themeToDark: '切換深色模式',
+    themeToLight: '切換淺色模式',
     reference: {
       summary: '收費表 · 常見問題 · 車種說明',
       intro: '一頁睇晒全港 9 條收費隧道——紅隧、東隧、西隧、大欖、獅子山、城門、大老山、香港仔、沙田嶺／尖山／大圍。揀日期、車種同時間，即刻睇到分時段收費、免費道路替代，同運輸署實時行車時間同交通消息。',
@@ -126,6 +128,8 @@ export const UI = {
     pageTitle: '香港隧道实时收费｜红隧 · 东隧 · 西隧 · 大榄 分时段收费',
     siteName: '香港隧道实时收费',
     github: 'GitHub 源码',
+    themeToDark: '切换深色模式',
+    themeToLight: '切换浅色模式',
     reference: {
       summary: '收费表 · 常见问题 · 车种说明',
       intro: '一页看遍全港 9 条收费隧道——红隧、东隧、西隧、大榄、狮子山、城门、大老山、香港仔、沙田岭／尖山／大围。选择日期、车种和时间，即可看到分时段收费、免费道路替代，以及运输署实时行车时间和交通消息。',
@@ -232,6 +236,8 @@ export const UI = {
     pageTitle: 'HK Tunnel Tolls (Live) — Hong Kong tolls by time of day',
     siteName: 'HK Tunnel Tolls (Live)',
     github: 'Source on GitHub',
+    themeToDark: 'Switch to dark mode',
+    themeToLight: 'Switch to light mode',
     reference: {
       summary: 'Toll tables · FAQ · vehicle classes',
       intro: 'Every Hong Kong toll tunnel on one page — Cross-Harbour, Eastern Harbour, Western Harbour, Tai Lam, Lion Rock, Shing Mun, Tate’s Cairn, Aberdeen, and Sha Tin Heights / Eagle’s Nest / Tai Wai. Pick a date, vehicle and time to see the time-of-day toll, the free road alternatives, and the Transport Department’s live journey times and traffic news.',

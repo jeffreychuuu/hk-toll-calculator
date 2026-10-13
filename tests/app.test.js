@@ -56,6 +56,7 @@ function mk(id) {
     addEventListener(t, h) { this._handlers[t] = h; },
     setAttribute(k, v) { this._attrs[k] = String(v); },
     getAttribute(k) { return Object.prototype.hasOwnProperty.call(this._attrs, k) ? this._attrs[k] : null; },
+    toggleAttribute(k, on) { if (on) this._attrs[k] = ''; else delete this._attrs[k]; },
     focus() { this.focused = true; },
     querySelectorAll(sel) { return sel === 'button' ? (buttonsFor[id] || []) : []; },
     closest(sel) {
@@ -78,6 +79,7 @@ for (const id of ['period-badge', 'next-hint',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice', 'chart-controls',
   'chart-axis', 'holiday-name', 'time-selects',
   'chart-title', 'chart-who', 'marker-label', 'site-name', 'github-link', 'lang-picker',
+  'theme-toggle', 'theme-icon-moon', 'theme-icon-sun',
   'compare-note',
   'alt-card', 'alt-list', 'label-vehicle-class',
   'tab-all', 'tab-compare', 'all-panel', 'all-list', 'compare-panel',
@@ -86,7 +88,8 @@ for (const id of ['period-badge', 'next-hint',
 
 globalThis.document = {
   getElementById: (id) => elements.get(id),
-  documentElement: { lang: '' },
+  documentElement: { lang: '', dataset: {} },
+  querySelector: () => null,
   title: '',
   _handlers: {},
   addEventListener(t, h) { this._handlers[t] = h; },
@@ -399,6 +402,7 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal(document.title, 'HK Tunnel Tolls (Live) — Hong Kong tolls by time of day');
   assert.equal($('site-name').textContent, 'HK Tunnel Tolls (Live)');
   assert.equal($('github-link').getAttribute('aria-label'), 'Source on GitHub');
+  assert.equal($('theme-toggle').getAttribute('aria-label'), 'Switch to dark mode');
   assert.equal($('lang-current').textContent, 'English');
   assert.equal($('chart-title').textContent, '24-hour toll period chart');
   assert.equal($('label-vehicle-class').textContent, 'Vehicle class');
@@ -885,4 +889,78 @@ test('a stale, string-named data module can never render undefined', async () =>
 
   data.TUNNELS[0].name = tunnelName;
   data.TVT_VEHICLES[0].name = vehicleName;
+});
+
+const isHidden = (id) => $(id).getAttribute('hidden') !== null;
+
+test('by default no theme is stored: the moon offers dark mode', async () => {
+  storage.delete('hk-toll-calculator.theme');
+  await import('../js/app.js?theme-default=1');
+  assert.equal(document.documentElement.dataset.theme, undefined, 'no stored choice leaves the system in charge');
+  assert.equal($('theme-toggle').getAttribute('aria-label'), '切換深色模式');
+  assert.equal($('theme-toggle').getAttribute('title'), '切換深色模式');
+  assert.equal(isHidden('theme-icon-moon'), false);
+  assert.equal(isHidden('theme-icon-sun'), true);
+});
+
+test('toggling stores an explicit choice and swaps icon and label', async () => {
+  storage.delete('hk-toll-calculator.theme');
+  await import('../js/app.js?theme-toggle=1');
+
+  fire('theme-toggle', 'click');
+  assert.equal(document.documentElement.dataset.theme, 'dark');
+  assert.equal(storage.get('hk-toll-calculator.theme'), 'dark');
+  assert.equal($('theme-toggle').getAttribute('aria-label'), '切換淺色模式');
+  assert.equal(isHidden('theme-icon-moon'), true);
+  assert.equal(isHidden('theme-icon-sun'), false);
+
+  fire('theme-toggle', 'click');
+  assert.equal(document.documentElement.dataset.theme, 'light');
+  assert.equal(storage.get('hk-toll-calculator.theme'), 'light');
+  assert.equal($('theme-toggle').getAttribute('aria-label'), '切換深色模式');
+});
+
+test('a stored theme is restored on load', async () => {
+  storage.set('hk-toll-calculator.theme', 'dark');
+  await import('../js/app.js?theme-stored=1');
+  assert.equal(document.documentElement.dataset.theme, 'dark');
+  assert.equal($('theme-toggle').getAttribute('aria-label'), '切換淺色模式');
+  assert.equal(isHidden('theme-icon-sun'), false);
+  storage.delete('hk-toll-calculator.theme');
+});
+
+test('storage failures do not break the theme toggle', async () => {
+  storage.delete('hk-toll-calculator.theme');
+  storageFails = true;
+  await import('../js/app.js?theme-broken=1');
+  fire('theme-toggle', 'click');
+  assert.equal(document.documentElement.dataset.theme, 'dark', 'the choice still applies for this visit');
+  assert.equal($('theme-toggle').getAttribute('aria-label'), '切換淺色模式');
+  storageFails = false;
+  storage.delete('hk-toll-calculator.theme');
+});
+
+test('with no stored choice a system change moves the button with it', async () => {
+  storage.delete('hk-toll-calculator.theme');
+  let systemDark = false;
+  let onSystem = null;
+  globalThis.matchMedia = () => ({
+    get matches() { return systemDark; },
+    addEventListener(type, handler) { onSystem = handler; },
+  });
+  await import('../js/app.js?theme-system=1');
+  assert.equal($('theme-toggle').getAttribute('aria-label'), '切換深色模式', 'the system is light');
+
+  systemDark = true;
+  onSystem();
+  assert.equal($('theme-toggle').getAttribute('aria-label'), '切換淺色模式', 'dark means the sun offers light');
+  assert.equal(isHidden('theme-icon-sun'), false);
+
+  fire('theme-toggle', 'click'); // an explicit choice overrides the system
+  assert.equal(storage.get('hk-toll-calculator.theme'), 'light');
+  systemDark = false;
+  onSystem();
+  assert.equal($('theme-toggle').getAttribute('aria-label'), '切換深色模式', 'the stored choice wins from now on');
+  delete globalThis.matchMedia;
+  storage.delete('hk-toll-calculator.theme');
 });
