@@ -5,7 +5,7 @@ import { defaultDayType, isPublicHoliday, toDateKey, inHolidayRange, holidayName
 import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 import { compareGroups, categoryForTunnel } from './regions.js';
 import { incidentsForCorridor, GANTRIES } from './traffic.js';
-import { tollTableBlocks } from './toll-tables.js';
+import { tollTableBlocks, labelsFor } from './toll-tables.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
 // The gantry we name for a route: the one on its own approach, so the reading
@@ -288,20 +288,7 @@ function renderFooter() {
 function renderReference() {
   const copy = t();
   const ref = copy.reference;
-  const names = Object.fromEntries(TUNNELS.map((tunnel) => [tunnel.id, nameOf(tunnel)]));
-  const tables = tollTableBlocks({
-    period: copy.period,
-    colPeriod: ref.colPeriod,
-    colTime: ref.colTime,
-    colCar: ref.colCar,
-    dayWeekday: ref.dayWeekday,
-    dayWeekend: ref.dayWeekend,
-    tollWeekday: ref.tollWeekday,
-    tollWeekend: ref.tollWeekend,
-    tollAllDay: ref.tollAllDay,
-    titles: ref.titles,
-    names,
-  });
+  const tables = tollTableBlocks(labelsFor(state.lang));
   const faq = ref.faq.map(({ q, a }) => `<dt>${esc(q)}</dt><dd>${esc(a)}</dd>`).join('');
   $('reference').innerHTML = [
     `<summary>${esc(ref.summary)}</summary>`,
