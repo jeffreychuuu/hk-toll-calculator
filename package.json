@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "build:pages": "node scripts/build-tunnel-pages.mjs"
   }
 }
