@@ -417,6 +417,18 @@ const tokensFor = (lang, tunnel) => {
   };
 };
 
+// One tunnel's FAQ, filled. The app shows these in the reference card, so the
+// main page and the landing pages answer with the same words.
+export function tunnelFaq(lang, tunnelId) {
+  const tunnel = TUNNELS.find((t) => t.id === tunnelId);
+  if (!tunnel) throw new Error(`unknown tunnel: ${tunnelId}`);
+  const tokens = tokensFor(lang, tunnel);
+  return COPY[lang].tunnels[tunnelId].faq.map(({ q, a }) => ({
+    q: fill(q, tokens, `${lang}/${tunnelId}`),
+    a: fill(a, tokens, `${lang}/${tunnelId}`),
+  }));
+}
+
 // ---- page sections -------------------------------------------------------
 
 const vehicleTable = (lang, tunnel) => {
@@ -510,7 +522,7 @@ export function tunnelPage(lang, tunnelId) {
   const title = filled(tunnelCopy.title);
   const description = filled(tunnelCopy.description);
   const intro = filled(tunnelCopy.intro);
-  const faq = tunnelCopy.faq.map(({ q, a }) => ({ q: filled(q), a: filled(a) }));
+  const faq = tunnelFaq(lang, tunnelId);
   const heading = UI[lang].reference.titles[tunnel.id] ?? tunnel.name[lang];
   const ogLocale = { tc: 'zh_HK', sc: 'zh_CN', en: 'en_US' }[lang];
   const langLinks = LANGS.map((l) => {
