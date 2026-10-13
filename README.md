@@ -30,6 +30,7 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
 - **An icon of its own** — a tunnel mouth, as an SVG favicon and a 180px touch icon
 - **Remembers your choice** — the last tunnel and vehicle class are restored on the next visit (localStorage)
 - **Three languages** — 繁體中文 / 简体中文 / English, picked automatically from the browser language and remembered once chosen
+- **Light and dark themes** — the page follows your system's preference until you toggle; the moon/sun button beside the GitHub link switches themes, and your choice is remembered from then on (localStorage)
 - **Transition-aware pricing** — computes exact stepwise rates during transition windows (e.g. +$2 every 2 minutes for private cars), matching TD's minute-by-minute schedule
 - **Pure static** — no backend, no build step, no runtime dependencies
 
