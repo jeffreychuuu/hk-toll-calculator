@@ -17,15 +17,15 @@
   /* Surfaces and accents outside the base palette — every literal colour the
      page paints is a token, so the dark theme is one block of overrides. */
   --surface: #ffffff;
-  --green-ink: var(--green-ink);
-  --green-tint: var(--green-tint);
-  --blue-ink: var(--blue-ink);
-  --blue-tint: var(--blue-tint);
-  --amber-ink: var(--amber-ink);
-  --amber-tint: var(--amber-tint);
-  --amber-line: var(--amber-line);
-  --orange-ink: var(--orange-ink);
-  --red-ink: var(--red-ink);
+  --green-ink: #157a4d;
+  --green-tint: #e7f6ee;
+  --blue-ink: #1d4ed8;
+  --blue-tint: #e8f1ff;
+  --amber-ink: #a2650f;
+  --amber-tint: #fdf1df;
+  --amber-line: #f0b478;
+  --orange-ink: #c2410c;
+  --red-ink: #b91c1c;
 }
 
 /* Dark theme. A stored choice wins through :root[data-theme="dark"]; with no
