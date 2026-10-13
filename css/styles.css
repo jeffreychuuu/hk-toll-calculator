@@ -368,14 +368,19 @@ button.icon-link { background: none; border: 0; padding: 0; cursor: pointer; }
 .all-group .compare-reading { flex: 1 1 100%; }
 /* Where you are, as an accent down the side — never a price colour. */
 .all-group button.compare-row[aria-current="true"] { box-shadow: inset 3px 0 0 var(--focus); font-weight: 700; }
+/* The corridor heading is a band, so the directory reads as sections of rows,
+   not one long list. */
 .all-head {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px;
-  margin: 16px 0 0;
-  padding: 0 8px;
-  font-size: 0.95rem;
+  margin: 18px 0 0;
+  padding: 6px 8px;
+  border-radius: 9px;
+  background: var(--form);
+  font-size: 0.9rem;
+  font-weight: 700;
   color: var(--ink);
 }
 .all-free { font-size: 0.78rem; font-weight: 700; color: var(--green-ink); }
