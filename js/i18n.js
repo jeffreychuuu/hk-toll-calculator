@@ -23,7 +23,9 @@ export const UI = {
     themeToDark: '切換深色模式',
     themeToLight: '切換淺色模式',
     reference: {
-      summary: '收費表 · 常見問題 · 車種說明',
+      tablesSummary: '收費表',
+      faqSummary: '常見問題',
+      classesSummary: '車種說明',
       intro: '一頁睇晒全港 9 條收費隧道——紅隧、東隧、西隧、大欖、獅子山、城門、大老山、香港仔、沙田嶺／尖山／大圍。揀日期、車種同時間，即刻睇到分時段收費、免費道路替代，同運輸署實時行車時間同交通消息。',
       classes: '三條過海隧道（紅隧、東隧、西隧）同大欖隧道採用分時段收費；其餘隧道全日劃一。電單車收費為私家車嘅四成；的士喺過海隧道全日劃一 $25，商用車輛（貨車、小巴、巴士）$50，大欖隧道分別為 $28 同 $43。收費以運輸署公布為準。',
       tablesTitle: '收費時段表（私家車）',
@@ -131,7 +133,9 @@ export const UI = {
     themeToDark: '切换深色模式',
     themeToLight: '切换浅色模式',
     reference: {
-      summary: '收费表 · 常见问题 · 车种说明',
+      tablesSummary: '收费表',
+      faqSummary: '常见问题',
+      classesSummary: '车种说明',
       intro: '一页看遍全港 9 条收费隧道——红隧、东隧、西隧、大榄、狮子山、城门、大老山、香港仔、沙田岭／尖山／大围。选择日期、车种和时间，即可看到分时段收费、免费道路替代，以及运输署实时行车时间和交通消息。',
       classes: '三条过海隧道（红隧、东隧、西隧）和大榄隧道采用分时段收费；其余隧道全日划一。电单车收费为私家车的四成；的士在过海隧道全日划一 $25，商用车辆（货车、小巴、巴士）$50，大榄隧道分别为 $28 和 $43。收费以运输署公布为准。',
       tablesTitle: '收费时段表（私家车）',
@@ -239,7 +243,9 @@ export const UI = {
     themeToDark: 'Switch to dark mode',
     themeToLight: 'Switch to light mode',
     reference: {
-      summary: 'Toll tables · FAQ · vehicle classes',
+      tablesSummary: 'Toll tables',
+      faqSummary: 'Common questions',
+      classesSummary: 'Vehicle classes',
       intro: 'Every Hong Kong toll tunnel on one page — Cross-Harbour, Eastern Harbour, Western Harbour, Tai Lam, Lion Rock, Shing Mun, Tate’s Cairn, Aberdeen, and Sha Tin Heights / Eagle’s Nest / Tai Wai. Pick a date, vehicle and time to see the time-of-day toll, the free road alternatives, and the Transport Department’s live journey times and traffic news.',
       classes: 'The three harbour crossings and Tai Lam charge by time of day; every other tunnel charges one rate all day. A motorcycle pays 40% of the private car; on the harbour crossings a taxi pays a flat $25 and a commercial vehicle (goods vehicle, minibus, bus) $50, and $28 and $43 respectively at Tai Lam. Tolls are as published by the Transport Department.',
       tablesTitle: 'Toll periods (private car)',

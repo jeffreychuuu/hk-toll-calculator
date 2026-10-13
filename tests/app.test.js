@@ -84,7 +84,11 @@ for (const id of ['period-badge', 'next-hint',
   'alt-card', 'alt-list', 'label-vehicle-class',
   'tab-all', 'tab-compare', 'all-panel', 'all-list', 'compare-panel',
   'all-moment', 'compare-who',
-  'lang-trigger', 'lang-current', 'lang-menu', 'footer-source', 'site-footer', 'reference']) elements.set(id, mk(id));
+  'lang-trigger', 'lang-current', 'lang-menu', 'footer-source', 'site-footer',
+  'reference-tables', 'ref-tables-summary', 'ref-tables-intro', 'ref-tabs', 'ref-blocks',
+  'reference-faq', 'ref-faq-summary', 'ref-faq-list',
+  'reference-classes', 'ref-classes-summary', 'ref-classes-text',
+  'toll-cht', 'toll-ehc', 'toll-whc', 'toll-tlt', 'toll-abt', 'toll-smt', 'toll-lrt', 'toll-stg', 'toll-tct']) elements.set(id, mk(id));
 
 globalThis.document = {
   getElementById: (id) => elements.get(id),
@@ -414,9 +418,12 @@ test('choosing English re-renders every label and the data names', () => {
   assert.equal(selectedName(), 'Cross-Harbour Tunnel (Hung Hom)');
   assert.ok($('alt-list').innerHTML.includes('Eastern Harbour Crossing'), 'the comparison is in English too');
   assert.equal($('period-badge').textContent, 'Peak'); // 17:30 on a weekday is the red tunnel's peak
-  assert.ok($('reference').innerHTML.includes('Toll periods (private car)'), 'the footer reference is in English');
-  assert.ok($('reference').innerHTML.includes('Common questions'));
-  assert.ok($('reference').innerHTML.includes('Cross-Harbour Tunnel'), 'the tables name the tunnels in English');
+  assert.equal($('ref-tables-summary').textContent, 'Toll tables');
+  assert.equal($('ref-faq-summary').textContent, 'Common questions');
+  assert.equal($('ref-classes-summary').textContent, 'Vehicle classes');
+  assert.ok($('ref-tabs').innerHTML.includes('Cross-Harbour Tunnel'), 'the tab bar names the tunnels in English');
+  assert.ok($('ref-blocks').innerHTML.includes('Cross-Harbour Tunnel'), 'the tables name the tunnels in English');
+  assert.ok($('ref-faq-list').innerHTML.includes('Cross-Harbour Tunnel'), 'the per-tunnel FAQ is in English');
 });
 
 test('choosing Simplified Chinese re-renders the labels', () => {
@@ -424,8 +431,9 @@ test('choosing Simplified Chinese re-renders the labels', () => {
   assert.equal(document.documentElement.lang, 'zh-Hans');
   assert.equal($('chart-title').textContent, '24小时收费时段分布图');
   assert.equal(selectedName(), '海底隧道（红隧）');
-  assert.ok($('reference').innerHTML.includes('收费时段表（私家车）'), 'the footer reference is in Simplified Chinese');
-  assert.ok($('reference').innerHTML.includes('常见问题'));
+  assert.equal($('ref-tables-summary').textContent, '收费表');
+  assert.equal($('ref-faq-summary').textContent, '常见问题');
+  assert.ok($('ref-blocks').innerHTML.includes('红隧（海底隧道）'), 'the tables name the tunnels in Simplified Chinese');
 });
 
 test('the chosen language is stored', () => {
@@ -963,4 +971,27 @@ test('with no stored choice a system change moves the button with it', async () 
   assert.equal($('theme-toggle').getAttribute('aria-label'), '切換深色模式', 'the stored choice wins from now on');
   delete globalThis.matchMedia;
   storage.delete('hk-toll-calculator.theme');
+});
+
+test('the reference tables show one tunnel at a time, and the tab bar switches it', async () => {
+  storage.delete('hk-toll-calculator.selection');
+  storage.delete('hk-toll-calculator.lang');
+  await import('../js/app.js?ref-tabs=1');
+  assert.equal($('toll-cht').hidden, false, "the reference opens on the tool's tunnel");
+  assert.equal($('toll-tct').hidden, true);
+  assert.ok($('ref-tabs').innerHTML.includes('data-ref-tunnel="cht" aria-selected="true"'), 'the current tab is marked');
+
+  fire('ref-tabs', 'click', { target: { closest: () => ({ dataset: { refTunnel: 'tct' } }) } });
+  assert.equal($('toll-tct').hidden, false);
+  assert.equal($('toll-cht').hidden, true);
+  assert.ok($('ref-tabs').innerHTML.includes('data-ref-tunnel="tct" aria-selected="true"'));
+  assert.ok($('ref-faq-list').innerHTML.includes('大老山隧道私家車收費幾多？'), 'the FAQ follows the picked tunnel');
+});
+
+test('changing the tunnel in the tool carries the reference with it', async () => {
+  await import('../js/app.js?ref-follow=1');
+  selectTunnel('ehc');
+  assert.equal($('toll-ehc').hidden, false, 'the reference follows the tool');
+  assert.equal($('toll-cht').hidden, true);
+  assert.ok($('ref-faq-list').innerHTML.includes('東隧私家車收費幾多？'), 'and so does the FAQ');
 });

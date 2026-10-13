@@ -6,6 +6,7 @@ import { LANGS, UI, TD_PATHS, detectLang } from './i18n.js';
 import { compareGroups, categoryForTunnel } from './regions.js';
 import { incidentsForCorridor, GANTRIES } from './traffic.js';
 import { tollTableBlocks, labelsFor } from './toll-tables.js';
+import { tunnelFaq } from './tunnel-pages.js';
 
 const LEGEND_ORDER = ['non-peak', 'normal', 'peak', 'transition', 'flat'];
 // The gantry we name for a route: the one on its own approach, so the reading
@@ -108,6 +109,9 @@ const TABS = {
 };
 
 let activeTab = 'all';
+// Which tunnel the reference tables card is showing. It follows the tool's
+// tunnel; picking a tab down here is reference-only.
+let refTunnel = null;
 
 function showTab(id) {
   if (!TABS[id]) return;
@@ -285,20 +289,38 @@ function renderFooter() {
 // Chinese so a crawler reads it without running any script; here we rebuild it
 // in whichever language the visitor is on. The tables come from the same
 // generator the page was built with, so the numbers cannot drift apart.
+// The reference stack above the footer: a tables card (with a tunnel tab bar),
+// a FAQ card and the vehicle-class notes. index.html ships the Traditional
+// Chinese tables statically so a crawler reads them without running any
+// script; here we rebuild the language-dependent parts and show one tunnel.
+function refTabButtons() {
+  const ref = t().reference;
+  return TUNNELS.map((tunnel) => {
+    const on = tunnel.id === refTunnel;
+    const label = ref.titles[tunnel.id] ?? nameOf(tunnel);
+    return `<button type="button" class="tab" role="tab" data-ref-tunnel="${tunnel.id}"`
+      + ` aria-selected="${on}">${esc(label)}</button>`;
+  }).join('');
+}
+
+function showRefTunnel(tunnelId) {
+  refTunnel = tunnelId;
+  $('ref-tabs').innerHTML = refTabButtons();
+  for (const tunnel of TUNNELS) $(`toll-${tunnel.id}`).hidden = tunnel.id !== refTunnel;
+  // The FAQ follows the tunnel too, so both cards tell the same story.
+  $('ref-faq-list').innerHTML = tunnelFaq(state.lang, refTunnel)
+    .map(({ q, a }) => `<dt>${esc(q)}</dt><dd>${esc(a)}</dd>`).join('\n');
+}
+
 function renderReference() {
-  const copy = t();
-  const ref = copy.reference;
-  const tables = tollTableBlocks(labelsFor(state.lang));
-  const faq = ref.faq.map(({ q, a }) => `<dt>${esc(q)}</dt><dd>${esc(a)}</dd>`).join('');
-  $('reference').innerHTML = [
-    `<summary>${esc(ref.summary)}</summary>`,
-    `<p>${esc(ref.intro)}</p>`,
-    `<p>${esc(ref.classes)}</p>`,
-    `<h3>${esc(ref.tablesTitle)}</h3>`,
-    tables,
-    `<h3>${esc(ref.faqTitle)}</h3>`,
-    `<dl class="faq">${faq}</dl>`,
-  ].join('\n');
+  const ref = t().reference;
+  $('ref-tables-summary').textContent = ref.tablesSummary;
+  $('ref-tables-intro').textContent = ref.intro;
+  $('ref-faq-summary').textContent = ref.faqSummary;
+  $('ref-classes-summary').textContent = ref.classesSummary;
+  $('ref-classes-text').textContent = ref.classes;
+  $('ref-blocks').innerHTML = tollTableBlocks(labelsFor(state.lang));
+  showRefTunnel(refTunnel);
 }
 
 // The html attribute drives the stylesheet; without a stored choice it stays
@@ -693,6 +715,7 @@ function renderToll() {
 }
 
 function render() {
+  if (refTunnel !== state.tunnelId) showRefTunnel(state.tunnelId);
   fillVehicleSelect();
   fillDayTypeSelect();
   renderDateType();
@@ -757,6 +780,7 @@ function init() {
     state.vehicleId = saved.vehicleId;
     if (saved.category) state.category = saved.category;
   }
+  refTunnel = state.tunnelId;
 
   fillTimeSelects();
   applyLanguage();
@@ -794,6 +818,11 @@ function init() {
     if (query.addEventListener) query.addEventListener('change', onSystemChange);
     else query.addListener(onSystemChange); // Safari < 14
   }
+
+  $('ref-tabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-ref-tunnel]');
+    if (btn) showRefTunnel(btn.dataset.refTunnel);
+  });
 
   $('tab-all').addEventListener('click', () => showTab('all'));
   $('tab-compare').addEventListener('click', () => showTab('compare'));

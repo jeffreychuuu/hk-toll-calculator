@@ -604,8 +604,11 @@ select:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible
    fine print rather than a section of its own */
 .site-footer p { margin: 0; }
 .site-footer .credit { margin: 8px 0 0; }
-.reference-card summary { cursor: pointer; font-weight: 600; }
-.reference-card details[open] > summary { color: var(--focus); }
+.reference-stack { display: flex; flex-direction: column; gap: 14px; }
+.reference-stack summary { cursor: pointer; font-weight: 600; }
+.reference-stack details[open] > summary { color: var(--focus); }
+/* Nine tunnel tabs need to wrap in the reference card */
+.ref-tabs { flex-wrap: wrap; margin-top: 4px; }
 .site-footer h3 { margin: 14px 0 4px; font-size: 0.84rem; color: var(--ink); }
 .site-footer h4 { margin: 10px 0 2px; font-size: 0.8rem; color: var(--ink); }
 .site-footer .tbl-day, .ref-page .tbl-day { margin: 6px 0 2px; font-weight: 600; color: var(--ink); }
@@ -639,7 +642,7 @@ select:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible
   .topbar { grid-area: topbar; }
   #alt-card { grid-area: alt; }
   #chart-card { grid-area: chart; }
-  .reference-card { grid-area: ref; }
+  .reference-stack { grid-area: ref; }
   .site-footer { grid-area: footer; }
 }
 
