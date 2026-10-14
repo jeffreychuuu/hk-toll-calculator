@@ -175,8 +175,9 @@ test('the all-tunnels list gathers every tunnel under its corridor', () => {
 
 test('the corridors with a free road say so once, on the heading', () => {
   const list = $('all-list').innerHTML;
-  // Tuen Mun Road, Tai Po Road and Lam Kam Road serve three corridors between them.
-  assert.equal((list.match(/有免費道路可選/g) || []).length, 3,
+  // Tuen Mun Road, Tai Po Road and Lam Kam Road serve three corridors; the
+  // island's free roads make the Aberdeen corridor the fourth.
+  assert.equal((list.match(/有免費道路可選/g) || []).length, 4,
     'one note per corridor, never one per tunnel');
 });
 
@@ -803,6 +804,8 @@ test('live conditions from the transport department sit beside the tunnels', asy
       roads: {
         tmr: { state: 'slow', minutes: 22, reports: 2, byDirection: { tsuenwan: { state: 'slow', minutes: 22, origins: ['SJ5'] } } },
         lamkam: { state: 'slow', minutes: 28, reports: 1, byDirection: { tsuenwan: { state: 'slow', minutes: 28 } } },
+        pfl: { state: 'slow', minutes: 14, reports: 2, byDirection: { pokfulam: { state: 'slow', minutes: 14, origins: ['H7', 'H9'] } } },
+        wncg: { state: 'free', minutes: 11, reports: 3, byDirection: { wongnaichung: { state: 'free', minutes: 11, origins: ['H6', 'H7', 'H8'] } } },
       },
       incidents: [{
         id: '147614',
@@ -846,6 +849,18 @@ test('live conditions from the transport department sit beside the tunnels', asy
   assert.ok($('alt-list').innerHTML.includes('由曾咀街起'), 'and says where it is measured from');
   assert.ok($('alt-list').innerHTML.includes('屯門公路(往九龍方向)'),
     'and its own road incident is shown with it');
+
+  // the island corridor's measured free roads
+  selectTunnel('abt');
+  const island = $('alt-list').innerHTML;
+  for (const name of ['薄扶林道', '黃泥涌峽道']) {
+    assert.ok(island.includes(name), `${name} is listed beside the tunnel`);
+  }
+  assert.ok(island.includes('往薄扶林 慢車 14 分鐘'), 'Pok Fu Lam Road carries a reading');
+  assert.ok(island.includes('往黃泥涌峽 暢通 11 分鐘'), 'and so does Wong Nai Chung Gap Road');
+  assert.ok(island.includes('由黃竹坑道起'), 'named from the H7 gantry');
+  assert.ok(!island.includes('域多利道'), 'Victoria Road stays out: the feed measures no reading for it');
+  selectTunnel('tlt'); // back to the corridor the schedule checks below use
 
   // picking the schedule already on screen keeps us at now
   $('daytype-select').value = 'weekday';

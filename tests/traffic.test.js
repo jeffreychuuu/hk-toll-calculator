@@ -39,6 +39,10 @@ test('the worst reading wins per tunnel', () => {
     { location: 'SJ5', dest: 'TWTM', type: 1, data: 22, colour: 2 }, // Tuen Mun Road
     { location: 'N05', dest: 'TPR', type: 1, data: 9, colour: 3 },   // Tai Po Road
     { location: 'SJ4', dest: 'TWCP', type: 1, data: 25, colour: 2 }, // Castle Peak Road
+    { location: 'H7', dest: 'PFL', type: 1, data: 12, colour: 3 },   // Pok Fu Lam Road
+    { location: 'H9', dest: 'PFL', type: 1, data: 15, colour: 2 },
+    { location: 'H6', dest: 'WNCG', type: 1, data: 11, colour: 3 },  // Wong Nai Chung Gap Road
+    { location: 'H7', dest: 'WNCG', type: 1, data: 13, colour: 2 },
   ]));
   const { tunnels } = result;
 
@@ -56,6 +60,11 @@ test('the worst reading wins per tunnel', () => {
   assert.equal(result.roads.lamkam.minutes, 25, 'and the Castle Peak Road corridor');
   assert.deepEqual(result.roads.tmr.byDirection.tsuenwan, { state: 'slow', minutes: 22, origins: ['SJ5'] },
     'a free road keeps its direction too');
+  assert.equal(result.roads.pfl.minutes, 15, 'Pok Fu Lam Road is measured too');
+  assert.deepEqual(result.roads.pfl.byDirection.pokfulam,
+    { state: 'slow', minutes: 15, origins: ['H7', 'H9'] }, 'both gantries feed one direction key');
+  assert.equal(result.roads.wncg.state, 'slow', 'Wong Nai Chung Gap Road aggregates its gantries');
+  assert.deepEqual(result.roads.wncg.byDirection.wongnaichung, { state: 'slow', minutes: 13, origins: ['H6', 'H7'] });
   assert.equal(tunnels.ehc, undefined, 'destinations we do not list are ignored');
 });
 
@@ -102,8 +111,19 @@ test('a road incident is tied to the road it names', () => {
   assert.deepEqual(roadsMentioned('屯門公路往九龍方向交通繁忙'), ['tmr']);
   assert.deepEqual(roadsMentioned('大埔公路往九龍方向交通意外'), ['tpr']);
   assert.deepEqual(roadsMentioned('青山公路往荃灣方向交通繁忙'), ['lamkam']);
+  assert.deepEqual(roadsMentioned('薄扶林道往香港仔方向交通意外'), ['pfl']);
+  assert.deepEqual(roadsMentioned('黃泥涌峽道近黃泥涌水塘部分行車線封閉'), ['wncg']);
   // a tunnel name is not a road
   assert.deepEqual(roadsMentioned('獅子山隧道管道內有交通意外'), []);
+});
+
+test('every road the department measures is a corridor we list', async () => {
+  const { FREE_EDGES } = await import('../js/regions.js');
+  const { ROAD_DESTINATIONS } = await import('../js/traffic.js');
+  const listed = new Set(FREE_EDGES.map((edge) => edge.id));
+  for (const { road } of Object.values(ROAD_DESTINATIONS)) {
+    assert.ok(listed.has(road), `${road} has a feed destination but is not a listed corridor`);
+  }
 });
 
 test('each reading keeps the direction it travels', () => {

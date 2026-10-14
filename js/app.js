@@ -19,6 +19,8 @@ const ORIGIN_GANTRY = {
   'smt:tsuenwan': 'SJ1',
   'tlt:tingkau': 'SJ4', // Mai Po
   'abt:wanchai': 'H7', // Wong Chuk Hang Road
+  'pfl:pokfulam': 'H7', // the same gantry times all three island routes
+  'wncg:wongnaichung': 'H7',
   'tmr:tsuenwan': 'SJ5', // Tseng Choi Street
   'lamkam:tsuenwan': 'SJ5',
   'tpr:kowloon': 'N06', // Tsing Sha Highway
@@ -491,6 +493,8 @@ const DIRECTION_LABEL = {
   tsuenwan: 'dirTsuenWan',
   shatin: 'dirShatin',
   wanchai: 'dirWanChai',
+  pokfulam: 'dirPokFuLam',
+  wongnaichung: 'dirWongNaiChung',
   tingkau: 'dirTingKau',
 };
 

@@ -45,6 +45,8 @@ export const ROAD_DESTINATIONS = {
   TPR: { road: 'tpr', direction: 'shatin' }, // Shatin via Tai Po Road
   KTPR: { road: 'tpr', direction: 'kowloon' }, // Kowloon via Tai Po Road
   TWCP: { road: 'lamkam', direction: 'tsuenwan' }, // Tsuen Wan (W) via Castle Peak
+  PFL: { road: 'pfl', direction: 'pokfulam' }, // Pok Fu Lam Road
+  WNCG: { road: 'wncg', direction: 'wongnaichung' }, // Wong Nai Chung Gap Road
 };
 
 const DESTINATION_DIRECTIONS = {
@@ -100,6 +102,8 @@ const ROAD_PATTERNS = [
   [/屯門公路|Tuen Mun Road/u, 'tmr'],
   [/大埔道|大埔公路|Tai Po Road/u, 'tpr'],
   [/林錦公路|青山公路|Lam Kam Road|Castle Peak Road/u, 'lamkam'],
+  [/薄扶林道|Pok Fu Lam Road/u, 'pfl'],
+  [/黃泥涌峽道|Wong Nai Chung Gap Road/u, 'wncg'],
 ];
 
 export function roadsMentioned(text) {
@@ -152,7 +156,8 @@ export function normaliseJourneyTimes(xml) {
     }
     if (!state) continue;
 
-    const entry = tunnels[tunnelId] || { state: 'free', minutes: 0, reports: 0, byDirection: {} };
+    const entry = (tunnelId ? tunnels[tunnelId] : roads[road.road])
+      || { state: 'free', minutes: 0, reports: 0, byDirection: {} };
     entry.state = worse(entry.state, state);
     if (minutes !== null) entry.minutes = Math.max(entry.minutes, minutes);
     entry.reports += 1;
