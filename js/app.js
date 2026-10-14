@@ -229,6 +229,30 @@ async function loadTraffic() {
   }
 }
 
+// The all-time view count, counted by /api/hit in Redis. Absent until it
+// loads, and silently absent if it cannot — the pill just stays hidden.
+let views = null;
+
+function renderViews() {
+  if (views == null) return;
+  const locale = { tc: 'zh-Hant', sc: 'zh-Hans', en: 'en' }[state.lang];
+  $('views-pill').textContent = t().views.replace('{n}', views.toLocaleString(locale));
+  $('views-pill').hidden = false;
+}
+
+async function loadViews() {
+  try {
+    const response = await fetch('/api/hit', { method: 'POST' });
+    if (!response.ok) return;
+    const data = await response.json();
+    if (typeof data.views !== 'number') return;
+    views = data.views;
+    renderViews();
+  } catch {
+    // an uncounted page is a normal state
+  }
+}
+
 function fillDayTypeSelect() {
   const copy = t();
   $('daytype-select').innerHTML = `<option value="weekday">${esc(copy.dayWeekday)}</option>`
@@ -371,6 +395,7 @@ function applyLanguage() {
   fillLangMenu();
   renderFooter();
   renderReference();
+  renderViews();
 }
 
 function renderResult() {
@@ -886,7 +911,10 @@ function init() {
 
   render();
   // Live conditions only make sense on a real page (the proxy is same-origin).
-  if (typeof location !== 'undefined' && /^https?:$/.test(location.protocol)) loadTraffic();
+  if (typeof location !== 'undefined' && /^https?:$/.test(location.protocol)) {
+    loadTraffic();
+    loadViews();
+  }
   setInterval(() => {
     if (!following) return;
     const now = new Date();

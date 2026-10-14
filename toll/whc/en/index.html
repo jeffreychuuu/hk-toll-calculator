@@ -94,11 +94,14 @@
   <main class="page-wrap">
     <header class="topbar">
       <p class="site-name"><a href="/">HK Tunnel Tolls (Live)</a></p>
-      <nav class="lang-links" aria-label="Language">
+      <div class="topbar-actions">
+        <span class="views-pill" id="views-pill" hidden></span>
+        <nav class="lang-links" aria-label="Language">
         <a href="/toll/whc/" hreflang="zh-Hant">繁體中文</a>
         <a href="/toll/whc/sc/" hreflang="zh-Hans">简体中文</a>
         <a href="/toll/whc/en/" hreflang="en" aria-current="page">English</a>
-      </nav>
+        </nav>
+      </div>
     </header>
 
     <article class="card ref-page">
@@ -172,5 +175,17 @@
       <p class="credit">Made by Jeffrey Chu (99% Agentic AI, 1% 🐈 Supervision &amp; 🥃)</p>
     </footer>
   </main>
+  <script>
+    // The running total of page views from Redis — the pill stays hidden if it
+    // cannot load.
+    fetch('/api/hit', { method: 'POST', keepalive: true })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || d.views == null) return;
+        var el = document.getElementById('views-pill');
+        el.textContent = '' + d.views.toLocaleString('en') + ' views';
+        el.hidden = false;
+      }).catch(function () {});
+  </script>
 </body>
 </html>

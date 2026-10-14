@@ -29,6 +29,7 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
   - Hour and minute dropdowns for any time of day, a slider, plus a **back-to-now** button
 - **One page** — the comparison and the chart sit together
 - **A reference you can open, not read past** — three folded lines in the footer fine print: the toll tables with a tab bar to switch tunnel, the FAQ (which follows the tunnel you picked in the tool) and the vehicle-class notes. Visitors barely notice them while search engines and curious readers still get the detail; the static copy is in Traditional Chinese and follows the language picker like everything else
+- **A view counter with nothing to hide** — the header shows how many times the pages have been viewed, from one Redis counter (Upstash via Vercel storage). No cookies, no IP stored, no third-party script — and the line simply stays hidden if it cannot load
 - **An icon of its own** — a tunnel mouth, as an SVG favicon and a 180px touch icon
 - **Remembers your choice** — the last tunnel and vehicle class are restored on the next visit (localStorage)
 - **Three languages** — 繁體中文 / 简体中文 / English, picked automatically from the browser language and remembered once chosen
@@ -75,7 +76,8 @@ hk-toll-calculator/
 │   ├── print-toll-tables.mjs   # node scripts/print-toll-tables.mjs
 │   └── build-tunnel-pages.mjs  # npm run build:pages (writes toll/ + sitemap.xml)
 ├── api/
-│   └── traffic.js      # the one serverless function (live traffic)
+│   ├── traffic.js      # the live-traffic proxy
+│   └── hit.js          # one view counted per page load, in Redis
 ├── tests/              # Node test runner suites
 ├── package.json        # test script (type: module)
 ├── README.md
@@ -105,6 +107,8 @@ vercel                   # follow the prompts; default static settings work
 ```
 
 Or connect the GitHub repository in the Vercel dashboard — no build command, output directory is the project root.
+
+The header view counter needs an **Upstash Redis** database from the Vercel storage marketplace: in the dashboard, Storage → create/connect Upstash Redis → the project gets `KV_REST_API_URL` and `KV_REST_API_TOKEN` injected automatically. Without them (local dev included) the counter is silently off — `api/hit.js` just answers `{ views: null }`.
 
 ## Notes
 
