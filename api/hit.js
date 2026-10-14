@@ -2,7 +2,13 @@
 // integration provides, reached through its REST API — so the repo keeps its
 // no-dependencies rule. A missing environment, a bot, or a Redis hiccup all
 // answer the same quiet way: { views: null }, and the header pill stays hidden.
-const KEY = 'hk-tolls:views';
+//
+// Preview deployments count into a key of their own, so a test visit never
+// lands in the public number. Vercel injects VERCEL_ENV itself:
+// 'production' | 'preview' | 'development'.
+export const keyFor = (vercelEnv) => (vercelEnv === 'production'
+  ? 'hk-tolls:views'
+  : 'hk-tolls:views:preview');
 
 const BOT = /bot|crawl|spider|slurp|bing|google|baidu|yandex|duckduck|facebookexternal|preview|monitor/i;
 
@@ -25,7 +31,7 @@ export default async function handler(request, response) {
   const { url, token } = redisEnv();
   if (!url || !token) return response.status(200).json({ views: null });
   try {
-    const result = await fetch(`${url}/incr/${KEY}`, {
+    const result = await fetch(`${url}/incr/${keyFor(process.env.VERCEL_ENV)}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
     });

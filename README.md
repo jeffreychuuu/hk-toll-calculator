@@ -108,7 +108,7 @@ vercel                   # follow the prompts; default static settings work
 
 Or connect the GitHub repository in the Vercel dashboard — no build command, output directory is the project root.
 
-The header view counter needs an **Upstash Redis** database from the Vercel storage marketplace: in the dashboard, Storage → create/connect Upstash Redis → the project gets `KV_REST_API_URL` and `KV_REST_API_TOKEN` injected automatically. Without them (local dev included) the counter is silently off — `api/hit.js` just answers `{ views: null }`.
+The header view counter needs an **Upstash Redis** database from the Vercel storage marketplace: in the dashboard, Storage → create/connect Upstash Redis → the project gets `KV_REST_API_URL` and `KV_REST_API_TOKEN` injected automatically. Without them (local dev included) the counter is silently off — `api/hit.js` just answers `{ views: null }`. Preview deployments count into `hk-tolls:views:preview` automatically (via Vercel's `VERCEL_ENV`), so test visits never land in the public number.
 
 ## Notes
 
