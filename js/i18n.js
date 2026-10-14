@@ -19,6 +19,7 @@ export const UI = {
   tc: {
     pageTitle: '香港隧道實時收費｜紅隧 · 東隧 · 西隧 · 大欖 分時段收費',
     siteName: '香港隧道實時收費',
+    views: '瀏覽 {n}',
     github: 'GitHub 原始碼',
     themeToDark: '切換深色模式',
     themeToLight: '切換淺色模式',
@@ -129,6 +130,7 @@ export const UI = {
   sc: {
     pageTitle: '香港隧道实时收费｜红隧 · 东隧 · 西隧 · 大榄 分时段收费',
     siteName: '香港隧道实时收费',
+    views: '浏览 {n}',
     github: 'GitHub 源码',
     themeToDark: '切换深色模式',
     themeToLight: '切换浅色模式',
@@ -239,6 +241,7 @@ export const UI = {
   en: {
     pageTitle: 'HK Tunnel Tolls (Live) — Hong Kong tolls by time of day',
     siteName: 'HK Tunnel Tolls (Live)',
+    views: '{n} views',
     github: 'Source on GitHub',
     themeToDark: 'Switch to dark mode',
     themeToLight: 'Switch to light mode',

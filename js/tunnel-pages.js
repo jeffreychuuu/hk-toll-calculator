@@ -532,6 +532,7 @@ export function tunnelPage(lang, tunnelId) {
   const faqVisible = faq.map(({ q, a }) => `        <dt>${esc(q)}</dt>\n        <dd>${esc(a)}</dd>`).join('\n');
   const periodTable = tollTableBlock(tunnel.id, { ...labelsFor(lang), heading: 'h3', hrefs: undefined });
   const ld = jsonLd(lang, tunnel, { faq });
+  const [viewsBefore, viewsAfter] = UI[lang].views.split('{n}');
 
   return `<!DOCTYPE html>
 <html lang="${meta.htmlLang}">
@@ -578,9 +579,18 @@ ${ld}
   <main class="page-wrap">
     <header class="topbar">
       <p class="site-name"><a href="/">${esc(UI[lang].siteName)}</a></p>
-      <nav class="lang-links" aria-label="${esc(UI[lang].langLabel)}">
+      <div class="topbar-actions">
+        <span class="views-pill" id="views-pill" hidden>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <span id="views-count"></span>
+        </span>
+        <nav class="lang-links" aria-label="${esc(UI[lang].langLabel)}">
 ${langLinks}
-      </nav>
+        </nav>
+      </div>
     </header>
 
     <article class="card ref-page">
@@ -606,6 +616,20 @@ ${siblingsSection(lang, tunnel)}
 
 ${footerBlock(lang, tunnel)}
   </main>
+  <script>
+    // The running total of page views from Redis — the pill stays hidden if it
+    // cannot load.
+    fetch('/api/hit', { method: 'POST', keepalive: true })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || d.views == null) return;
+        var count = d.views.toLocaleString('${meta.htmlLang}');
+        var el = document.getElementById('views-pill');
+        document.getElementById('views-count').textContent = count;
+        el.title = '${esc(viewsBefore)}' + count + '${esc(viewsAfter)}';
+        el.hidden = false;
+      }).catch(function () {});
+  </script>
 </body>
 </html>
 `;

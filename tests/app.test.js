@@ -79,7 +79,7 @@ for (const id of ['period-badge', 'next-hint',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice', 'chart-controls',
   'chart-axis', 'holiday-name', 'time-selects',
   'chart-title', 'chart-who', 'marker-label', 'site-name', 'github-link', 'lang-picker',
-  'theme-toggle', 'theme-icon-moon', 'theme-icon-sun',
+  'theme-toggle', 'theme-icon-moon', 'theme-icon-sun', 'views-pill', 'views-count',
   'compare-note',
   'alt-card', 'alt-list', 'label-vehicle-class',
   'tab-all', 'tab-compare', 'all-panel', 'all-list', 'compare-panel',
@@ -971,6 +971,29 @@ test('with no stored choice a system change moves the button with it', async () 
   assert.equal($('theme-toggle').getAttribute('aria-label'), '切換深色模式', 'the stored choice wins from now on');
   delete globalThis.matchMedia;
   storage.delete('hk-toll-calculator.theme');
+});
+
+test('the view counter fills the header pill; without it the pill stays hidden', async () => {
+  globalThis.location = { protocol: 'https:' };
+  globalThis.fetch = async (url) => (url === '/api/hit'
+    ? { ok: true, json: async () => ({ views: 1234 }) }
+    : { ok: false });
+  await import('../js/app.js?views=ok');
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal($('views-pill').hidden, false);
+  assert.equal($('views-count').textContent, '1,234');
+  assert.equal($('views-pill').title, '瀏覽 1,234', 'the words live in the tooltip');
+
+  // an uncounted page is normal: a failing counter leaves the pill hidden
+  $('views-pill').hidden = true;
+  $('views-count').textContent = '';
+  globalThis.fetch = async () => { throw new Error('counter down'); };
+  await import('../js/app.js?views=down');
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal($('views-pill').hidden, true);
+  assert.equal($('views-count').textContent, '');
+  delete globalThis.location;
+  delete globalThis.fetch;
 });
 
 test('the reference tables show one tunnel at a time, and the tab bar switches it', async () => {

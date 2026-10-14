@@ -94,11 +94,20 @@
   <main class="page-wrap">
     <header class="topbar">
       <p class="site-name"><a href="/">香港隧道實時收費</a></p>
-      <nav class="lang-links" aria-label="語言">
+      <div class="topbar-actions">
+        <span class="views-pill" id="views-pill" hidden>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <span id="views-count"></span>
+        </span>
+        <nav class="lang-links" aria-label="語言">
         <a href="/toll/whc/" hreflang="zh-Hant" aria-current="page">繁體中文</a>
         <a href="/toll/whc/sc/" hreflang="zh-Hans">简体中文</a>
         <a href="/toll/whc/en/" hreflang="en">English</a>
-      </nav>
+        </nav>
+      </div>
     </header>
 
     <article class="card ref-page">
@@ -172,5 +181,19 @@
       <p class="credit">Made by Jeffrey Chu (99% Agentic AI, 1% 🐈 Supervision &amp; 🥃)</p>
     </footer>
   </main>
+  <script>
+    // The running total of page views from Redis — the pill stays hidden if it
+    // cannot load.
+    fetch('/api/hit', { method: 'POST', keepalive: true })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || d.views == null) return;
+        var count = d.views.toLocaleString('zh-Hant');
+        var el = document.getElementById('views-pill');
+        document.getElementById('views-count').textContent = count;
+        el.title = '瀏覽 ' + count + '';
+        el.hidden = false;
+      }).catch(function () {});
+  </script>
 </body>
 </html>
