@@ -30,7 +30,10 @@
   --red-ink: #b91c1c;
   --badge-flat-bg: #eef0f3;
   --badge-flat-ink: #4b5563;
-  --cheapest-bg: #e8eefc;
+  --teal-ink: #0f766e;
+  --teal-tint: #e2f6f3;
+  --violet-ink: #7c3aed;
+  --violet-tint: #ede9fe;
   --holiday-line: #f0dfb8;
   --holiday-bg: #fdf7e8;
   --holiday-ink: #8a5a12;
@@ -72,7 +75,10 @@
     --red-ink: #f87171;
     --badge-flat-bg: #21242b;
     --badge-flat-ink: #9aa1ab;
-    --cheapest-bg: #17233a;
+    --teal-ink: #2dd4bf;
+    --teal-tint: #12312d;
+    --violet-ink: #a78bfa;
+    --violet-tint: #2a2342;
     --holiday-line: #8a6a3a;
     --holiday-bg: #2a2318;
     --holiday-ink: #e0a458;
@@ -110,7 +116,10 @@
   --red-ink: #f87171;
   --badge-flat-bg: #21242b;
   --badge-flat-ink: #9aa1ab;
-  --cheapest-bg: #17233a;
+  --teal-ink: #2dd4bf;
+  --teal-tint: #12312d;
+  --violet-ink: #a78bfa;
+  --violet-tint: #2a2342;
   --holiday-line: #8a6a3a;
   --holiday-bg: #2a2318;
   --holiday-ink: #e0a458;
@@ -417,7 +426,7 @@ button.icon-link { background: none; border: 0; padding: 0; cursor: pointer; }
   font-weight: 700;
   color: var(--ink);
 }
-.all-free { background: var(--green-ink); color: var(--bg); border-radius: 999px; padding: 1px 8px; font-size: 0.72rem; font-weight: 700; }
+.all-free { background: var(--teal-ink); color: var(--bg); border-radius: 999px; padding: 1px 8px; font-size: 0.72rem; font-weight: 700; }
 /* The comparison says whose trip it is. */
 .compare-who { margin: 0 0 2px; font-size: 0.95rem; color: var(--ink); }
 .alt-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -439,21 +448,21 @@ button.icon-link { background: none; border: 0; padding: 0; cursor: pointer; }
 }
 button.compare-row:hover { background: var(--form); }
 /* Money wears a solid pill — colour alone never carries the meaning, so a
-   green 免費 tag can never be read as a green 暢通 reading. */
-.compare-row.free { background: var(--green-tint); }
+   teal 免費 tag can never be read as a green 暢通 reading. */
+.compare-row.free { background: var(--teal-tint); }
 .compare-row.free .compare-price,
 .compare-row.free .compare-tag {
-  background: var(--green-ink); color: var(--bg);
+  background: var(--teal-ink); color: var(--bg);
   border-radius: 999px; padding: 2px 10px; font-weight: 700;
 }
-.compare-row.cheapest { background: var(--cheapest-bg); }
+.compare-row.cheapest { background: var(--violet-tint); }
 /* The name takes a line of its own, so it is never squeezed into a column of
    single Chinese characters; the readings, price and tags follow underneath. */
 .compare-name { flex: 1 1 100%; min-width: 0; }
 .compare-price { font-variant-numeric: tabular-nums; white-space: nowrap; margin-left: auto; }
 .compare-tag { color: var(--muted); font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
 .compare-row.cheapest .compare-tag {
-  background: var(--blue-ink); color: var(--bg);
+  background: var(--violet-ink); color: var(--bg);
   border-radius: 999px; padding: 2px 10px; font-weight: 700;
 }
 div.compare-row { cursor: default; }
