@@ -79,7 +79,7 @@ for (const id of ['period-badge', 'next-hint',
   'hour-select', 'minute-select', 'time-slider', 'back-to-now', 'holiday-notice', 'chart-controls',
   'chart-axis', 'holiday-name', 'time-selects',
   'chart-title', 'chart-who', 'marker-label', 'site-name', 'github-link', 'lang-picker',
-  'theme-toggle', 'theme-icon-moon', 'theme-icon-sun', 'views-pill',
+  'theme-toggle', 'theme-icon-moon', 'theme-icon-sun', 'views-pill', 'views-count',
   'compare-note',
   'alt-card', 'alt-list', 'label-vehicle-class',
   'tab-all', 'tab-compare', 'all-panel', 'all-list', 'compare-panel',
@@ -981,16 +981,17 @@ test('the view counter fills the header pill; without it the pill stays hidden',
   await import('../js/app.js?views=ok');
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal($('views-pill').hidden, false);
-  assert.equal($('views-pill').textContent, '瀏覽 1,234');
+  assert.equal($('views-count').textContent, '1,234');
+  assert.equal($('views-pill').title, '瀏覽 1,234', 'the words live in the tooltip');
 
   // an uncounted page is normal: a failing counter leaves the pill hidden
   $('views-pill').hidden = true;
-  $('views-pill').textContent = '';
+  $('views-count').textContent = '';
   globalThis.fetch = async () => { throw new Error('counter down'); };
   await import('../js/app.js?views=down');
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal($('views-pill').hidden, true);
-  assert.equal($('views-pill').textContent, '');
+  assert.equal($('views-count').textContent, '');
   delete globalThis.location;
   delete globalThis.fetch;
 });

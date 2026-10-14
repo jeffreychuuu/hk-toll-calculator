@@ -95,7 +95,13 @@
     <header class="topbar">
       <p class="site-name"><a href="/">HK Tunnel Tolls (Live)</a></p>
       <div class="topbar-actions">
-        <span class="views-pill" id="views-pill" hidden></span>
+        <span class="views-pill" id="views-pill" hidden>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <span id="views-count"></span>
+        </span>
         <nav class="lang-links" aria-label="Language">
         <a href="/toll/tlt/" hreflang="zh-Hant">繁體中文</a>
         <a href="/toll/tlt/sc/" hreflang="zh-Hans">简体中文</a>
@@ -178,8 +184,10 @@
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (!d || d.views == null) return;
+        var count = d.views.toLocaleString('en');
         var el = document.getElementById('views-pill');
-        el.textContent = '' + d.views.toLocaleString('en') + ' views';
+        document.getElementById('views-count').textContent = count;
+        el.title = '' + count + ' views';
         el.hidden = false;
       }).catch(function () {});
   </script>

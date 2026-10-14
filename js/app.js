@@ -236,8 +236,12 @@ let views = null;
 function renderViews() {
   if (views == null) return;
   const locale = { tc: 'zh-Hant', sc: 'zh-Hans', en: 'en' }[state.lang];
-  $('views-pill').textContent = t().views.replace('{n}', views.toLocaleString(locale));
-  $('views-pill').hidden = false;
+  const count = views.toLocaleString(locale);
+  const pill = $('views-pill');
+  pill.title = t().views.replace('{n}', count);
+  pill.setAttribute('aria-label', pill.title);
+  $('views-count').textContent = count;
+  pill.hidden = false;
 }
 
 async function loadViews() {

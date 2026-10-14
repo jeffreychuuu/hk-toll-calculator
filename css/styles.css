@@ -156,8 +156,9 @@ body {
 .topbar-actions { display: flex; align-items: center; gap: 10px; }
 .icon-link { display: inline-flex; color: var(--muted); }
 .icon-link:hover { color: var(--ink); }
-/* How many times the pages have been viewed — hidden until the counter loads. */
-.views-pill { color: var(--muted); font-size: 0.78rem; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* How many times the pages have been viewed — icon and number, hidden until
+   the counter loads. */
+.views-pill { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 0.78rem; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
 button.icon-link { background: none; border: 0; padding: 0; cursor: pointer; }
 .lang-picker { position: relative; }
 

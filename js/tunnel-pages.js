@@ -580,7 +580,13 @@ ${ld}
     <header class="topbar">
       <p class="site-name"><a href="/">${esc(UI[lang].siteName)}</a></p>
       <div class="topbar-actions">
-        <span class="views-pill" id="views-pill" hidden></span>
+        <span class="views-pill" id="views-pill" hidden>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <span id="views-count"></span>
+        </span>
         <nav class="lang-links" aria-label="${esc(UI[lang].langLabel)}">
 ${langLinks}
         </nav>
@@ -617,8 +623,10 @@ ${footerBlock(lang, tunnel)}
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (!d || d.views == null) return;
+        var count = d.views.toLocaleString('${meta.htmlLang}');
         var el = document.getElementById('views-pill');
-        el.textContent = '${esc(viewsBefore)}' + d.views.toLocaleString('${meta.htmlLang}') + '${esc(viewsAfter)}';
+        document.getElementById('views-count').textContent = count;
+        el.title = '${esc(viewsBefore)}' + count + '${esc(viewsAfter)}';
         el.hidden = false;
       }).catch(function () {});
   </script>
