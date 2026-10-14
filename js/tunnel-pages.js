@@ -94,9 +94,8 @@ export const COPY = {
         faq: [
           { q: '香港仔隧道私家車收費幾多？', a: '全日劃一 {carWeekday}，任何時間出入都係一樣價錢。' },
           { q: '香港仔隧道電單車收費幾多？', a: '電單車全日劃一 {motoWeekday}。' },
-          { q: '港島南區有冇免費替代路線？', a: '呢條走廊冇列出免費替代——香港仔隧道係往返港島南區嘅主要行車隧道。' },
+          { q: '港島南區有冇免費替代路線？', a: '有：{roads}，全日免費；價錢同實時行車時間可以喺主頁比較。' },
         ],
-        freeNote: '港島市內呢條走廊冇列出免費替代路線。',
       },
       smt: {
         title: '城門隧道收費{year}：車種收費表同免費替代｜香港隧道實時收費',
@@ -208,9 +207,8 @@ export const COPY = {
         faq: [
           { q: '香港仔隧道私家车收费多少？', a: '全日划一 {carWeekday}，任何时间进出都是一样价钱。' },
           { q: '香港仔隧道电单车收费多少？', a: '电单车全日划一 {motoWeekday}。' },
-          { q: '港岛南区有没有免费替代路线？', a: '这条走廊没有列出免费替代——香港仔隧道是往返港岛南区的主要行车隧道。' },
+          { q: '港岛南区有没有免费替代路线？', a: '有：{roads}，全日免费；价钱和实时行车时间可以在主页比较。' },
         ],
-        freeNote: '港岛市内这条走廊没有列出免费替代路线。',
       },
       smt: {
         title: '城门隧道收费{year}：车种收费表和免费替代｜香港隧道实时收费',
@@ -322,9 +320,8 @@ export const COPY = {
         faq: [
           { q: 'How much is the Aberdeen Tunnel for a private car?', a: 'A flat {carWeekday} all day, whatever time you drive.' },
           { q: 'How much is the Aberdeen Tunnel for a motorcycle?', a: 'A flat {motoWeekday} all day.' },
-          { q: 'Is there a free alternative to the Aberdeen Tunnel?', a: 'No free alternative is listed for this corridor — the Aberdeen Tunnel is the main road tunnel into the Southern District.' },
+          { q: 'Is there a free alternative to the Aberdeen Tunnel?', a: 'Yes: {roads}, free all day; the main page compares the fares and live journey times.' },
         ],
-        freeNote: 'No free alternative is listed within Hong Kong Island for this corridor.',
       },
       smt: {
         title: 'Shing Mun Tunnel toll {year} — flat fare and the free alternative | HK Tunnel Tolls (Live)',
