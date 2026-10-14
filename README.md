@@ -1,6 +1,6 @@
 # HK Tunnel Tolls (Live)
 
-**English** | [繁體中文](README.zh-Hant.md)
+**English** | [Chinese](README.zh-Hant.md)
 
 **Live:** https://hk-toll-calculator.jeffreychuuu.com
 
@@ -10,19 +10,19 @@ A static website that checks Hong Kong road tunnel tolls in real time — showin
 
 The site focuses on **fare estimation by time of day**: pick a tunnel, vehicle class, day type, and time, and the page shows the toll in effect, a coloured 24-hour distribution chart, and a hint for the next rate transition.
 
-Data is sourced from the Transport Department (TD) published toll schedules, including the time-varying toll (分時段收費) schemes for the three cross-harbour tunnels and Tai Lam Tunnel.
+Data is sourced from the Transport Department (TD) published toll schedules, including the time-varying toll schemes for the three cross-harbour tunnels and Tai Lam Tunnel.
 
 ## Features
 
 - **All paid tunnels in Hong Kong**
   - Time-varying toll: Cross-Harbour Tunnel (Hung Hom), Eastern Harbour Crossing, Western Harbour Crossing, Tai Lam Tunnel
-  - Flat-rate tunnels: Aberdeen, Shing Mun, Lion Rock, Sha Tin Pass / Tsuen Shin / Tai Wai, Tate's Cross
+  - Flat-rate tunnels: Aberdeen, Shing Mun, Lion Rock, Sha Tin Heights / Eagle's Nest / Tai Wai, Tate's Cairn
 - **The chart picks its own tunnel** — the 24-hour chart card carries its own picker, listing just the tunnels of the corridor shown above, so what it draws is never ambiguous
-- **Live conditions, shown only while it is now** — the Transport Department's journey times sit beside each tunnel and free corridor, one chip per direction (往…), each naming the gantry it is measured from — the department times a route from a gantry, not from the tunnel mouth, so 大埔道 往九龍 starts on the Tsing Sha Highway and 獅子山 at Sha Tin Racecourse. The harbour crossings are timed from many points and so name none. Also the corridor's traffic news, whether the news names a tunnel or the road itself
-- **A corridor at a glance** — the comparison carries the 車種 selector and lists, corridor by corridor, every tunnel and free road that serves the trip, each with its live reading and its toll (the cheapest tunnel marked 最平 in violet, the free corridors — Tuen Mun Road, Tai Po Road, Lam Kam Road / Castle Peak Road, Pok Fu Lam Road and Wong Nai Chung Gap Road — reading 免費 in teal). Picking a corridor picks its first tunnel, so the chart follows; every tunnel is a chip away, including one off the macro map
-- **24-hour toll-period chart** — the current period badge, colour-coded periods, the date / day-type / clock controls, a marker labelled 現在 while the view is the present moment (or the time you picked), one pill that reads 現在 at now and becomes the 回到現在 button once you leave, and the next-period hint. A tunnel that charges one flat rate all day (and Tai Lam on a Sunday) simply shows a single band across the day, and its schedule controls step aside — there is nothing to pick
+- **Live conditions, shown only while it is now** — the Transport Department's journey times sit beside each tunnel and free corridor, one chip per direction, each naming the gantry it is measured from — the department times a route from a gantry, not from the tunnel mouth, so Tai Po Road towards Kowloon starts on the Tsing Sha Highway and Lion Rock at Sha Tin Racecourse. The harbour crossings are timed from many points and so name none. Also the corridor's traffic news, whether the news names a tunnel or the road itself
+- **A corridor at a glance** — the comparison carries the vehicle-class selector and lists, corridor by corridor, every tunnel and free road that serves the trip, each with its live reading and its toll (the cheapest tunnel wearing a violet pill, the free corridors — Tuen Mun Road, Tai Po Road, Lam Kam Road / Castle Peak Road, Pok Fu Lam Road and Wong Nai Chung Gap Road — wearing a teal pill). Picking a corridor picks its first tunnel, so the chart follows; every tunnel is a chip away, including one off the macro map
+- **24-hour toll-period chart** — the current period badge, colour-coded periods, the date / day-type / clock controls, a marker labelled "Now" while the view is the present moment (or the time you picked), one pill that reads "Now" at the present moment and becomes the "back to now" button once you leave, and the next-period hint. A tunnel that charges one flat rate all day (and Tai Lam on a Sunday) simply shows a single band across the day, and its schedule controls step aside — there is nothing to pick
 - **The whole network as a directory** — the All tunnels tab lists every tolled tunnel under its corridor heading, each row carrying its fare and live reading; picking a row opens that corridor's comparison
-- **A page for every tunnel** — each tolled tunnel has a landing page of its own (`/toll/<id>/`) in all three languages, with its fares by vehicle class, the time-of-day table, the free-road alternatives and its own FAQ — the pages that answer 紅隧收費 / 西隧價錢 searches directly
+- **A page for every tunnel** — each tolled tunnel has a landing page of its own (`/toll/<id>/`) in all three languages, with its fares by vehicle class, the time-of-day table, the free-road alternatives and its own FAQ — the pages that answer "Hung Hom toll" / "Western Harbour Crossing fare" searches directly
 - **Flexible inputs**
   - Vehicle class selector (private car, motorcycle, taxi, goods vehicles, buses, etc.), on the comparison card because it changes every price there — and it keeps the same class of vehicle when you switch tunnels, even though each tunnel names its classes differently
   - A **date** and a **day type** (Mon–Sat non-holiday / Sunday and public holidays): the schedule follows the date, and picking a day type jumps to the next day (counted from today) that has it — or straight back to now when today already does
@@ -32,7 +32,7 @@ Data is sourced from the Transport Department (TD) published toll schedules, inc
 - **A view counter with nothing to hide** — the header shows how many times the pages have been viewed, from one Redis counter (Upstash via Vercel storage). No cookies, no IP stored, no third-party script — and the line simply stays hidden if it cannot load
 - **An icon of its own** — a tunnel mouth, as an SVG favicon and a 180px touch icon
 - **Remembers your choice** — the last tunnel and vehicle class are restored on the next visit (localStorage)
-- **Three languages** — 繁體中文 / 简体中文 / English, picked automatically from the browser language and remembered once chosen
+- **Three languages** — Traditional Chinese / Simplified Chinese / English, picked automatically from the browser language and remembered once chosen
 - **Light and dark themes** — the page follows your system's preference until you toggle; the moon/sun button beside the GitHub link switches themes, and your choice is remembered from then on (localStorage)
 - **Transition-aware pricing** — computes exact stepwise rates during transition windows (e.g. +$2 every 2 minutes for private cars), matching TD's minute-by-minute schedule
 - **Pure static** — no backend, no build step, no runtime dependencies
