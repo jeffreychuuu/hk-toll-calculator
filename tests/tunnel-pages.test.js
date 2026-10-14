@@ -76,7 +76,8 @@ test('no placeholder token survives into a page', () => {
 test('every page beacons its view to the counter', () => {
   for (const { file, html } of pages) {
     assert.ok(html.includes("fetch('/api/hit'"), `${file}: counts its own view`);
-    assert.ok(html.includes('id="views-pill"'), `${file}: has somewhere to show it`);
+    assert.ok(html.includes('id="views-pill"') && html.includes('id="views-count"'),
+      `${file}: has somewhere to show it`);
   }
 });
 
