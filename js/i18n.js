@@ -48,7 +48,7 @@ export const UI = {
       faq: [
         { q: '香港隧道收費點樣分時段？', a: '三條過海隧道（紅隧、東隧、西隧）同大欖隧道採用分時段收費，分繁忙、一般同非繁忙三個時段，轉換時段每 2 分鐘逐步調整。其餘隧道（獅子山、城門、大老山、香港仔、沙田嶺／尖山）劃一收費。' },
         { q: '星期日同公眾假期隧道收費唔同嗎？', a: '唔同。三條過海隧道喺星期日及公眾假期用另一套收費表，一般全日同價；大欖隧道亦全日劃一。' },
-        { q: '有冇免費道路可以代替隧道？', a: '有。屯門公路、大埔道、林錦公路／青山公路、薄扶林道、黃泥涌峽道同域多利道都免費，會同隧道一齊列出，連車費同實時行車時間一齊比較。' },
+        { q: '有冇免費道路可以代替隧道？', a: '有。屯門公路、大埔道、林錦公路／青山公路、薄扶林道同黃泥涌峽道都免費，會同隧道一齊列出，連車費同實時行車時間一齊比較。' },
         { q: '實時行車時間係由邊度量起？', a: '讀數嚟自運輸署「行車時間顯示器」，係由指定分流點量到目的地（例如獅子山由沙田馬場起、大埔道往九龍由青沙公路起），唔係隧道管道內嘅時間，而且只喺揀「現在」時顯示。' },
         { q: '過渡時段每 2 分鐘點計？', a: '轉換時段每 2 分鐘調整一次收費。例如紅隧平日 07:30 由 $22 起，逐步加到 07:48 的 $40；西隧平日 07:30 起由 $22 加到 08:08 的 $60。' },
         { q: '的士同商用車輛過海收費幾多？', a: '三條過海隧道（紅隧、東隧、西隧）的士全日劃一 $25，貨車、小巴、巴士等商用車輛 $50；大欖隧道分別為 $28 同 $43。' },
@@ -161,7 +161,7 @@ export const UI = {
       faq: [
         { q: '香港隧道收费怎样分时段？', a: '三条过海隧道（红隧、东隧、西隧）和大榄隧道采用分时段收费，分繁忙、一般和非繁忙三个时段，转换时段每 2 分钟逐步调整。其余隧道（狮子山、城门、大老山、香港仔、沙田岭／尖山）划一收费。' },
         { q: '星期日和公众假期隧道收费不一样吗？', a: '不一样。三条过海隧道在星期日及公众假期用另一套收费表，一般全日同价；大榄隧道也全日划一。' },
-        { q: '有没有免费道路可以代替隧道？', a: '有。屯门公路、大埔道、林锦公路／青山公路、薄扶林道、黄泥涌峡道和域多利道都免费，会和隧道一起列出，连车费和实时行车时间一起比较。' },
+        { q: '有没有免费道路可以代替隧道？', a: '有。屯门公路、大埔道、林锦公路／青山公路、薄扶林道和黄泥涌峡道都免费，会和隧道一起列出，连车费和实时行车时间一起比较。' },
         { q: '实时行车时间是由哪里开始计算？', a: '读数据来自运输署「行车时间显示器」，是由指定分流点计到目的地（例如狮子山由沙田马场起、大埔道往九龙由青沙公路起），不是隧道管道内的时间，而且只在选择「现在」时显示。' },
         { q: '过渡时段每 2 分钟怎样计算？', a: '转换时段每 2 分钟调整一次收费。例如红隧平日 07:30 由 $22 起，逐步加到 07:48 的 $40；西隧平日 07:30 起由 $22 加到 08:08 的 $60。' },
         { q: '的士和商用车辆过海收费多少？', a: '三条过海隧道（红隧、东隧、西隧）的士全日划一 $25，货车、小巴、巴士等商用车辆 $50；大榄隧道分别为 $28 和 $43。' },
@@ -274,7 +274,7 @@ export const UI = {
       faq: [
         { q: 'How is the toll split by time of day?', a: 'The three harbour crossings (Cross-Harbour, Eastern Harbour, Western Harbour) and Tai Lam charge by time of day, in peak, normal and non-peak periods, stepping by $2 every 2 minutes through the transitions. Every other tunnel (Lion Rock, Shing Mun, Tate’s Cairn, Aberdeen, Sha Tin Heights / Eagle’s Nest) charges one rate.' },
         { q: 'Is the toll different on Sundays and public holidays?', a: 'Yes. The three harbour crossings use a separate table on Sundays and public holidays, usually one rate all day; Tai Lam is flat all day too.' },
-        { q: 'Are there free roads instead of a tunnel?', a: 'Yes. Tuen Mun Road, Tai Po Road, Lam Kam Road / Castle Peak Road, Pok Fu Lam Road, Wong Nai Chung Gap Road and Victoria Road are free; they are listed beside the tunnels so the time and the fare can be compared together.' },
+        { q: 'Are there free roads instead of a tunnel?', a: 'Yes. Tuen Mun Road, Tai Po Road, Lam Kam Road / Castle Peak Road, Pok Fu Lam Road and Wong Nai Chung Gap Road are free; they are listed beside the tunnels so the time and the fare can be compared together.' },
         { q: 'Where does the live journey time start?', a: 'The readings come from the Transport Department’s journey-time indicators and run from a gantry to the destination (Lion Rock from Sha Tin Racecourse, Tai Po Road towards Kowloon from the Tsing Sha Highway) — not the time inside the tunnel — and they show only while “now” is selected.' },
         { q: 'How does the transition period work?', a: 'A transition moves the rate once every 2 minutes. The Cross-Harbour Tunnel, for example, climbs from $22 at 07:30 to $40 at 07:48, and the Western Harbour Crossing from $22 at 07:30 to $60 at 08:08.' },
         { q: 'What do taxis and commercial vehicles pay across the harbour?', a: 'The three harbour crossings charge a taxi a flat $25 and a commercial vehicle (goods vehicle, minibus, bus) $50; Tai Lam charges $28 and $43.' },

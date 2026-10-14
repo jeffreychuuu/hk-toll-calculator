@@ -23,10 +23,9 @@ test('the free corridors are named in three languages and listed once each', () 
   }
   const names = COMPARE_ROADS.map((road) => road.name.tc);
   assert.equal(new Set(names).size, names.length, 'no duplicate corridors');
-  assert.deepEqual(names, ['林錦公路／青山公路', '屯門公路', '大埔道', '薄扶林道', '黃泥涌峽道', '域多利道']);
+  assert.deepEqual(names, ['林錦公路／青山公路', '屯門公路', '大埔道', '薄扶林道', '黃泥涌峽道']);
   for (const road of COMPARE_ROADS) assert.equal(typeof road.id, 'string');
   assert.equal(COMPARE_ROADS.find((road) => road.name.tc === '屯門公路').id, 'tmr');
-  assert.equal(COMPARE_ROADS.find((road) => road.name.tc === '域多利道').id, 'vcr');
 });
 
 test('the corridor categories cover every tolled tunnel', () => {
@@ -58,7 +57,7 @@ test('each category lists only the alternatives for that kind of trip', () => {
 
   assert.deepEqual(byId.island.tunnels, ['abt']);
   assert.deepEqual(byId.island.roads.map((road) => road.name.tc),
-    ['薄扶林道', '黃泥涌峽道', '域多利道'], 'the island free roads sit with the Aberdeen Tunnel');
+    ['薄扶林道', '黃泥涌峽道'], 'the measured island free roads sit with the Aberdeen Tunnel');
 });
 
 test('every tunnel in the graph belongs to exactly one trip category', () => {

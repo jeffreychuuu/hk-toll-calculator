@@ -850,18 +850,16 @@ test('live conditions from the transport department sit beside the tunnels', asy
   assert.ok($('alt-list').innerHTML.includes('屯門公路(往九龍方向)'),
     'and its own road incident is shown with it');
 
-  // the island corridor's free roads: two measured, one not
+  // the island corridor's measured free roads
   selectTunnel('abt');
   const island = $('alt-list').innerHTML;
-  for (const name of ['薄扶林道', '黃泥涌峽道', '域多利道']) {
+  for (const name of ['薄扶林道', '黃泥涌峽道']) {
     assert.ok(island.includes(name), `${name} is listed beside the tunnel`);
   }
   assert.ok(island.includes('往薄扶林 慢車 14 分鐘'), 'Pok Fu Lam Road carries a reading');
   assert.ok(island.includes('往黃泥涌峽 暢通 11 分鐘'), 'and so does Wong Nai Chung Gap Road');
   assert.ok(island.includes('由黃竹坑道起'), 'named from the H7 gantry');
-  const vcrRow = island.split('<li>').find((row) => row.includes('域多利道')) || '';
-  assert.ok(vcrRow.includes('compare-row free'), 'Victoria Road is a free row');
-  assert.ok(!vcrRow.includes('class="traffic'), 'with no reading, because the feed has none');
+  assert.ok(!island.includes('域多利道'), 'Victoria Road stays out: the feed measures no reading for it');
   selectTunnel('tlt'); // back to the corridor the schedule checks below use
 
   // picking the schedule already on screen keeps us at now
