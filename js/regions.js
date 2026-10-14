@@ -41,15 +41,13 @@ export const FREE_EDGES = [
     a: 'nte', b: 'klc', id: 'tpr', compare: true,    name: { tc: '大埔道', sc: '大埔道', en: 'Tai Po Road' },
   },
   // Hong Kong Island: the free ways to the Southern District, listed beside
-  // the Aberdeen Tunnel. Victoria Road has no journey-time reading.
+  // the Aberdeen Tunnel. Victoria Road is free too, but the department
+  // publishes no journey-time reading for it, so it is not offered.
   {
     a: 'isc', b: 'iss', id: 'pfl', compare: true,    name: { tc: '薄扶林道', sc: '薄扶林道', en: 'Pok Fu Lam Road' },
   },
   {
     a: 'isc', b: 'iss', id: 'wncg', compare: true,    name: { tc: '黃泥涌峽道', sc: '黄泥涌峡道', en: 'Wong Nai Chung Gap Road' },
-  },
-  {
-    a: 'isc', b: 'iss', id: 'vcr', compare: true,    name: { tc: '域多利道', sc: '域多利道', en: 'Victoria Road' },
   },
 ];
 

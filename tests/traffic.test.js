@@ -113,7 +113,6 @@ test('a road incident is tied to the road it names', () => {
   assert.deepEqual(roadsMentioned('青山公路往荃灣方向交通繁忙'), ['lamkam']);
   assert.deepEqual(roadsMentioned('薄扶林道往香港仔方向交通意外'), ['pfl']);
   assert.deepEqual(roadsMentioned('黃泥涌峽道近黃泥涌水塘部分行車線封閉'), ['wncg']);
-  assert.deepEqual(roadsMentioned('Victoria Road near Sandy Bay closed'), ['vcr']);
   // a tunnel name is not a road
   assert.deepEqual(roadsMentioned('獅子山隧道管道內有交通意外'), []);
 });

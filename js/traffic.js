@@ -104,7 +104,6 @@ const ROAD_PATTERNS = [
   [/林錦公路|青山公路|Lam Kam Road|Castle Peak Road/u, 'lamkam'],
   [/薄扶林道|Pok Fu Lam Road/u, 'pfl'],
   [/黃泥涌峽道|Wong Nai Chung Gap Road/u, 'wncg'],
-  [/域多利道|Victoria Road/u, 'vcr'],
 ];
 
 export function roadsMentioned(text) {
