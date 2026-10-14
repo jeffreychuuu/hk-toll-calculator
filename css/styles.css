@@ -30,7 +30,10 @@
   --red-ink: #b91c1c;
   --badge-flat-bg: #eef0f3;
   --badge-flat-ink: #4b5563;
-  --cheapest-bg: #e8eefc;
+  --teal-ink: #0f766e;
+  --teal-tint: #e2f6f3;
+  --violet-ink: #7c3aed;
+  --violet-tint: #ede9fe;
   --holiday-line: #f0dfb8;
   --holiday-bg: #fdf7e8;
   --holiday-ink: #8a5a12;
@@ -72,7 +75,10 @@
     --red-ink: #f87171;
     --badge-flat-bg: #21242b;
     --badge-flat-ink: #9aa1ab;
-    --cheapest-bg: #17233a;
+    --teal-ink: #2dd4bf;
+    --teal-tint: #12312d;
+    --violet-ink: #a78bfa;
+    --violet-tint: #2a2342;
     --holiday-line: #8a6a3a;
     --holiday-bg: #2a2318;
     --holiday-ink: #e0a458;
@@ -110,7 +116,10 @@
   --red-ink: #f87171;
   --badge-flat-bg: #21242b;
   --badge-flat-ink: #9aa1ab;
-  --cheapest-bg: #17233a;
+  --teal-ink: #2dd4bf;
+  --teal-tint: #12312d;
+  --violet-ink: #a78bfa;
+  --violet-tint: #2a2342;
   --holiday-line: #8a6a3a;
   --holiday-bg: #2a2318;
   --holiday-ink: #e0a458;
@@ -363,10 +372,9 @@ button.icon-link { background: none; border: 0; padding: 0; cursor: pointer; }
 /* The moment the directory is pricing — the chart card, which owns the clock
    controls, is hidden while the directory is on screen. */
 .all-moment { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 2px; font-size: 0.82rem; color: var(--muted); }
-.all-moment.is-now .all-when { color: var(--green-ink); font-weight: 600; }
+.all-moment.is-now .all-when { color: var(--ink); font-weight: 600; }
 /* The clock is the point of the line: bigger than everything around it. */
 .all-moment .all-time { font-size: 1.35rem; font-weight: 700; line-height: 1.05; color: var(--ink); font-variant-numeric: tabular-nums; }
-.all-moment.is-now .all-time { color: var(--green-ink); }
 /* Which tunnel the chart belongs to. It takes a line of its own, so it lands in
    the same place whichever tunnel it is — a long name moves nothing. */
 .chart-who { flex: 1 1 100%; font-size: 0.9rem; font-weight: 700; color: var(--ink); }
@@ -418,7 +426,7 @@ button.icon-link { background: none; border: 0; padding: 0; cursor: pointer; }
   font-weight: 700;
   color: var(--ink);
 }
-.all-free { font-size: 0.78rem; font-weight: 700; color: var(--green-ink); }
+.all-free { background: var(--teal-ink); color: var(--bg); border-radius: 999px; padding: 1px 8px; font-size: 0.72rem; font-weight: 700; }
 /* The comparison says whose trip it is. */
 .compare-who { margin: 0 0 2px; font-size: 0.95rem; color: var(--ink); }
 .alt-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -439,19 +447,24 @@ button.icon-link { background: none; border: 0; padding: 0; cursor: pointer; }
   cursor: pointer;
 }
 button.compare-row:hover { background: var(--form); }
-/* A free corridor reads 免費 and wears green; the cheapest tunnel wears blue,
-   so the two best-value rows are never confused for each other. */
-.compare-row.free { background: var(--green-tint); color: var(--green-ink); font-weight: 700; }
+/* Money wears a solid pill — colour alone never carries the meaning, so a
+   teal 免費 tag can never be read as a green 暢通 reading. */
+.compare-row.free { background: var(--teal-tint); }
 .compare-row.free .compare-price,
-.compare-row.free .compare-tag { color: var(--green-ink); }
-.compare-row.cheapest { background: var(--cheapest-bg); color: var(--blue-ink); font-weight: 700; }
+.compare-row.free .compare-tag {
+  background: var(--teal-ink); color: var(--bg);
+  border-radius: 999px; padding: 2px 10px; font-weight: 700;
+}
+.compare-row.cheapest { background: var(--violet-tint); }
 /* The name takes a line of its own, so it is never squeezed into a column of
    single Chinese characters; the readings, price and tags follow underneath. */
 .compare-name { flex: 1 1 100%; min-width: 0; }
 .compare-price { font-variant-numeric: tabular-nums; white-space: nowrap; margin-left: auto; }
 .compare-tag { color: var(--muted); font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
-.compare-row.cheapest .compare-price,
-.compare-row.cheapest .compare-tag { color: var(--blue-ink); }
+.compare-row.cheapest .compare-tag {
+  background: var(--violet-ink); color: var(--bg);
+  border-radius: 999px; padding: 2px 10px; font-weight: 700;
+}
 div.compare-row { cursor: default; }
 
 /* Live conditions from the Transport Department */
@@ -484,7 +497,7 @@ div.compare-row { cursor: default; }
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
-.marker-label.now { color: var(--green-ink); }
+.marker-label.now { color: var(--ink); }
 
 .chart-bar { display: flex; height: 100%; border-radius: 8px; overflow: hidden; }
 .chart-bar .seg { height: 100%; }
