@@ -16,11 +16,13 @@ const fakeResponse = () => ({
 const withEnv = async (run) => {
   process.env.KV_REST_API_URL = 'https://redis.example';
   process.env.KV_REST_API_TOKEN = 'secret';
+  process.env.VERCEL_ENV = 'production';
   try {
     await run();
   } finally {
     delete process.env.KV_REST_API_URL;
     delete process.env.KV_REST_API_TOKEN;
+    delete process.env.VERCEL_ENV;
   }
 };
 
@@ -59,6 +61,26 @@ test('a bot never touches the counter', async () => {
     assert.equal(res.statusCode, 200);
     assert.deepEqual(res.body, { views: null });
     assert.equal(called, false, 'no Redis call for a crawler');
+    delete globalThis.fetch;
+  });
+});
+
+test('a preview deployment counts into its own key', async () => {
+  await withEnv(async () => {
+    process.env.VERCEL_ENV = 'preview';
+    const urls = [];
+    globalThis.fetch = async (url) => { urls.push(url); return { ok: true, json: async () => ({ result: 7 }) }; };
+    const { default: handler } = await import('../api/hit.js?preview=1');
+    const res = fakeResponse();
+    await handler(request(), res);
+    assert.equal(urls[0], 'https://redis.example/incr/hk-tolls:views:preview');
+    assert.deepEqual(res.body, { views: 7 });
+
+    // local runs (no VERCEL_ENV) are previews too
+    delete process.env.VERCEL_ENV;
+    urls.length = 0;
+    await handler(request(), fakeResponse());
+    assert.equal(urls[0], 'https://redis.example/incr/hk-tolls:views:preview');
     delete globalThis.fetch;
   });
 });

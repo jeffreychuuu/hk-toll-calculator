@@ -107,7 +107,7 @@ vercel                   # 跟提示做；靜態站用預設設定就得
 
 或者喺 Vercel dashboard 連接 GitHub repo — build command 留空，output directory 用專案根目錄。
 
-Header 個瀏覽計數需要 Vercel storage marketplace 開一個 **Upstash Redis**：dashboard → Storage → 建立／連接 Upstash Redis → 專案會自動有 `KV_REST_API_URL` 同 `KV_REST_API_TOKEN` 兩個 env var。冇呢兩個 env（包括本地 dev）計數會靜靜地關咗——`api/hit.js` 只會答 `{ views: null }`。
+Header 個瀏覽計數需要 Vercel storage marketplace 開一個 **Upstash Redis**：dashboard → Storage → 建立／連接 Upstash Redis → 專案會自動有 `KV_REST_API_URL` 同 `KV_REST_API_TOKEN` 兩個 env var。冇呢兩個 env（包括本地 dev）計數會靜靜地關咗——`api/hit.js` 只會答 `{ views: null }`。Preview deployment 會自動計落 `hk-tolls:views:preview`（用 Vercel 嘅 `VERCEL_ENV`），測試流量唔會入到公開數字。
 
 ## 注意
 
