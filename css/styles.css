@@ -274,6 +274,7 @@ button.icon-link { background: none; border: 0; padding: 0; cursor: pointer; }
 .now-pill.is-now,
 .now-pill.is-now:disabled {
   background: none;
+  border-color: var(--line);
   color: var(--ink);
   cursor: default;
   opacity: 1;
