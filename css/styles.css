@@ -262,7 +262,7 @@ button.icon-link { background: none; border: 0; padding: 0; cursor: pointer; }
   border: 1px solid transparent;
   border-radius: 999px;
   background: none;
-  color: var(--ink);
+  color: var(--green-ink);
   font: inherit;
   font-size: 0.8rem;
   font-weight: 700;
@@ -273,9 +273,8 @@ button.icon-link { background: none; border: 0; padding: 0; cursor: pointer; }
 }
 .now-pill.is-now,
 .now-pill.is-now:disabled {
-  background: none;
-  border-color: var(--line);
-  color: var(--ink);
+  background: var(--green-tint);
+  color: var(--green-ink);
   cursor: default;
   opacity: 1;
 }
