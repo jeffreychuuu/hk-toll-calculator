@@ -532,6 +532,7 @@ export function tunnelPage(lang, tunnelId) {
   const faqVisible = faq.map(({ q, a }) => `        <dt>${esc(q)}</dt>\n        <dd>${esc(a)}</dd>`).join('\n');
   const periodTable = tollTableBlock(tunnel.id, { ...labelsFor(lang), heading: 'h3', hrefs: undefined });
   const ld = jsonLd(lang, tunnel, { faq });
+  const [viewsBefore, viewsAfter] = UI[lang].views.split('{n}');
 
   return `<!DOCTYPE html>
 <html lang="${meta.htmlLang}">
@@ -578,9 +579,12 @@ ${ld}
   <main class="page-wrap">
     <header class="topbar">
       <p class="site-name"><a href="/">${esc(UI[lang].siteName)}</a></p>
-      <nav class="lang-links" aria-label="${esc(UI[lang].langLabel)}">
+      <div class="topbar-actions">
+        <span class="views-pill" id="views-pill" hidden></span>
+        <nav class="lang-links" aria-label="${esc(UI[lang].langLabel)}">
 ${langLinks}
-      </nav>
+        </nav>
+      </div>
     </header>
 
     <article class="card ref-page">
@@ -606,6 +610,18 @@ ${siblingsSection(lang, tunnel)}
 
 ${footerBlock(lang, tunnel)}
   </main>
+  <script>
+    // The running total of page views from Redis — the pill stays hidden if it
+    // cannot load.
+    fetch('/api/hit', { method: 'POST', keepalive: true })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || d.views == null) return;
+        var el = document.getElementById('views-pill');
+        el.textContent = '${esc(viewsBefore)}' + d.views.toLocaleString('${meta.htmlLang}') + '${esc(viewsAfter)}';
+        el.hidden = false;
+      }).catch(function () {});
+  </script>
 </body>
 </html>
 `;

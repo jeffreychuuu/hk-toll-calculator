@@ -29,6 +29,7 @@
   - 時／分下拉選單 + 時間滑桿，全日任一時間可查，加「回到現在」掣
 - **同一頁** — 行程比較同 24 小時圖放埋一齊
 - **可摺起嘅參考資料** — 摺埋喺 footer fine print 度，一行一個：收費表（有隧道 tab 揀單一條睇）、常見問題（跟住你喺上面揀嘅隧道）、車種說明。用戶唔覺眼，但搜尋引擎同想睇細節嘅人照攞到；HTML 入面係繁體中文，揀語言時亦會跟住轉
+- **公開嘅瀏覽計數** — header 顯示全站累計瀏覽次數，一個 Redis counter（Upstash via Vercel storage）搞掂。冇 cookie、唔存 IP、冇第三方 script——載入唔到就索性唔顯示
 - **有自己嘅 icon** — 隧道口，SVG favicon ＋ 180px touch icon
 - **記住上次選擇** — 隧道同車輛類別存喺 localStorage，下次開頁自動還原
 - **三種語言** — 繁體中文 / 简体中文 / English，首次跟瀏覽器語言自動揀，揀過之後記住
@@ -75,7 +76,8 @@ hk-toll-calculator/
 │   ├── print-toll-tables.mjs   # node scripts/print-toll-tables.mjs
 │   └── build-tunnel-pages.mjs  # npm run build:pages（寫 toll/ + sitemap.xml）
 ├── api/
-│   └── traffic.js      # 唯一嘅 serverless function（實時路況）
+│   ├── traffic.js      # 實時路況 proxy
+│   └── hit.js          # 每頁一次瀏覽計數，寫入 Redis
 ├── tests/              # Node 測試套件
 ├── package.json        # test script（type: module）
 ├── README.md
@@ -104,6 +106,8 @@ vercel                   # 跟提示做；靜態站用預設設定就得
 ```
 
 或者喺 Vercel dashboard 連接 GitHub repo — build command 留空，output directory 用專案根目錄。
+
+Header 個瀏覽計數需要 Vercel storage marketplace 開一個 **Upstash Redis**：dashboard → Storage → 建立／連接 Upstash Redis → 專案會自動有 `KV_REST_API_URL` 同 `KV_REST_API_TOKEN` 兩個 env var。冇呢兩個 env（包括本地 dev）計數會靜靜地關咗——`api/hit.js` 只會答 `{ views: null }`。
 
 ## 注意
 
